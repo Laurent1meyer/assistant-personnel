@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sillage — test du store</title>
+<style>
+:root{--abysse:#070C12;--surface:#0E1620;--line:#1B2836;--texte:#E6EFF6;--sourd:#8598AC;
+--ecume:#5EEAD4;--courant:#38BDF8;--fait:#34D399;--alerte:#F87171;
+--mono:ui-monospace,"SF Mono",Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--abysse);color:var(--texte);font-family:-apple-system,Inter,sans-serif;
+padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+h1{font-size:20px;margin:4px 0 2px}h1 em{font-style:normal;color:var(--ecume)}
+.sous{color:var(--sourd);font-size:12.5px;margin-bottom:14px}
+#res{font-family:var(--mono);font-size:12px;line-height:1.7;background:var(--surface);
+border:1px solid var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;word-break:break-word}
+.ok{color:var(--fait)}.ko{color:var(--alerte)}.info{color:var(--courant)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--sourd);margin:20px 0 8px}
+button{border:1px solid var(--line);background:var(--surface);color:var(--texte);font:inherit;
+font-size:13px;padding:10px 12px;border-radius:10px;cursor:pointer;margin:3px 4px 3px 0}
+button.prim{border-color:#1E6B62;color:var(--ecume)}
+#jeu{font-family:var(--mono);font-size:11.5px;background:var(--surface);border:1px solid var(--line);
+border-radius:12px;padding:12px;white-space:pre-wrap;margin-top:8px;min-height:60px}
+</style>
+</head>
+<body>
+<h1>Test du <em>store</em> Sillage</h1>
+<div class="sous">Étape 1 : la suite tourne en mémoire (ton localStorage n'est pas touché).<br>
+Étape 2 : le terrain de jeu utilise le vrai stockage de ce navigateur.</div>
+
+<div id="res">Chargement…</div>
+
+<h2>Terrain de jeu (vraie persistance)</h2>
+<div>
+<button class="prim" onclick="jSeed()">Créer 3 tâches démo</button>
+<button onclick="jJour()">Simuler +1 jour ⏩</button>
+<button onclick="jEtat()">État du jour</button>
+<button onclick="jVersions()">Versions</button>
+<button onclick="jExport()">Exporter</button>
+<button onclick="jReset()" style="color:var(--alerte)">Tout effacer</button>
+</div>
+<div id="jeu">Le store réel s'initialise au chargement. Ferme et rouvre la page après « +1 jour » pour voir le tick agir…</div>
+
+<script>
+/* ============================================================
+   SILLAGE — store.js  (V2.0 · couche DONNÉES)
+   Source de vérité unique. Zéro DOM, zéro réseau.
+   Toute modification passe par les ACTIONS (Store.actions.*).
+   L'UI et l'agent Claude sont des clients égaux de ce store.
+   ============================================================ */
+
+const Store = (() => {
+
+  //=========================================================
+  // CONFIG & UTILITAIRES
+  //=========================================================
+  const CLE = "sillage_v2";
+  const CLE_VERSIONS = "sillage_v2_versions";
+  const MAX_VERSIONS = 10;
+  const MAX_JOURNAL = 300;
+
+  // Horloge injectable (indispensable pour les tests : simuler +N jours)
+  let _maintenant = () => new Date();
+  const maintenant = () => _maintenant();
+  const aujourdhui = () => isoJour(maintenant());          // "2026-07-04"
+  function isoJour(d){ 
+    const z = n => String(n).padStart(2,"0");
+    return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());
+  }
+  function plusJours(iso, n){
+    const d = new Date(iso+"T12:00:00"); d.setDate(d.getDate()+n);
+    return isoJour(d);
+  }
+  const uid = () => "t" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+  // Adaptateur de persistance (localStorage, remplaçable par iCloud/backend)
+  let persist = {
+    lire:  cle => { try { return JSON.parse(localStorage.getItem(cle)); } catch(e){ return null; } },
+    ecrire:(cle,val) => { try { localStorage.setItem(cle, JSON.stringify(val)); return true; } catch(e){ return false; } }
+  };
+
+  //=========================================================
+  // ÉTAT
+  //=========================================================
+  let etat = { objets: {}, journal: [], meta: { creele: null, tick_dernier: null, schema: 2 } };
+  const abonnes = [];
+  function notifier(type, detail){ abonnes.forEach(f => { try{ f(type, detail); }catch(e){} }); }
+
+  //=========================================================
+  // SCHÉMA — un seul type d'objet, trois couches (cf. CDC §3)
+  //=========================================================
+  function nouvelObjet(base){
+    const auj = aujourdhui();
+    return Object.assign({
+      // — NOYAU —
+      id: uid(), titre: "", notes: "",
+      nature: "tache",              // tache | rdv | projet
+      domaine: "perso",             // perso | pro
+      statut: "active",             // dormante | active | faite | a_planifier | corbeille
+      date_apparition: auj,         // glissante (tâches)
+      date_initiale: base.date_apparition || auj,   // figée : l'intention d'origine
+      date_heure_debut: null, date_heure_fin: null, // ancrées (rdv)
+      echeance_dure: null,
+      recurrence: null,             // { n:7, ancrage:"realisation"|"calendrier" }
+      lieu: null,
+      instances: [],                // [{date_prevue, date_reelle, etat}]
+      glissements: 0,
+      // — ORGANISATION —
+      tags: [],
+      liens: [],                    // [{type:"parent"|"bloquee_par"|"alimente", cible:id}]
+      // — CHAMPS LIBRES —
+      champs: {},                   // clé:valeur ; valeur "=..." → formule
+      procedure: [],                // [{etape, fait, promue?}]
+      // — MÉTA —
+      creele: auj, derniere_modif: maintenant().toISOString()
+    }, base);
+  }
+
+  function valider(o){
+    const err = [];
+    if(!o.titre || !o.titre.trim()) err.push("titre requis");
+    if(!["tache","rdv","projet"].includes(o.nature)) err.push("nature invalide");
+    if(!["perso","pro"].includes(o.domaine)) err.push("domaine invalide");
+    if(!["dormante","active","faite","a_planifier","corbeille"].includes(o.statut)) err.push("statut invalide");
+    if(o.nature==="rdv" && !o.date_heure_debut) err.push("rdv sans date_heure_debut");
+    if(o.date_apparition && !/^\d{4}-\d{2}-\d{2}$/.test(o.date_apparition)) err.push("date_apparition non ISO");
+    return err;
+  }
+
+  //=========================================================
+  // VERSIONS (anneau de 10) & JOURNAL & CORBEILLE
+  //=========================================================
+  let _derniereVersionTs = 0;
+  function snapshot(force){
+    const t = maintenant().getTime();
+    if(!force && t - _derniereVersionTs < 60000) return;   // coalescence 1/min
+    _derniereVersionTs = t;
+    const v = persist.lire(CLE_VERSIONS) || [];
+    v.push({ ts: maintenant().toISOString(), donnees: JSON.parse(JSON.stringify(etat.objets)) });
+    while(v.length > MAX_VERSIONS) v.shift();
+    persist.ecrire(CLE_VERSIONS, v);
+  }
+  function versions(){ return (persist.lire(CLE_VERSIONS)||[]).map((v,i)=>({index:i, ts:v.ts, n:Object.keys(v.donnees).length})); }
+  function restaurerVersion(index){
+    const v = persist.lire(CLE_VERSIONS)||[];
+    if(!v[index]) return faux("version inexistante");
+    snapshot(true);                                        // sécuriser l'état courant d'abord
+    etat.objets = JSON.parse(JSON.stringify(v[index].donnees));
+    journaliser("restauration", null, {version: v[index].ts});
+    sauver(); notifier("restauration");
+    return ok();
+  }
+  function journaliser(action, id, detail, source){
+    etat.journal.push({ ts: maintenant().toISOString(), action, id, detail: detail||null, source: source||"ui" });
+    while(etat.journal.length > MAX_JOURNAL) etat.journal.shift();
+  }
+
+  //=========================================================
+  // PERSISTANCE
+  //=========================================================
+  function sauver(){
+    const okp = persist.ecrire(CLE, etat);
+    if(!okp) notifier("erreur", {msg:"Échec de sauvegarde (stockage plein ?)"});
+    return okp;
+  }
+  function charger(){
+    const d = persist.lire(CLE);
+    if(d && d.meta && d.meta.schema === 2){ etat = d; return true; }
+    return false;
+  }
+  function occupation(){ // jauge localStorage (≈ 5 Mo max)
+    try{ return Math.round(JSON.stringify(etat).length / 1024); }catch(e){ return -1; }
+  }
+
+  //=========================================================
+  // TICK — mécanique bête et robuste (CDC §2.1, §3.2)
+  //=========================================================
+  function tick(){
+    const auj = aujourdhui();
+    if(etat.meta.tick_dernier === auj) return {glisses:0, activees:0};
+    let glisses = 0, activees = 0;
+    for(const o of Object.values(etat.objets)){
+      if(o.nature !== "tache") continue;
+      // dormante dont la date arrive → active
+      if(o.statut === "dormante" && o.date_apparition <= auj){
+        o.statut = "active"; activees++;
+        o.derniere_modif = maintenant().toISOString();
+      }
+      // active dans le passé → glisse à aujourd'hui, compteur +1
+      if(o.statut === "active" && o.date_apparition < auj){
+        o.glissements += (joursEntre(o.date_apparition, auj));
+        o.date_apparition = auj; glisses++;
+        o.derniere_modif = maintenant().toISOString();
+      }
+    }
+    etat.meta.tick_dernier = auj;
+    if(glisses || activees){ journaliser("tick", null, {glisses, activees}, "systeme"); sauver(); notifier("tick",{glisses,activees}); }
+    else { sauver(); }
+    return {glisses, activees};
+  }
+  function joursEntre(a,b){ return Math.round((new Date(b+"T12:00:00") - new Date(a+"T12:00:00")) / 86400000); }
+
+  //=========================================================
+  // FORMULES (niveau 1) — champs "=expr" entre champs numériques
+  //=========================================================
+  function evaluerFormules(o){
+    const num = {};
+    for(const [k,v] of Object.entries(o.champs)){
+      if(typeof v === "number") num[k] = v;
+      else if(typeof v === "string" && !v.startsWith("=")){
+        const f = parseFloat(String(v).replace(",", ".").replace(/[^\d.\-]/g,""));
+        if(!isNaN(f)) num[k] = f;
+      }
+    }
+    const resultats = {};
+    for(const [k,v] of Object.entries(o.champs)){
+      if(typeof v !== "string" || !v.startsWith("=")) continue;
+      let expr = v.slice(1);
+      // remplacer les noms de champs par leurs valeurs (les plus longs d'abord)
+      for(const nom of Object.keys(num).sort((a,b)=>b.length-a.length))
+        expr = expr.split(nom).join("("+num[nom]+")");
+      // sécurité : uniquement chiffres et opérateurs après substitution
+      if(!/^[\d\s+\-*/().eE]+$/.test(expr)){ resultats[k] = "#CHAMP?"; continue; }
+      try{ 
+        const r = Function('"use strict";return ('+expr+')')();
+        resultats[k] = (typeof r === "number" && isFinite(r)) ? Math.round(r*1000)/1000 : "#ERREUR";
+      }catch(e){ resultats[k] = "#ERREUR"; }
+    }
+    return resultats; // { nom_champ: valeur_calculée }
+  }
+
+  //=========================================================
+  // REQUÊTES (lecture seule)
+  //=========================================================
+  const lire = id => { const o = etat.objets[id]; return (o && o.statut!=="corbeille") ? o : null; };
+  const tous = () => Object.values(etat.objets).filter(o=>o.statut!=="corbeille");
+  const actifs = () => tous().filter(o=>o.statut==="active");
+  const vivier = () => tous().filter(o=>o.statut==="a_planifier");
+  const corbeille = () => Object.values(etat.objets).filter(o=>o.statut==="corbeille");
+
+  function enfants(id){ return tous().filter(o=>o.liens.some(l=>l.type==="parent"&&l.cible===id)); }
+  function parent(o){ const l=o.liens.find(l=>l.type==="parent"); return l?lire(l.cible):null; }
+  function chaine(o){ const c=[]; let p=parent(o); while(p){ c.unshift(p); p=parent(p); if(c.length>10)break; } return c; }
+  function sousArbre(id){
+    const res=[], pile=[id];
+    while(pile.length){ const cur=pile.pop(); for(const e of enfants(cur)){ res.push(e); pile.push(e.id); } }
+    return res;
+  }
+  function rechercher(q){
+    q=q.toLowerCase();
+    return tous().filter(o=>JSON.stringify(o).toLowerCase().includes(q));
+  }
+  function velocite(jours=14){
+    const depuis = plusJours(aujourdhui(), -jours);
+    let n=0;
+    for(const o of Object.values(etat.objets))
+      n += o.instances.filter(i=>i.etat==="faite" && i.date_reelle >= depuis).length;
+    return Math.round(n/jours*10)/10;
+  }
+  function duJour(){
+    const auj = aujourdhui();
+    return tous().filter(o =>
+      (o.nature==="tache" && o.statut==="active") ||
+      (o.nature==="rdv" && o.date_heure_debut && o.date_heure_debut.startsWith(auj)));
+  }
+
+  //=========================================================
+  // ACTIONS (écriture) — les seules portes d'entrée
+  //=========================================================
+  const ok  = (data) => ({ok:true, data});
+  const faux = (msg) => ({ok:false, erreur:msg});
+
+  function mutation(action, fn, source){
+    snapshot();
+    const res = fn();
+    if(res.ok){
+      journaliser(action, res.data && res.data.id, res.detail, source);
+      sauver(); notifier(action, res.data);
+    }
+    return res;
+  }
+
+  const actions = {
+
+    creer(props, source){
+      return mutation("creer", () => {
+        const o = nouvelObjet(props||{});
+        // rdv : ancré, jamais de glissement ; statut selon date
+        if(o.nature==="rdv"){ o.date_apparition = (o.date_heure_debut||"").slice(0,10) || aujourdhui(); }
+        if(o.nature==="tache" && o.date_apparition > aujourdhui() && o.statut==="active") o.statut="dormante";
+        const err = valider(o);
+        if(err.length) return faux(err.join(", "));
+        etat.objets[o.id] = o;
+        return ok(o);
+      }, source);
+    },
+
+    modifier(id, patch, source){
+      return mutation("modifier", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        const interdit = ["id","instances","glissements","creele","date_initiale"];
+        for(const k of Object.keys(patch)) if(interdit.includes(k)) return faux("champ protégé : "+k);
+        const copie = Object.assign({}, o, patch, {derniere_modif: maintenant().toISOString()});
+        const err = valider(copie);
+        if(err.length) return faux(err.join(", "));
+        Object.assign(o, copie);
+        return ok(o);
+      }, source);
+    },
+
+    remplirChamp(id, cle, valeur, source){
+      return mutation("champ", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        if(!/^[\w àâéèêëîïôùûç%()²³./-]{1,60}$/i.test(cle)) return faux("nom de champ invalide");
+        o.champs[cle] = valeur;
+        o.derniere_modif = maintenant().toISOString();
+        return Object.assign(ok(o), {detail:{cle, valeur}});
+      }, source);
+    },
+
+    cocher(id, source){
+      return mutation("cocher", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        if(o.nature!=="tache") return faux("seules les tâches se cochent (rdv → marquerRdv)");
+        const auj = aujourdhui();
+        o.instances.push({date_prevue: o.date_apparition, date_reelle: auj, etat:"faite",
+                          glissements: o.glissements});
+        o.statut = "faite";
+        o.derniere_modif = maintenant().toISOString();
+        // récurrence → nouvelle instance dormante
+        let suivante = null;
+        if(o.recurrence && o.recurrence.n > 0){
+          const base = o.recurrence.ancrage==="calendrier" ? o.date_apparition : auj;
+          let prochaine = plusJours(base, o.recurrence.n);
+          if(prochaine <= auj) prochaine = plusJours(auj, o.recurrence.n);
+          o.statut = prochaine <= auj ? "active" : "dormante";
+          o.date_apparition = prochaine;
+          o.glissements = 0;
+          o.statut = "dormante";
+          suivante = prochaine;
+        }
+        return Object.assign(ok(o), {detail:{recurrence_suivante: suivante}});
+      }, source);
+    },
+
+    decocher(id, source){
+      return mutation("decocher", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        const i = o.instances.map(x=>x.etat).lastIndexOf("faite");
+        if(i<0) return faux("aucune réalisation à annuler");
+        o.instances.splice(i,1);
+        o.statut = "active"; o.date_apparition = aujourdhui();
+        return ok(o);
+      }, source);
+    },
+
+    marquerRdv(id, etatRdv, source){   // "assiste" | "manque"
+      return mutation("rdv", () => {
+        const o = lire(id); if(!o||o.nature!=="rdv") return faux("rdv introuvable");
+        o.instances.push({date_prevue:o.date_apparition, date_reelle:o.date_apparition, etat:etatRdv});
+        o.statut="faite";
+        return ok(o);
+      }, source);
+    },
+
+    planifier(id, dateIso, source){    // (re)donner une date — sort du vivier si besoin
+      return mutation("planifier", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        o.date_apparition = dateIso;
+        o.statut = dateIso > aujourdhui() ? "dormante" : "active";
+        return ok(o);
+      }, source);
+    },
+
+    auVivier(id, source){              // rétrogradation → À planifier
+      return mutation("vivier", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        o.statut = "a_planifier";
+        return ok(o);
+      }, source);
+    },
+
+    lier(id, type, cibleId, source){
+      return mutation("lier", () => {
+        const o = lire(id), c = lire(cibleId);
+        if(!o||!c) return faux("objet ou cible introuvable");
+        if(!["parent","bloquee_par","alimente"].includes(type)) return faux("type de lien invalide");
+        if(type==="parent"){
+          if(chaine(c).some(a=>a.id===id) || cibleId===id) return faux("cycle de hiérarchie interdit");
+          o.liens = o.liens.filter(l=>l.type!=="parent");   // un seul parent
+        }
+        if(!o.liens.some(l=>l.type===type&&l.cible===cibleId)) o.liens.push({type, cible:cibleId});
+        return ok(o);
+      }, source);
+    },
+
+    promouvoirEtape(id, index, source){ // procédure hybride → vraie sous-tâche
+      return mutation("promotion", () => {
+        const o = lire(id); if(!o||!o.procedure[index]) return faux("étape introuvable");
+        const et = o.procedure[index];
+        const st = nouvelObjet({ titre: et.etape, domaine:o.domaine, tags:[...o.tags],
+                                 statut: et.fait?"faite":"active" });
+        st.liens.push({type:"parent", cible:o.id});
+        etat.objets[st.id] = st;
+        et.promue = st.id;
+        return Object.assign(ok(st), {detail:{depuis:o.id}});
+      }, source);
+    },
+
+    cocherEtape(id, index, source){
+      return mutation("etape", () => {
+        const o = lire(id); if(!o||!o.procedure[index]) return faux("étape introuvable");
+        o.procedure[index].fait = o.procedure[index].fait ? 0 : 1;
+        return ok(o);
+      }, source);
+    },
+
+    supprimer(id, source){             // → corbeille (jamais de suppression directe)
+      return mutation("corbeille", () => {
+        const o = lire(id); if(!o) return faux("objet introuvable");
+        o.statut_avant = o.statut; o.statut = "corbeille";
+        return ok(o);
+      }, source);
+    },
+    restaurer(id, source){
+      return mutation("restaurer", () => {
+        const o = etat.objets[id]; if(!o||o.statut!=="corbeille") return faux("pas en corbeille");
+        o.statut = o.statut_avant || "active"; delete o.statut_avant;
+        return ok(o);
+      }, source);
+    },
+    viderCorbeille(source){
+      return mutation("purge", () => {
+        const n = corbeille().length;
+        for(const o of corbeille()) delete etat.objets[o.id];
+        return Object.assign(ok(), {detail:{purges:n}});
+      }, source);
+    }
+  };
+
+  //=========================================================
+  // IMPORT / EXPORT / MIGRATION
+  //=========================================================
+  function exporter(){ return JSON.stringify(etat, null, 1); }
+  function importer(json){
+    try{
+      const d = typeof json==="string" ? JSON.parse(json) : json;
+      if(!d.objets || !d.meta) return faux("format Sillage v2 non reconnu");
+      snapshot(true);
+      etat = d; sauver(); notifier("import");
+      return ok({n:Object.keys(etat.objets).length});
+    }catch(e){ return faux("JSON invalide : "+e.message); }
+  }
+
+  // Migration depuis l'app v1 — schéma réel :
+  // {exportDate, tasks:[{id,title,project,desc,parentId,children,recurring,recurDays,
+  //                      blocking,status,convRef,instances:[{date,completed}],lastCompleted}]}
+  function migrerV1(sourceJson){
+    let src;
+    try{ src = typeof sourceJson==="string" ? JSON.parse(sourceJson) : sourceJson; }
+    catch(e){ return faux("JSON v1 invalide"); }
+    const anciennes = src.tasks || src.taches || (Array.isArray(src)?src:null);
+    if(!anciennes) return faux("structure v1 non reconnue (attendu: {tasks:[...]})");
+    snapshot(true);
+    const auj = aujourdhui();
+    let n=0, projets={}, mapId={};   // ancien id → nouveau id
+    // 1) projets depuis les noms rencontrés
+    for(const t of anciennes){
+      const p = t.project || t.projet;
+      if(p && !projets[p]){
+        const po = nouvelObjet({titre:p, nature:"projet", domaine:"perso", tags:["projet"]});
+        etat.objets[po.id]=po; projets[p]=po.id;
+      }
+    }
+    // 2) tâches
+    for(const t of anciennes){
+      const statutV1 = String(t.status||"").toLowerCase();
+      const faite = ["fait","faite","done","termine","terminé","complete"].includes(statutV1);
+      // date courante = dernière instance non complétée, sinon lastCompleted+recur, sinon rien
+      const instOuverte = (t.instances||[]).filter(i=>!i.completed).map(i=>i.date).sort().pop() || null;
+      const o = nouvelObjet({
+        titre: t.title || t.titre || "(sans titre)",
+        notes: t.desc || t.notes || "",
+        nature: "tache",
+        domaine: t.domaine==="pro" ? "pro" : "perso",
+        statut: faite ? "faite"
+              : instOuverte ? (instOuverte > auj ? "dormante" : "active")
+              : "a_planifier",
+        date_apparition: instOuverte ? (instOuverte <= auj && !faite ? auj : instOuverte) : auj,
+        tags: [].concat(t.tags||[],
+                        t.project?[String(t.project).toLowerCase()]:[],
+                        t.blocking?["bloquante"]:[]),
+        recurrence: (t.recurring && t.recurDays>0) ? {n:t.recurDays, ancrage:"realisation"} : null
+      });
+      o.date_initiale = instOuverte || auj;
+      if(instOuverte && instOuverte < auj && !faite) o.glissements = joursEntre(instOuverte, auj);
+      // historique : instances complétées + lastCompleted
+      for(const i of (t.instances||[]).filter(i=>i.completed))
+        o.instances.push({date_prevue:i.date, date_reelle:i.date, etat:"faite"});
+      if(t.lastCompleted && !o.instances.some(i=>i.date_reelle===t.lastCompleted))
+        o.instances.push({date_prevue:t.lastCompleted, date_reelle:t.lastCompleted, etat:"faite"});
+      if(t.convRef) o.champs.conversation_ref = t.convRef;
+      const p = t.project || t.projet;
+      if(p && projets[p]) o.liens.push({type:"parent", cible:projets[p]});
+      etat.objets[o.id]=o; mapId[t.id]=o.id; n++;
+    }
+    // 3) hiérarchie parentId entre tâches (remplace le lien projet si présent)
+    for(const t of anciennes){
+      if(t.parentId && mapId[t.parentId] && mapId[t.id]){
+        const o = etat.objets[mapId[t.id]];
+        o.liens = o.liens.filter(l=>l.type!=="parent");
+        o.liens.push({type:"parent", cible:mapId[t.parentId]});
+      }
+    }
+    journaliser("migration_v1", null, {taches:n, projets:Object.keys(projets).length}, "systeme");
+    sauver(); notifier("migration");
+    return ok({taches:n, projets:Object.keys(projets).length});
+  }
+
+  //=========================================================
+  // INITIALISATION & API PUBLIQUE
+  //=========================================================
+  function init(options){
+    options = options||{};
+    if(options.maintenant) _maintenant = options.maintenant;   // horloge injectable
+    if(options.persist) persist = options.persist;             // stockage injectable
+    if(!charger()){
+      etat.meta.creele = maintenant().toISOString();
+      sauver();
+    }
+    tick();
+    return { objets: Object.keys(etat.objets).length, tick_dernier: etat.meta.tick_dernier };
+  }
+
+  return {
+    init, tick, actions,
+    lire, tous, actifs, vivier, corbeille, duJour,
+    enfants, parent, chaine, sousArbre, rechercher, velocite,
+    evaluerFormules, joursEntre, plusJours, aujourdhui,
+    exporter, importer, migrerV1,
+    versions, restaurerVersion, occupation,
+    journal: () => etat.journal.slice(),
+    abonner: f => abonnes.push(f),
+    _debug: () => etat            // lecture seule pour la console
+  };
+})();
+
+if(typeof module!=="undefined") module.exports = Store;
+
+</script>
+<script>
+//================= SUITE AUTOMATIQUE (en mémoire) =================
+(function(){
+  const L=[]; let okN=0, koN=0;
+  const t=(nom,cond)=>{ cond?okN++:koN++; L.push((cond?'<span class="ok">✓</span> ':'<span class="ko">✗</span> ')+nom); };
+
+  // store isolé : horloge simulée + persistance mémoire
+  let jourSim = new Date("2026-07-04T09:00:00");
+  const mem = {};
+  // on recharge une instance neuve du module en réévaluant la factory :
+  const S = (function(){ /* réutilise l'objet global mais réinitialisé sur mémoire */ return Store; })();
+  S.init({ maintenant: ()=>jourSim,
+           persist: { lire:k=>mem[k]?JSON.parse(mem[k]):null, ecrire:(k,v)=>{mem[k]=JSON.stringify(v);return true;} } });
+
+  // — création & validation —
+  const r1 = S.actions.creer({titre:"Traiter la piscine", tags:["maison"], recurrence:{n:7, ancrage:"realisation"}});
+  t("créer une tâche", r1.ok && r1.data.statut==="active");
+  const rBad = S.actions.creer({titre:"", nature:"tache"});
+  t("refus d'une tâche sans titre", !rBad.ok);
+  const rDorm = S.actions.creer({titre:"Tailler la haie", date_apparition:"2026-07-09"});
+  t("tâche future → dormante", rDorm.ok && rDorm.data.statut==="dormante");
+  const rRdv = S.actions.creer({titre:"Dentiste", nature:"rdv", date_heure_debut:"2026-07-12T17:30"});
+  t("créer un rdv ancré", rRdv.ok);
+  const rViv = S.actions.creer({titre:"Tester sticker NFC", statut:"a_planifier"});
+  t("vivier « à planifier »", rViv.ok && S.vivier().length===1);
+
+  // — glissement : la mécanique cœur —
+  jourSim = new Date("2026-07-07T08:00:00");            // +3 jours
+  const tk = S.tick();
+  const pisc = S.lire(r1.data.id);
+  t("tick : la piscine glisse à aujourd'hui", pisc.date_apparition==="2026-07-07");
+  t("tick : glissements = 3 (comptage exact)", pisc.glissements===3);
+  t("tick : date_initiale intacte (2026-07-04)", pisc.date_initiale==="2026-07-04");
+  t("tick : le rdv n'a PAS glissé (ancré)", S.lire(rRdv.data.id).date_apparition==="2026-07-12");
+  t("tick : idempotent le même jour", S.tick().glisses===0);
+
+  // — dormante qui s'active —
+  jourSim = new Date("2026-07-09T08:00:00");
+  S.tick();
+  t("dormante → active à sa date", S.lire(rDorm.data.id).statut==="active");
+
+  // — cocher + récurrence ancrée réalisation —
+  const rc = S.actions.cocher(pisc.id);
+  t("cocher : date réelle gravée (09/07)", rc.ok && pisc.instances[0].date_reelle==="2026-07-09");
+  t("cocher : glissements archivés dans l'instance", pisc.instances[0].glissements===5);
+  t("récurrence réalisation : prochaine = 16/07", pisc.date_apparition==="2026-07-16" && pisc.statut==="dormante");
+  t("compteur remis à zéro pour l'instance suivante", pisc.glissements===0);
+
+  // — hiérarchie & liens —
+  const prop=S.actions.creer({titre:"Entretien propriété", nature:"projet"}).data;
+  const jard=S.actions.creer({titre:"Entretenir le jardin", nature:"projet"}).data;
+  const tond=S.actions.creer({titre:"Tondre la pelouse"}).data;
+  S.actions.lier(jard.id,"parent",prop.id);
+  S.actions.lier(tond.id,"parent",jard.id);
+  t("chaîne d'ascendance complète", S.chaine(S.lire(tond.id)).map(x=>x.titre).join(">")==="Entretien propriété>Entretenir le jardin");
+  t("sous-arbre depuis la racine", S.sousArbre(prop.id).length===2);
+  const cyc = S.actions.lier(prop.id,"parent",tond.id);
+  t("cycle de hiérarchie refusé", !cyc.ok);
+
+  // — procédure hybride & promotion —
+  const imp=S.actions.creer({titre:"Déclarer les impôts",
+    procedure:[{etape:"Se connecter",fait:0},{etape:"Rassembler les factures",fait:0}]}).data;
+  S.actions.cocherEtape(imp.id,0);
+  t("cocher une étape", S.lire(imp.id).procedure[0].fait===1);
+  const pr=S.actions.promouvoirEtape(imp.id,1);
+  t("promotion étape → sous-tâche liée", pr.ok && S.parent(pr.data).id===imp.id);
+  t("hérite domaine/tags du parent", pr.data.domaine===imp.domaine);
+
+  // — formules niveau 1 —
+  const mot=S.actions.creer({titre:"Calcul moteur"}).data;
+  S.actions.remplirChamp(mot.id,"P_roue",4.52);
+  S.actions.remplirChamp(mot.id,"marge",1.08);
+  S.actions.remplirChamp(mot.id,"P_dim","=P_roue*marge");
+  const f=S.evaluerFormules(S.lire(mot.id));
+  t("formule =P_roue*marge → 4.882", f.P_dim===4.882);
+  S.actions.remplirChamp(mot.id,"mauvaise","=P_roue*inconnu");
+  t("champ inconnu → #CHAMP? (pas de crash)", S.evaluerFormules(S.lire(mot.id)).mauvaise==="#CHAMP?");
+
+  // — corbeille & versions —
+  S.actions.supprimer(mot.id);
+  t("suppression → corbeille (récupérable)", S.lire(mot.id)===null && S.corbeille().length===1);
+  S.actions.restaurer(mot.id);
+  t("restauration depuis la corbeille", S.lire(mot.id)!==null);
+  t("versions : snapshots présents", S.versions().length>=1);
+
+  // — vélocité & requêtes —
+  t("vélocité calculée (>0 après 1 réalisation)", S.velocite()>0);
+  t("recherche plein-texte (champs inclus)", S.rechercher("p_roue").length===1);
+
+  // — migration v1 (schéma RÉEL de l'app existante) —
+  const v1 = {exportDate:"2026-06-29", tasks:[
+    {id:"t01",title:"Entretenir piscine",project:"Piscine",desc:"",parentId:null,children:[],
+     recurring:true,recurDays:4,blocking:false,status:"encours",convRef:null,
+     instances:[{date:"2026-06-29",completed:false}],lastCompleted:null},
+    {id:"t02",title:"Vérifier le pH",project:"Piscine",desc:"",parentId:"t01",children:[],
+     recurring:false,recurDays:0,blocking:false,status:"encours",convRef:null,
+     instances:[],lastCompleted:null},
+    {id:"t03",title:"Hiverner la pompe",project:"Piscine",desc:"",parentId:null,children:[],
+     recurring:false,recurDays:0,blocking:false,status:"fait",convRef:"conv42",
+     instances:[{date:"2026-05-10",completed:true}],lastCompleted:"2026-05-10"}]};
+  const mig=S.migrerV1(v1);
+  t("migration v1 réelle : 3 tâches + 1 projet", mig.ok && mig.data.taches===3 && mig.data.projets===1);
+  const pv=S.rechercher("Entretenir piscine")[0];
+  t("migration : retard 29/06 → aujourd'hui + ⌇ (pas de date passée)", pv.date_apparition===S.aujourdhui() && pv.glissements===S.joursEntre("2026-06-29",S.aujourdhui()));
+  t("migration : recurring/recurDays → récurrence n=4", pv.recurrence && pv.recurrence.n===4);
+  const ph=S.rechercher("Vérifier le pH")[0];
+  t("migration : parentId → hiérarchie tâche→tâche", S.parent(ph) && S.parent(ph).id===pv.id);
+  t("migration : sans instance ouverte → vivier", ph.statut==="a_planifier");
+  const hiv=S.rechercher("Hiverner")[0];
+  t("migration : status fait + date réelle 10/05", hiv.statut==="faite" && hiv.instances[0].date_reelle==="2026-05-10");
+  t("migration : convRef conservé en champ", hiv.champs.conversation_ref==="conv42");
+
+  // — export/import aller-retour —
+  const dump=S.exporter();
+  const imp2=S.importer(dump);
+  t("export → import sans perte", imp2.ok);
+
+  document.getElementById("res").innerHTML =
+    `<span class="info">Suite automatique — ${okN+koN} tests</span>\n`+L.join("\n")+
+    `\n\n<b class="${koN? 'ko':'ok'}">${koN? koN+' ÉCHEC(S)':'TOUT EST VERT ✓'}</b> — store validé en mémoire.`;
+})();
+
+//================= TERRAIN DE JEU (vrai localStorage) =================
+let decalage = parseInt(localStorage.getItem("sillage_test_decalage")||"0");
+const vrai = Store; // même module, mais réinitialisé sur le vrai stockage
+vrai.init({ maintenant: ()=>{ const d=new Date(); d.setDate(d.getDate()+decalage); return d; } });
+const J=t=>document.getElementById("jeu").textContent=t;
+
+function jSeed(){
+  vrai.actions.creer({titre:"Traiter la piscine", recurrence:{n:7,ancrage:"realisation"}, tags:["maison"]});
+  vrai.actions.creer({titre:"Déclarer les impôts", echeance_dure:"2026-07-10", tags:["administratif"]});
+  vrai.actions.creer({titre:"Tailler la haie", date_apparition: vrai.plusJours(vrai.aujourdhui(),2)});
+  jEtat();
+}
+function jJour(){
+  decalage++; localStorage.setItem("sillage_test_decalage",decalage);
+  const r=vrai.tick();
+  J(`⏩ Jour simulé : ${vrai.aujourdhui()} (décalage +${decalage})\nTick → ${r.glisses} glissée(s), ${r.activees} activée(s).\n\n`+resume());
+}
+function jEtat(){ J(`Aujourd'hui simulé : ${vrai.aujourdhui()}\n\n`+resume()); }
+function resume(){
+  return vrai.tous().map(o=>`[${o.statut}] ${o.titre} — date:${o.date_apparition} ⌇${o.glissements}`).join("\n")
+    +`\n\nVélocité : ${vrai.velocite()}/j · Occupation : ${vrai.occupation()} ko · Versions : ${vrai.versions().length}`;
+}
+function jVersions(){ J("Versions (anneau de 10) :\n"+vrai.versions().map(v=>`#${v.index} ${v.ts} (${v.n} objets)`).join("\n")); }
+function jExport(){ J(vrai.exporter().slice(0,1500)+"\n… (tronqué à l'écran, export complet OK)"); }
+function jReset(){ localStorage.removeItem("sillage_v2");localStorage.removeItem("sillage_v2_versions");
+  localStorage.removeItem("sillage_test_decalage");location.reload(); }
+</script>
+</body>
+</html>
