@@ -367,6 +367,11 @@ function renderReglages(){
       <textarea class="grandinput" id="rctx" rows="3" placeholder="Qui tu es, tes projets, tes préférences…">${esc(cfg.contexte)}</textarea>
       <div class="ligne"><label>Consommation</label><span style="font-family:var(--mono);font-size:12px">${cfg.tokens} tk · ${cfg.cout.toFixed(2)} €</span></div>
     </div>
+    <div class="bloc"><h3>Capture (inbox GitHub)</h3>
+      <div class="ligne"><label>${Capture.aJeton() ? "Jeton configuré sur cet appareil ✓" : "Aucun jeton configuré sur cet appareil"}</label>
+        <button class="btn" data-act="configurerCapture">Configurer la capture</button></div>
+      <p style="font-size:11px;color:var(--efface)">Le jeton n'est jamais écrit dans le code (dépôt public) : il reste dans le localStorage de cet appareil.</p>
+    </div>
     <div class="bloc"><h3>Données</h3>
       <div class="ligne"><label>${nb} objets · ${occ} ko / ~5120 ko</label></div>
       <div class="jauge"><i style="width:${pc}%"></i></div>
@@ -452,6 +457,13 @@ function agir(el){
     case "prevG": bougeG(-1); break;
     case "nextG": bougeG(1); break;
     case "sauveCle": cfg.cle=$("#rcle").value.trim(); cfgSauver(); toast("Clé enregistrée (localement)"); break;
+    case "configurerCapture": {
+      const t = prompt("Jeton GitHub (accès au repo privé sillage-inbox) :");
+      if(t===null) break;
+      if(Capture.definirJeton(t)){ toast("Jeton enregistré (localement)"); Capture.relever(); }
+      else toast("Jeton retiré");
+      renderReglages();
+      break; }
     case "exporter": {
       const blob=new Blob([Store.exporter()],{type:"application/json;charset=utf-8"});
       const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
@@ -492,13 +504,14 @@ function editer(el){
     if(nv!==null) Store.actions.modifier(id,{echeance_dure:nv.trim()||null}); }
   if(quoi==="recurrence"){
     nv=prompt("Récurrence : « 7 » (tous les 7 j), « 7c » (calendrier), « m20 » (le 20 du mois), vide = aucune :",
-      o.recurrence ? (o.recurrence.jourMois?"m"+o.recurrence.jourMois:o.recurrence.n+(o.recurrence.ancrage==="calendrier"?"c":"")) : "")}
+      o.recurrence ? (o.recurrence.jourMois?"m"+o.recurrence.jourMois:o.recurrence.n+(o.recurrence.ancrage==="calendrier"?"c":"")) : "");
     if(nv!==null){
       nv=nv.trim().toLowerCase(); let r=null, m;
       if((m=nv.match(/^m(\d+)$/))) r={n:30, ancrage:"calendrier", jourMois:+m[1]};
       else if((m=nv.match(/^(\d+)(c?)$/))) r={n:+m[1], ancrage:m[2]?"calendrier":"realisation"};
       Store.actions.modifier(id,{recurrence:r});
-    }}
+    }
+  }
   sheetRedraw();
 }
 function editerChamp(el){

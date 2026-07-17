@@ -33,12 +33,13 @@ const Capture = (() => {
   });
 
   //=========================================================
-  // BASE64 ↔ TEXTE (UTF-8 propre — atob seul massacre les accents,
-  // leçon du mojibake retenue 😄)
+  // BASE64 ↔ TEXTE (UTF-8 strict — atob seul massacre les accents,
+  // leçon du mojibake retenue 😄 ; fatal:true rejette un flux
+  // mal formé plutôt que de le remplacer silencieusement)
   //=========================================================
   function b64VersTexte(b64){
     const bin = atob(b64.replace(/\s/g, ""));
-    return new TextDecoder("utf-8").decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+    return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
   }
 
   //=========================================================
