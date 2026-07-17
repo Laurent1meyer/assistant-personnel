@@ -600,6 +600,7 @@ $("#bretour").onclick=sheetBack;
 //================ INIT ================
 Store.abonner((type)=>{ if(["cocher","decocher","creer","tick","planifier","vivier","rdv","import","migration","restauration"].includes(type)) render(); });
 Store.init();
+Capture.init({ alerter: n => console.log(n + " capture(s) au vivier") });
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ const r=Store.tick(); if(r.glisses) toast("〜 "+r.glisses+" tâche(s) ont suivi le courant"); render(); } });
 render();
 if(!Store.tous().length){
