@@ -452,7 +452,7 @@ function agir(el){
     case "nextG": bougeG(1); break;
     case "sauveCle": cfg.cle=$("#rcle").value.trim(); cfgSauver(); toast("Clé enregistrée (localement)"); break;
     case "exporter": {
-      const blob=new Blob([Store.exporter()],{type:"application/json"});
+      const blob=new Blob([Store.exporter()],{type:"application/json";charset=utf-8});
       const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
       a.download="sillage_"+auj()+".json"; a.click(); toast("⬇ Export généré"); break; }
     case "partager": {
