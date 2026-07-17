@@ -60,13 +60,15 @@ function itemsDuJour(d){
 }
 
 //================ CARTE (partagée) ================
-function carte(it){
+// plat=true : rendu sans hiérarchie (fil quotidien) — ni glissement, ni
+// récurrence, ni chip projet. Les fiches (jour, projet) gardent le détail complet.
+function carte(it, plat){
   const o = it.o || it, type = it.type || "active";
   const hd = o.echeance_dure ? `<span class="hdure">⚑ ${esc(fmtCourt(o.echeance_dure))}</span>` : "";
-  const gl = (type==="active" && o.glissements) ? `<span class="ondule">⌇${o.glissements}</span>` : "";
-  const rec = o.recurrence ? `<span class="tag">↻${o.recurrence.jourMois?" le "+o.recurrence.jourMois:o.recurrence.n+"j"}</span>` : "";
+  const gl = (!plat && type==="active" && o.glissements) ? `<span class="ondule">⌇${o.glissements}</span>` : "";
+  const rec = (!plat && o.recurrence) ? `<span class="tag">↻${o.recurrence.jourMois?" le "+o.recurrence.jourMois:o.recurrence.n+"j"}</span>` : "";
   const heure = o.nature==="rdv" ? `<span>${esc((o.date_heure_debut||"").slice(11,16)||"journée")}</span>` : "";
-  const p = Store.parent(o);
+  const p = plat ? null : Store.parent(o);
   const proj = p ? `<span class="tag">${esc(p.titre.slice(0,16))}</span>` : "";
   let coche = `<div style="width:24px"></div>`;
   if(o.nature==="tache"){
@@ -102,7 +104,7 @@ function rFil(){
     if(j!==0 && !items.length) continue;
     h += `<div class="jour ${j===0?"auj":j<0?"passe":""}"><span class="noeud"></span>
       <h2>${fmt(d)}<small>${j===0?"le sillage te suit":j<0?"gravé":""}</small></h2></div>`;
-    h += items.length ? items.map(carte).join("") : `<div class="vide">Rien pour aujourd'hui — profite ⛵</div>`;
+    h += items.length ? items.map(it=>carte(it,true)).join("") : `<div class="vide">Rien pour aujourd'hui — profite ⛵</div>`;
   }
   h += `<button class="charger" data-act="futurPlus">↓ charger la suite</button></div>`;
   return h;
