@@ -369,17 +369,14 @@ function renderReglages(){
       <textarea class="grandinput" id="rctx" rows="3" placeholder="Qui tu es, tes projets, tes préférences…">${esc(cfg.contexte)}</textarea>
       <div class="ligne"><label>Consommation</label><span style="font-family:var(--mono);font-size:12px">${cfg.tokens} tk · ${cfg.cout.toFixed(2)} €</span></div>
     </div>
-    <div class="bloc"><h3>Capture (inbox GitHub)</h3>
-      <div class="ligne"><label>${Capture.aJeton() ? "Jeton configuré sur cet appareil ✓" : "Aucun jeton configuré sur cet appareil"}</label>
-        <button class="btn" data-act="configurerCapture">Configurer la capture</button></div>
-      <p style="font-size:11px;color:var(--efface)">Le jeton n'est jamais écrit dans le code (dépôt public) : il reste dans le localStorage de cet appareil.</p>
-    </div>
     <div class="bloc"><h3>Données</h3>
       <div class="ligne"><label>${nb} objets · ${occ} ko / ~5120 ko</label></div>
       <div class="jauge"><i style="width:${pc}%"></i></div>
       <div class="actions">
         <button class="btn prim" data-act="exporter">⬇ Exporter (sauvegarde)</button>
-        <button class="btn" data-act="partager">Partager…</button></div>
+        <button class="btn" data-act="partager">Partager…</button>
+        <button class="btn" data-act="configurerCapture">Configurer la capture</button></div>
+      <p style="font-size:11px;color:var(--efface)">${Capture.aJeton() ? "Jeton de capture configuré sur cet appareil ✓" : "Jeton de capture non configuré"} — jamais écrit dans le code (dépôt public), stocké en localStorage.</p>
       <div class="htitre">Importer / restaurer une sauvegarde Sillage</div>
       <textarea class="grandinput" id="rimport" rows="2" placeholder="Coller le JSON Sillage v2 ici…"></textarea>
       <div class="actions"><button class="btn" data-act="importer">Importer (remplace tout)</button></div>
@@ -472,7 +469,7 @@ function agir(el){
       a.download="sillage_"+auj()+".json"; a.click(); toast("⬇ Export généré"); break; }
     case "partager": {
       if(navigator.share){
-        const f=new File([Store.exporter()],"sillage_"+auj()+".json",{type:"application/json"});
+        const f=new File([Store.exporter()],"sillage_"+auj()+".json",{type:"application/json;charset=utf-8"});
         navigator.share({files:[f],title:"Sauvegarde Sillage"}).catch(()=>{});
       } else toast("Partage non disponible ici");
       break; }
