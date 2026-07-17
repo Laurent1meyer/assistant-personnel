@@ -392,6 +392,9 @@ function renderReglages(){
     <p style="font-size:11px;color:var(--efface)">Sillage V2.0 · store schéma 2 · données 100 % locales.<br>
     Sauvegarde auto NAS/iCloud : Raccourci (Phase 2.2).</p>`;
 }
+<button onclick="Capture.definirJeton(prompt('Jeton GitHub :')) && Capture.relever()">
+  Configurer la capture
+</button>
 
 //================ ACTIONS UI ================
 function agir(el){
