@@ -168,7 +168,9 @@ td.num{font-family:var(--mono);font-size:11.5px;color:var(--courant)}
 .ligne label{flex:1;font-size:13px;color:var(--sourd)}
 .jauge{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px}
 .jauge i{display:block;height:100%;background:linear-gradient(90deg,var(--ecume),var(--courant))}
-
+<button onclick="Capture.definirJeton(prompt('Jeton GitHub :')) && Capture.relever()">
+  Configurer la capture
+</button>
 /* ---------- nav ---------- */
 nav{flex:none;display:flex;border-top:1px solid var(--line);background:rgba(10,17,25,.92);
   backdrop-filter:blur(14px);padding:6px 8px calc(8px + var(--sb));z-index:20}
@@ -259,6 +261,7 @@ nav button#nb-cap .ic{width:36px;height:36px;border-radius:50%;display:grid;plac
   <button data-v="v-ch"><span class="ic">⌕</span>Recherche</button>
   <button data-v="v-reg"><span class="ic">⚙</span>Réglages</button>
 </nav>
+<button onclick='Capture.definirJeton(prompt("Jeton GitHub :")) && Capture.relever()'>Configurer la capture</button>
 
 <div id="voile"></div>
 <div id="sheet">
