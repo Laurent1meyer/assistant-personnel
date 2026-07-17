@@ -86,6 +86,7 @@ const Capture = (() => {
           titre:  texte,
           nature: "tache",
           statut: "a_planifier",                  // → le vivier
+          tags:   ["inbox"],                       // → visible dans l'onglet ＋ (tri manuel)
           champs: horodatage ? { capture: horodatage } : {}
         }, "capture");
         if(res.ok) importees++;
