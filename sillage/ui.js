@@ -492,7 +492,7 @@ function editer(el){
     if(nv!==null) Store.actions.modifier(id,{echeance_dure:nv.trim()||null}); }
   if(quoi==="recurrence"){
     nv=prompt("Récurrence : « 7 » (tous les 7 j), « 7c » (calendrier), « m20 » (le 20 du mois), vide = aucune :",
-      o.recurrence ? (o.recurrence.jourMois?"m"+o.recurrence.jourMois:o.recurrence.n+(o.recurrence.ancrage==="calendrier"?"c":"")) : "");
+      o.recurrence ? (o.recurrence.jourMois?"m"+o.recurrence.jourMois:o.recurrence.n+(o.recurrence.ancrage==="calendrier"?"c":"")) : "")}
     if(nv!==null){
       nv=nv.trim().toLowerCase(); let r=null, m;
       if((m=nv.match(/^m(\d+)$/))) r={n:30, ancrage:"calendrier", jourMois:+m[1]};
