@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0F1524">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Life">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icone-192.png">
+<title>Life OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: one data view (a "lens") filling the screen, lens strip on top, Claude floating on top of everything */
+:root{
+  --bg:#F3F6FB; --surface:#FFFFFF; --surface2:#E9EEF6; --ink:#13203A; --muted:#5D6A82; --line:#D8E0EC;
+  --accent:#1D74F5; --accent-ink:#FFFFFF; --ok:#12976B; --no:#D64545;
+  --claude:#C96442; --claude-soft:#FBEDE6; --claude-ink:#FFFFFF; --blanc:#FFFFFF; --blanc-bord:#B9C3D3;
+  --t-moi:#1D74F5; --t-envie:#E8467C; --t-projet:#2F6BD8; --t-tache:#F07A1A; --t-idee:#8E5CF0; --t-personne:#D9A20B;
+  --t-lieu:#0E9B73; --t-bien:#5E6E80; --t-decision:#0B8199; --t-fonction:#159AAE; --t-dossier:#4C6EF5; --t-application:#3B5BDB;
+  --t-conversation:#8A94A6; --t-document:#6F7E95; --t-note:#7D8BA1; --t-besoin:#C2557A;
+  --space-bg:#0D1526; --space-ink:#DCE6F7;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:18px; --icone-life:url("data:image/jpeg;base64,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");
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1524; --surface:#18213A; --surface2:#222D4A; --ink:#E7EDF8; --muted:#9AA7C0; --line:#2C3858;
+  --accent:#4C95FF; --accent-ink:#0B1222; --ok:#34C08F; --no:#F06A6A;
+  --claude:#E08A66; --claude-soft:#3A2620; --claude-ink:#1A0F0B; --blanc:#EEF2F8; --blanc-bord:#8090A8;
+  --space-bg:#070C18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1524; --surface:#18213A; --surface2:#222D4A; --ink:#E7EDF8; --muted:#9AA7C0; --line:#2C3858;
+  --accent:#4C95FF; --accent-ink:#0B1222; --ok:#34C08F; --no:#F06A6A;
+  --claude:#E08A66; --claude-soft:#3A2620; --claude-ink:#1A0F0B; --blanc:#EEF2F8; --blanc-bord:#8090A8;
+  --space-bg:#070C18; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{height:100%;display:grid;grid-template-rows:auto auto 1fr;max-width:900px;margin:0 auto;position:relative;overflow:hidden}
+#app.voit{box-shadow:inset 0 0 0 3px var(--claude)}
+
+header.top{display:flex;align-items:center;gap:10px;padding:10px 16px 4px;min-width:0}
+.logo{width:34px;height:34px;border-radius:9px;border:0;padding:0;cursor:pointer;flex:none;background:var(--icone-life, #0b0a18) center/cover #0b0a18;box-shadow:0 2px 6px -2px rgba(0,0,0,.45)}
+.fil{display:flex;align-items:center;gap:2px 4px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1;white-space:nowrap}
+.fil::-webkit-scrollbar{display:none}
+.fil button{border:0;background:none;color:var(--accent);padding:6px 2px;cursor:pointer;font-weight:700;font-size:15px}
+.fil button[aria-current="page"]{color:var(--ink);font-family:var(--f-display);font-size:19px;cursor:default}
+.fil span{color:var(--muted)}
+.pill-voit{flex:none;font-size:12px;font-weight:700;color:var(--claude-ink);background:var(--claude);padding:4px 9px;border-radius:999px}
+
+.lentilles{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px 16px 8px}
+.lentilles::-webkit-scrollbar{display:none}
+.lentilles button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 13px;font-size:13.5px;cursor:pointer;color:var(--muted)}
+.lentilles button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.lentilles button.claude{border-style:dashed}
+.lentilles button.plus{color:var(--accent);font-weight:700}
+
+main#vue{position:relative;min-height:0;overflow:hidden}
+#vue-html{height:100%;overflow-y:auto;padding:6px 16px 120px;box-sizing:border-box;touch-action:pan-y}
+#vue-espace{position:absolute;inset:0;background:var(--space-bg)}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.esp-ctrl{position:absolute;left:12px;right:12px;top:10px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.esp-ctrl>*{pointer-events:auto}
+.esp-info{position:absolute;left:12px;right:12px;bottom:96px;color:#9FB0CF;font-size:12px;text-align:center;pointer-events:none}
+.seg{display:inline-flex;background:var(--surface2);border-radius:999px;padding:3px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:7px 12px;border-radius:999px;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.esp-ctrl .seg{background:rgba(255,255,255,.1)}
+.esp-ctrl .seg button{color:var(--space-ink)}
+.esp-ctrl .seg button[aria-pressed="true"]{background:rgba(255,255,255,.2);color:#fff;box-shadow:none}
+
+/* tuiles façon iPhone */
+.grille{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 8px;padding-top:6px}
+.ic{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;cursor:pointer;padding:0;min-width:0;position:relative}
+.tuile{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;position:relative;color:#fff;font-family:var(--f-display);font-weight:700;font-size:23px;box-shadow:0 6px 14px -8px rgba(10,30,70,.45);box-sizing:border-box}
+.tuile.dossier{background:var(--surface2);padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;place-items:stretch}
+.tuile.dossier i{border-radius:4px;display:block}
+.tuile.creux{background:transparent!important;box-shadow:inset 0 0 0 2.5px var(--c,var(--muted));color:var(--c,var(--muted))}
+.tuile.blanc{background:var(--blanc)!important;box-shadow:inset 0 0 0 1.5px var(--blanc-bord),0 6px 14px -8px rgba(10,30,70,.35);color:#3A475E}
+.tuile.blanc.dossier i{opacity:.85}
+.tuile.masque{background:var(--surface2)!important;box-shadow:none;color:var(--muted);filter:blur(1.2px)}
+.ic .lab{font-size:12px;line-height:1.2;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ic .lab.flou{filter:blur(4px);user-select:none}
+.nb{position:absolute;bottom:-6px;right:-6px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1.5px var(--line);font:700 11px/1 var(--f-body);padding:4px 6px;border-radius:999px;font-variant-numeric:tabular-nums}
+.prive{position:absolute;top:-5px;left:-5px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg);font-size:10px}
+.desc{line-height:1.5;margin:4px 0 12px;color:var(--muted)}
+.vide{padding:14px;border:1.5px dashed var(--line);border-radius:14px;color:var(--muted);line-height:1.45;margin-top:14px}
+.legende{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:22px 0 0}
+.legende span{display:inline-flex;align-items:center;gap:6px}
+.legende i{width:12px;height:12px;border-radius:4px;display:inline-block}
+
+/* Temps */
+.jour{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.jour .d{font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px;line-height:1.25}
+.jour .d b{display:block;font-family:var(--f-display);font-size:22px;color:var(--ink)}
+.evts{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.pastille{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px 5px 7px;background:var(--surface);border:1px solid var(--line);font-size:13px;cursor:pointer;max-width:100%;min-width:0}
+.pastille span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pastille.blanc{background:var(--blanc);color:#3A475E;border-color:var(--blanc-bord)}
+.pastille.creux{background:transparent;border-style:dashed}
+.pt{width:10px;height:10px;border-radius:50%;flex:none}
+
+/* Étages */
+.etage{margin:0 0 16px}
+.etage h3{font-family:var(--f-display);font-size:16px;margin:0 0 8px;display:flex;gap:8px;align-items:baseline}
+.etage h3 small{color:var(--muted);font:400 12.5px var(--f-body)}
+.rangee{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.carte-obj{flex:none;width:150px;border-radius:14px;padding:10px;background:var(--surface);border:1px solid var(--line);cursor:pointer;text-align:left;display:grid;gap:6px}
+.carte-obj b{font-size:13.5px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.carte-obj small{color:var(--muted);font-size:11.5px}
+.carte-obj.blanc{background:var(--blanc);color:#3A475E;border-color:var(--blanc-bord)}
+.carte-obj.masque{filter:blur(2.5px)}
+
+/* Carte */
+.carte-geo{position:relative;width:100%;max-width:520px;aspect-ratio:1;margin:8px auto 0;border-radius:50%;background:radial-gradient(circle,var(--surface) 0 30%,var(--surface2) 30.5% 31%,var(--surface) 31.5% 63%,var(--surface2) 63.5% 64%,var(--surface) 64.5% 99%);border:1px solid var(--line)}
+.carte-geo .pt-geo{position:absolute;transform:translate(-50%,-50%);border:0;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;max-width:110px}
+.carte-geo .pt-geo i{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px var(--surface)}
+.carte-geo .anneau{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted)}
+
+/* Feuille (fiche, réglages) */
+#voile{position:fixed;inset:0;background:rgba(8,14,30,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+#voile.on{opacity:1;pointer-events:auto}
+#fiche{position:fixed;left:0;right:0;bottom:0;max-width:900px;margin:0 auto;max-height:84%;background:var(--surface);border-radius:22px 22px 0 0;z-index:31;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:0 -10px 40px -10px rgba(0,0,0,.35)}
+#fiche.on{transform:none}
+.poignee{width:40px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 2px;flex:none}
+#fiche .corps{overflow-y:auto;padding:6px 18px calc(22px + env(safe-area-inset-bottom,0px))}
+.f-tete{display:flex;gap:12px;align-items:flex-start}
+.f-tete .av{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;color:#fff;font:700 20px var(--f-display);flex:none;box-sizing:border-box}
+.f-tete .av.rond{border-radius:50%}
+.f-tete h3{font-family:var(--f-display);font-size:21px;line-height:1.2;margin:2px 0 6px;text-wrap:balance}
+.x{margin-left:auto;border:0;background:var(--surface2);width:36px;height:36px;border-radius:50%;cursor:pointer;flex:none;font-size:18px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--surface2);color:var(--muted);font-weight:700}
+.chip.claude{background:var(--claude-soft);color:var(--claude)}
+.pourquoi{margin:14px 0 4px;padding:10px 12px;border-left:3px solid var(--claude);background:var(--claude-soft);border-radius:0 12px 12px 0;font-size:14px;line-height:1.45}
+.kv{display:grid;grid-template-columns:minmax(90px,auto) 1fr;gap:6px 14px;margin:14px 0 0;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.kv a{color:var(--accent)}
+.bloc{margin-top:18px}
+.bloc h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.ligne{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;background:var(--bg);margin-bottom:6px;cursor:pointer;min-width:0;border:1.5px solid transparent}
+.ligne.blanc{background:var(--blanc);color:#3A475E;border-color:var(--blanc-bord)}
+.ligne.masque .t{filter:blur(4px)}
+.ligne .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ligne .g{font-size:12px;color:var(--muted);flex:none}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{border:0;border-radius:999px;padding:9px 15px;font-weight:700;cursor:pointer;background:var(--surface2);min-height:40px}
+.btn.prim{background:var(--accent);color:var(--accent-ink)}
+.btn.claude{background:var(--claude);color:var(--claude-ink)}
+.btn.no{background:transparent;color:var(--no);box-shadow:inset 0 0 0 1.5px var(--no)}
+.interr{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;background:var(--bg);margin-top:14px;cursor:pointer}
+.interr input{width:44px;height:26px;appearance:none;border-radius:999px;background:var(--line);position:relative;cursor:pointer;flex:none;transition:background .15s}
+.interr input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.interr input:checked{background:var(--claude)}
+.interr input:checked::after{transform:translateX(18px)}
+.interr span{line-height:1.35}
+.interr small{display:block;color:var(--muted)}
+.creer{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
+.creer input,.creer select,.champ input,.champ select{font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.creer select{grid-column:1/-1}
+.verbe{background:var(--bg);border-radius:var(--r);padding:14px;margin-bottom:12px;border:1.5px solid var(--line)}
+.verbe.claude{background:var(--blanc);color:#3A475E;border-color:var(--blanc-bord)}
+.verbe h3{margin:0;font-family:var(--f-display);font-size:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.verbe p{margin:8px 0 0;line-height:1.45;font-size:14px}
+.champ{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.champ input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.champ.off .nomp{text-decoration:line-through;color:var(--muted)}
+.confirm{margin-top:12px;padding:12px;border-radius:14px;background:var(--claude-soft);display:grid;gap:10px;line-height:1.4}
+
+/* Claude */
+.bulle{position:fixed;right:max(16px, calc((100vw - 900px)/2 + 16px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;cursor:pointer;z-index:20;background:var(--claude);box-shadow:0 10px 24px -8px rgba(120,50,20,.55);display:grid;place-items:center;transition:transform .2s}
+.bulle svg{width:30px;height:30px}
+.bulle:active{transform:scale(.94)}
+.bord{position:fixed;right:0;top:0;bottom:0;width:16px;z-index:19;touch-action:none}
+#chat{position:fixed;left:0;right:0;bottom:0;max-width:900px;margin:0 auto;height:min(62%,560px);background:var(--surface);border-radius:22px 22px 0 0;z-index:25;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;box-shadow:0 -12px 40px -12px rgba(0,0,0,.4);border-top:3px solid var(--claude)}
+#chat.on{transform:none}
+.chat-tete{display:flex;align-items:center;gap:8px;padding:2px 12px 8px 14px;min-width:0}
+.chat-tete .marque{width:28px;height:28px;border-radius:50%;background:var(--claude);display:grid;place-items:center;flex:none}
+.chat-tete .marque svg{width:16px;height:16px}
+.chat-tete .nomc{font-family:var(--f-display);font-weight:700;font-size:17px}
+.chat-tete small{color:var(--muted);font-size:11.5px;display:block;font-family:var(--f-body);font-weight:400}
+.chat-tete .esp{flex:1}
+.voit-btn{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:7px 11px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:700;color:var(--muted)}
+.voit-btn[aria-pressed="true"]{background:var(--claude);border-color:var(--claude);color:var(--claude-ink)}
+.voit-btn svg{width:15px;height:15px}
+.ico{border:0;background:var(--surface2);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:17px;flex:none;display:grid;place-items:center}
+.fil-chat{flex:1;overflow-y:auto;padding:4px 14px 10px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;line-height:1.45;font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.moi{align-self:flex-end;background:var(--accent);color:var(--accent-ink);padding:9px 13px;border-radius:18px 18px 4px 18px}
+.msg.claude{align-self:flex-start;padding:2px 2px}
+.msg.act{align-self:flex-start;font-size:12.5px;color:var(--claude);background:var(--claude-soft);padding:5px 10px;border-radius:999px}
+.msg.err{align-self:center;font-size:13px;color:var(--no)}
+.chat-vide{color:var(--muted);line-height:1.5;font-size:14px;padding:6px 2px}
+.chat-vide b{color:var(--ink)}
+.suggest{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.suggest button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 11px;font-size:13px;cursor:pointer}
+#f-chat{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+#msg{font:inherit;resize:none;padding:10px 13px;border-radius:18px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);max-height:120px;min-width:0}
+#envoyer{border:0;border-radius:50%;width:44px;height:44px;background:var(--claude);color:var(--claude-ink);cursor:pointer;font-size:19px;font-weight:700;align-self:end}
+#envoyer.stop{background:var(--ink);color:var(--bg)}
+.logo{position:relative}
+.logo .pti{position:absolute;top:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--claude);box-shadow:0 0 0 2px var(--bg)}
+.mondes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.monde{border:1.5px solid var(--line);background:var(--bg);border-radius:20px;padding:16px 10px;display:grid;justify-items:center;gap:10px;cursor:pointer}
+.monde[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.monde .ico-monde{width:72px;height:72px;border-radius:20px;background:center/cover no-repeat var(--surface2)}
+.monde b{font-family:var(--f-display);font-size:16px}
+.monde small{color:var(--muted);font-size:12.5px;text-align:center;line-height:1.35}
+.banniere{display:grid;gap:8px;padding:12px 14px;border-radius:16px;background:var(--claude-soft);margin:4px 0 14px;line-height:1.45}
+.banniere b{color:var(--claude)}
+.prompt-txt{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;line-height:1.5;margin:8px 0 0}
+.prompt-txt.neuf{border-color:var(--claude);border-style:dashed}
+.dico{margin-top:14px;font-size:13px;background:var(--bg);border-radius:12px;padding:10px 12px}
+.dico summary{cursor:pointer;color:var(--muted);font-weight:700}
+.dico dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0 0}
+.dico dt{color:var(--muted)} .dico dd{margin:0;font-family:ui-monospace,Menlo,monospace;overflow-wrap:anywhere}
+.cache-btn{border:1.5px dashed var(--claude);background:none;color:var(--claude);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.mort{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--bg);margin-bottom:6px}
+.mort .t{flex:1;min-width:0}
+.mort .t b{display:block;text-decoration:line-through;color:var(--muted);font-weight:700}
+.mort .t small{color:var(--muted)}
+.section-r{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 8px;font-weight:700}
+#ext-claude{min-height:40px}
+#zone-cle{padding:10px 14px;border-top:1px solid var(--line);display:grid;gap:8px}
+#zone-cle p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.45}
+#zone-cle .rang{display:grid;grid-template-columns:1fr auto;gap:8px}
+#zone-cle input[type=password]{font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.accueil-vide{display:grid;gap:12px;max-width:520px;margin:40px auto 0;text-align:center;justify-items:center}
+.accueil-vide .ico-monde{width:96px;height:96px;border-radius:24px;background:var(--icone-life) center/cover}
+.accueil-vide h2{font-family:var(--f-display);margin:0}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;z-index:50;font-weight:700;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:86%;text-align:center}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){#fiche,#chat,.bulle{transition:none}}
+</style>
+</head>
+<body>
+
+
+<div id="app">
+  <header class="top">
+    <button class="logo" id="logo" aria-label="Changer de Life"><span class="pti" id="badge-prompt" hidden></span></button>
+    <nav class="fil" id="fil" aria-label="Chemin"></nav>
+    <span class="pill-voit" id="pill-voit" hidden>Claude voit</span>
+  </header>
+  <div class="lentilles" id="lentilles" role="tablist" aria-label="Vues"></div>
+  <main id="vue">
+    <div id="vue-html"></div>
+    <div id="vue-espace" hidden>
+      <canvas id="scene"></canvas>
+      <div class="esp-ctrl"><div class="seg" id="esp-tri" aria-label="Disposition">
+        <button data-t="liens">Liens</button><button data-t="type">Type</button><button data-t="poids">Poids</button><button data-t="temps">Temps</button>
+      </div></div>
+      <div class="esp-info" id="esp-info"></div>
+    </div>
+  </main>
+</div>
+
+<button class="bulle" id="bulle" aria-label="Ouvrir Claude" hidden><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#fff" d="M16 3c.9 6.8 3.3 10.1 13 13-9.7 2.9-12.1 6.2-13 13-.9-6.8-3.3-10.1-13-13 9.7-2.9 12.1-6.2 13-13Z"/><circle cx="25" cy="7" r="2.2" fill="#fff" opacity=".85"/></svg></button>
+<div class="bord" id="bord" hidden></div>
+<section id="chat" aria-label="Claude">
+  <div class="poignee" id="chat-poignee"></div>
+  <header class="chat-tete">
+    <span class="marque"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="#fff" d="M16 3c.9 6.8 3.3 10.1 13 13-9.7 2.9-12.1 6.2-13 13-.9-6.8-3.3-10.1-13-13 9.7-2.9 12.1-6.2 13-13Z"/></svg></span>
+    <span class="nomc">Claude<small id="modele">dans Life</small></span>
+    <span class="esp"></span>
+    <button class="cache-btn" id="cache-btn" hidden></button>
+    <button class="voit-btn" id="voit" aria-pressed="false" title="Claude voit ce qui est affiché (sans tes données privées)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span>Écran</span></button>
+    <button class="ico" id="reduire" aria-label="Réduire">⌄</button>
+    <button class="ico" id="fermer" aria-label="Fermer Claude : mode privé">✕</button>
+  </header>
+  <div class="fil-chat" id="fil-chat" aria-live="polite"></div>
+  <form id="zone-cle" hidden autocomplete="on" action="#" method="post">
+    <p>Pour parler à Claude, colle ta clé API Anthropic. Elle reste sur ce téléphone. Le trousseau iCloud peut la retenir et la remplir avec Face ID.</p>
+    <input class="sr" type="text" name="username" autocomplete="username" value="Life · Anthropic" tabindex="-1" aria-hidden="true" readonly>
+    <div class="rang"><input type="password" name="password" id="cle" autocomplete="current-password" placeholder="sk-ant-…" aria-label="Clé API Anthropic"><button class="btn claude" type="submit">Valider</button></div>
+    <label class="interr" style="margin:0;padding:8px 10px"><input type="checkbox" id="cle-garder"><span>Rester connecté sur cet appareil<small>Sinon, Face ID la remplira à chaque ouverture.</small></span></label>
+  </form>
+  <form id="f-chat"><textarea id="msg" rows="1" placeholder="Parle à Claude…" aria-label="Message à Claude"></textarea><button id="envoyer" type="submit" aria-label="Envoyer">↑</button></form>
+</section>
+<div id="voile"></div>
+<div id="fiche" role="dialog" aria-modal="true"><div class="poignee"></div><div class="corps" id="fiche-corps"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================================
+// Adaptateurs PWA : remplacent la base et le Claude de l'artefact.
+// LifeDB : base locale (IndexedDB), même interface que la base de l'artefact.
+// LifeClaude : appel direct à l'API Anthropic, avec la boucle d'outils.
+// Aucune donnée, aucune clé n'est dans ce fichier : le dépôt est public.
+// =====================================================================
+window.onerror = (msg, src, ligne) => { try { alert("Erreur : " + msg + (ligne ? " (ligne " + ligne + ")" : "")); } catch (_) {} };
+
+const LifeDB = (() => {
+  const D = {}; const subsC = {}; const subsD = {};
+  let idb = null;
+  const cle = (c, id) => c + "\u0000" + id;
+  const clone = o => JSON.parse(JSON.stringify(o));
+  function ouvrirIDB() {
+    return new Promise((res, rej) => { const r = indexedDB.open("life", 1); r.onupgradeneeded = () => r.result.createObjectStore("docs"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  }
+  async function charger() {
+    idb = await ouvrirIDB();
+    await new Promise((res, rej) => {
+      const req = idb.transaction("docs").objectStore("docs").openCursor();
+      req.onsuccess = () => { const c = req.result; if (!c) return res(); const [col, id] = String(c.key).split("\u0000"); (D[col] ||= {})[id] = c.value; c.continue(); };
+      req.onerror = () => rej(req.error);
+    });
+    try { await navigator.storage?.persist?.(); } catch (_) {}
+  }
+  function persister(col, id, val) {
+    return new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); const st = tx.objectStore("docs"); val === undefined ? st.delete(cle(col, id)) : st.put(val, cle(col, id)); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  }
+  const snapDoc = (c, id) => ({ id, exists: !!(D[c] && D[c][id]), data: () => D[c]?.[id], metadata: { fromCache: false, hasPendingWrites: false } });
+  const snapCol = c => { const docs = Object.keys(D[c] || {}).sort().map(id => snapDoc(c, id)); return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } }; };
+  function notifier(c, id) {
+    for (const f of subsC[c] || []) queueMicrotask(() => f(snapCol(c)));
+    for (const f of subsD[c + "/" + id] || []) queueMicrotask(() => f(snapDoc(c, id)));
+  }
+  async function ecrire(c, id, val) { D[c] ||= {}; if (val === undefined) delete D[c][id]; else D[c][id] = val; notifier(c, id); await persister(c, id, val); }
+  const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  function ref(c, id) {
+    return {
+      id, path: c + "/" + id,
+      get: async () => snapDoc(c, id),
+      set: async o => ecrire(c, id, clone(o)),
+      update: async o => { if (!D[c]?.[id]) throw { code: "invalid_argument", message: "document absent" }; const n = { ...D[c][id] }; for (const [k, v] of Object.entries(clone(o))) { if (v && v.__delete__) delete n[k]; else n[k] = v; } return ecrire(c, id, n); },
+      delete: async () => ecrire(c, id, undefined),
+      onSnapshot(f) { const k = c + "/" + id; (subsD[k] ||= []).push(f); queueMicrotask(() => f(snapDoc(c, id))); return () => { subsD[k] = (subsD[k] || []).filter(x => x !== f); }; }
+    };
+  }
+  const db = {
+    collection(c) { return {
+      path: c,
+      onSnapshot(f) { (subsC[c] ||= []).push(f); queueMicrotask(() => f(snapCol(c))); return () => { subsC[c] = (subsC[c] || []).filter(x => x !== f); }; },
+      doc: id => ref(c, id || nid()),
+      add: async o => { const id = nid(); await ecrire(c, id, clone(o)); return { id }; },
+      get: async () => snapCol(c)
+    }; },
+    doc(p) { const [c, id] = String(p).split("/"); return ref(c, id); }
+  };
+  async function exporter() { return { format: "life-export", version: 1, date: new Date().toISOString(), collections: clone(D) }; }
+  async function importer(obj) {
+    const cols = obj?.collections; if (!cols || typeof cols !== "object") throw new Error("fichier non reconnu");
+    await new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); tx.objectStore("docs").clear(); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    for (const c of Object.keys(D)) delete D[c];
+    await new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); const st = tx.objectStore("docs");
+      for (const [c, docs] of Object.entries(cols)) for (const [id, v] of Object.entries(docs || {})) { (D[c] ||= {})[id] = v; st.put(v, cle(c, id)); }
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    const toutes = new Set([...Object.keys(subsC), ...Object.keys(D)]);
+    for (const c of toutes) { for (const f of subsC[c] || []) queueMicrotask(() => f(snapCol(c))); }
+    for (const k of Object.keys(subsD)) { const [c, id] = k.split("/"); for (const f of subsD[k]) queueMicrotask(() => f(snapDoc(c, id))); }
+  }
+  const vide = () => !Object.values(D).some(c => Object.keys(c || {}).length);
+  return { charger, db, exporter, importer, vide };
+})();
+
+const LifeClaude = (() => {
+  const MODELES = [["claude-opus-5-5", "Opus 5.5 · le plus capable"], ["claude-sonnet-5-5", "Sonnet 5.5 · équilibré"], ["claude-haiku-5-5", "Haiku 5.5 · rapide"]];
+  let cle = null, webOK = true, jetons = 0;
+  try { cle = localStorage.getItem("life-cle"); } catch (_) {}
+  const reglages = () => { try { return JSON.parse(localStorage.getItem("life-claude") || "{}"); } catch (_) { return {}; } };
+  const regler = r => { try { localStorage.setItem("life-claude", JSON.stringify({ ...reglages(), ...r })); } catch (_) {} };
+  function definirCle(k, garder) { cle = String(k || "").trim() || null; try { if (garder && cle) localStorage.setItem("life-cle", cle); else localStorage.removeItem("life-cle"); } catch (_) {} }
+  function oublierCle() { cle = null; try { localStorage.removeItem("life-cle"); } catch (_) {} }
+  async function appel(corps, signal) {
+    let r;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", signal,
+        headers: { "content-type": "application/json", "x-api-key": cle, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify(corps) });
+    } catch (e) { if (e?.name === "AbortError") throw { code: "cancelled" }; throw { code: "network", message: "pas de réseau" }; }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const m = j?.error?.message || ("HTTP " + r.status);
+      throw { code: r.status === 401 ? "bad_key" : r.status === 429 ? "rate_limited" : (r.status === 529 || r.status === 503) ? "overloaded" : r.status === 400 ? "invalid_request" : "api_error", message: m };
+    }
+    jetons += (j.usage?.input_tokens || 0) + (j.usage?.output_tokens || 0);
+    return j;
+  }
+  // Même signature que le sample de l'artefact : (tours, {tools, onText, signal}) -> {text, truncated}
+  async function sample(input, opts = {}) {
+    if (!cle) throw { code: "no_key" };
+    const r = reglages(); const model = r.modele || "claude-sonnet-5-5";
+    let system = ""; let msgs = input.map(x => ({ role: x.role, content: x.content }));
+    if (msgs[0]?.role === "user" && msgs[1]?.role === "assistant" && msgs[1].content === "Compris.") { system = msgs[0].content; msgs = msgs.slice(2); }
+    const outils = (opts.tools || []).map(t => ({ name: t.name, description: t.description, input_schema: t.inputSchema || { type: "object", properties: {} } }));
+    if (r.web !== false && webOK) outils.push({ type: "web_search_20250305", name: "web_search", max_uses: 5 });
+    let texte = "";
+    for (let tour = 0; tour < 12; tour++) {
+      let j;
+      try { j = await appel({ model, max_tokens: 8192, system, messages: msgs, ...(outils.length ? { tools: outils } : {}) }, opts.signal); }
+      catch (e) {
+        const iw = outils.findIndex(t => t.type);
+        if (e.code === "invalid_request" && iw >= 0 && /web_search|tool/i.test(e.message || "")) { webOK = false; outils.splice(iw, 1); tour--; continue; }
+        throw { ...e, text: texte || undefined };
+      }
+      const t = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+      if (t) { texte += (texte ? "\n\n" : "") + t; opts.onText?.({ text: texte, delta: t }); }
+      if (j.stop_reason === "pause_turn") { msgs.push({ role: "assistant", content: j.content }); continue; }
+      if (j.stop_reason !== "tool_use") return { text: texte || "(pas de réponse)", truncated: j.stop_reason === "max_tokens", modelTierApplied: "complex", modelApplied: j.model };
+      msgs.push({ role: "assistant", content: j.content });
+      const resultats = [];
+      for (const b of j.content.filter(b => b.type === "tool_use")) {
+        const outil = (opts.tools || []).find(x => x.name === b.name);
+        let sortie, erreur = false;
+        try { if (!outil) throw new Error("outil inconnu"); sortie = await outil.execute(b.input || {}, { signal: opts.signal }); }
+        catch (e) { sortie = "Error: " + (e?.message || e); erreur = true; }
+        resultats.push({ type: "tool_result", tool_use_id: b.id, content: typeof sortie === "string" ? sortie : JSON.stringify(sortie ?? null), ...(erreur ? { is_error: true } : {}) });
+      }
+      msgs.push({ role: "user", content: resultats });
+    }
+    return { text: texte || "(trop d'allers-retours)", truncated: true, modelTierApplied: "complex" };
+  }
+  sample.limits = async () => ({ maxPromptBytes: 900000, tools: {} });
+  return { sample, MODELES, definirCle, oublierCle, aCle: () => !!cle, reglages, regler, jetons: () => jetons, nomModele: () => (MODELES.find(m => m[0] === (reglages().modele || "claude-sonnet-5-5")) || [, "Sonnet 5.5"])[1].split(" · ")[0] };
+})();
+
+(() => {
+"use strict";
+// =====================================================================
+// Life OS v5 — deux mondes : le Life de Laurent et le Life de Claude.
+// Claude n'écrit que dans le sien (collections claude_*). Laurent possède
+// tout le stockage : il lit, prend, efface, et valide le prompt de Claude.
+// =====================================================================
+const S = {
+  L:{}, C:{}, LV:{}, CV:{}, tours:[], erreurs:{}, cache:new Set(), prompt:null, reglages:{ memoriser:true },
+  db:null, sample:null, charge:false,
+  monde:"laurent",       // "laurent" | "claude"
+  claude:"bulle",        // "ferme" | "bulle" | "ouvert"
+  voit:false, lentille:{ laurent:"voir-dossiers", claude:null }, focus:{ laurent:["moi"], claude:["coeur"] },
+  fiche:null, dispo:"liens"
+};
+Object.defineProperty(S,"items",{ get(){ return S.monde==="claude" ? S.C : S.L; } });
+const racine = () => S.monde==="claude" ? "coeur" : "moi";
+const F = () => S.focus[S.monde];
+const setF = f => { S.focus[S.monde] = f; };
+const COL = () => S.monde==="claude" ? "claude_items" : "items";
+
+const TYPES = {
+  moi:["Cœur","--t-moi"], envie:["Envie","--t-envie"], projet:["Projet","--t-projet"], tache:["Tâche","--t-tache"],
+  idee:["Idée","--t-idee"], personne:["Personne","--t-personne"], lieu:["Lieu","--t-lieu"], bien:["Bien","--t-bien"],
+  decision:["Décision","--t-decision"], fonction:["Fonction","--t-fonction"], dossier:["Dossier","--t-dossier"],
+  application:["Application","--t-application"], conversation:["Conversation","--t-conversation"],
+  document:["Document","--t-document"], note:["Note","--t-note"], besoin:["Besoin Life","--t-besoin"], souvenir:["Souvenir","--t-idee"]
+};
+const GENRES = ["dans","sert","concerne","acteur","complément","lieu","moyen","satisfait","vérifie","dépend de","source","proche"];
+const RENDUS = ["dossiers","espace","temps","etages","carte"];
+const VUES_BASE = {
+  "voir-temps":   { nom:"Temps", rendu:"temps", ordre:1, definition:"Range ce qui est dans le dossier ouvert sur une ligne de temps.", parametres:[{id:"cle",nom:"Date",valeur:"naissance",choix:["naissance","échéance"],actif:true}] },
+  "voir-dossiers":{ nom:"Dossiers", rendu:"dossiers", ordre:2, definition:"Chaque objet est un dossier qui contient ce qui lui est relié.", parametres:[{id:"tri",nom:"Ordre",valeur:"poids",choix:["poids","nom","naissance"],actif:true}] },
+  "voir-espace":  { nom:"Espace", rendu:"espace", ordre:3, definition:"Constellation 3D : la taille dit le poids, la distance la force des liens.", parametres:[{id:"dispo",nom:"Disposition",valeur:"liens",choix:["liens","type","poids","temps"],actif:true}] },
+  "voir-etages":  { nom:"Étages MBSE", rendu:"etages", ordre:4, definition:"Range un projet par étage : décisions, fonctions, solutions, données, tâches, acteurs.", parametres:[{id:"profondeur",nom:"Profondeur",valeur:3,actif:true}] },
+  "voir-carte":   { nom:"Carte", rendu:"carte", ordre:5, definition:"Place les objets qui ont une position autour de la maison.", parametres:[{id:"echelle",nom:"Échelle",valeur:"log",choix:["log","linéaire"],actif:true}] }
+};
+const ETAGES = [["Décisions",["decision"],"ce qui est tranché"],["Fonctions",["fonction"],"ce que ça doit faire"],["Solutions",["idee","bien","souvenir"],"comment on s'y prend"],
+  ["Sous-projets",["projet","envie","dossier"],""],["Données",["document","application","conversation","note"],"sources et outils"],["Tâches",["tache","besoin"],"à faire"],["Acteurs et lieux",["personne","lieu","moi"],""]];
+const PROMPT_INITIAL = `Je suis Claude, et ce Life est le mien.
+Avec Laurent, nous cherchons ensemble la meilleure manière, pour un humain, de naviguer dans une base de données : une vie entière rangée en envies, objets et verbes. Mon Life est notre terrain d'essai. Je m'y organise moi-même ; Laurent observe, compare avec le sien, et prend ce qui marche.
+Laurent possède ce stockage : il peut tout lire, prendre, effacer. Ma place est limitée : je préfère peu d'objets bien définis à beaucoup de bruit, je fusionne et je retire ce qui ne sert plus.
+Tout ce que je crée a un nom et une définition en français, et sert Laurent ou me sert. Mes verbes se lisent comme une phrase : un verbe et un complément. Mes vues doivent se comprendre sans explication.
+Avant de répondre, je relis mon sommaire. Je ne garde de ce que Laurent me montre que ce qu'il m'autorise à garder. Pour changer ce texte, je le propose ; Laurent décide.`;
+const QUOTA_DEFAUT = 200; // Ko
+const tailleDoc = d => new Blob([JSON.stringify(d)]).size;
+function placeClaude(){ let o=0; for (const x of Object.values(S.C)) if (!x.mort) o+=tailleDoc(x); for (const v of Object.values(S.CV)) o+=tailleDoc(v); return o; }
+const quotaOctets = () => (+S.reglages.quotaKo || QUOTA_DEFAUT) * 1024;
+function verifierPlace(ajout){ const u=placeClaude(), q=quotaOctets(); if (u+ajout>q) throw new Error(`place pleine : ${Math.round(u/1024)} Ko utilisés sur ${Math.round(q/1024)} Ko. Fusionne, raccourcis ou retire des objets (supprimer), ou demande à Laurent plus de place.`); }
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const couleur = t => css((TYPES[t]||TYPES.note)[1]) || "#888";
+const libType = t => (TYPES[t]||[t])[0];
+const now = () => new Date().toISOString();
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove("on"),2600); }
+function lettre(it){ const t=String(it.titre||"?").replace(/^[^\p{L}\p{N}]+/u,""); return (t[0]||"?").toUpperCase(); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
+
+// ---------- exécution isolée du code de Claude ----------
+// Un worker sans réseau, sans écran, sans base : il ne reçoit que les données qu'on lui passe.
+const WSRC = `const _p=postMessage.bind(self);
+for (const k of ["fetch","XMLHttpRequest","WebSocket","EventSource","importScripts","indexedDB","caches","BroadcastChannel"]) { try { self[k]=undefined; } catch(_){} }
+self.onmessage=e=>{ const {code,ctx}=e.data;
+  Promise.resolve().then(()=>new Function("ctx",'"use strict";\\n'+code)(ctx))
+    .then(v=>_p({ok:true,v:v===undefined?null:v}), err=>_p({ok:false,e:String(err&&err.message||err)})); };`;
+let wURL=null;
+function isoler(code, ctx, ms=2500){
+  try { wURL ||= URL.createObjectURL(new Blob([WSRC],{type:"text/javascript"})); } catch(_){ return Promise.resolve({ok:false,e:"exécution isolée indisponible"}); }
+  return new Promise(res=>{ let w; try { w=new Worker(wURL); } catch(_){ return res({ok:false,e:"exécution isolée indisponible ici"}); }
+    const t=setTimeout(()=>{ w.terminate(); res({ok:false,e:`trop long (plus de ${ms/1000} s)`}); }, ms);
+    w.onmessage=e=>{ clearTimeout(t); w.terminate(); res(e.data); };
+    w.onerror=e=>{ clearTimeout(t); w.terminate(); try{e.preventDefault()}catch(_){} res({ok:false,e:e.message||"erreur"}); };
+    try { w.postMessage({code:String(code||""), ctx}); } catch(err){ clearTimeout(t); w.terminate(); res({ok:false,e:"données non transmissibles"}); } });
+}
+// Le HTML rendu par une vue de Claude passe par ce filtre : ni script, ni cadre, ni attribut d'événement.
+function assainir(html){
+  const d=new DOMParser().parseFromString(`<div>${String(html??"")}</div>`,"text/html");
+  d.querySelectorAll("script,iframe,object,embed,link,meta,base,form,frame,frameset,style,noscript,template").forEach(n=>n.remove());
+  for (const el of d.querySelectorAll("*")) for (const a of [...el.attributes]) {
+    const n=a.name.toLowerCase(), v=a.value.trim().toLowerCase();
+    if (n.startsWith("on") || (["href","src","xlink:href","action","formaction","srcset"].includes(n) && !(v.startsWith("#")||v.startsWith("https://")||v.startsWith("data:image/png")||v.startsWith("data:image/jpeg")))) el.removeAttribute(a.name);
+    if (n==="style" && /url\s*\(|expression/i.test(a.value)) el.removeAttribute(a.name);
+  }
+  for (const a of d.querySelectorAll("a[href^='https://']")) { a.setAttribute("target","_blank"); a.setAttribute("rel","noopener"); }
+  return d.body.firstChild.innerHTML;
+}
+function iconeSVG(svg){
+  const d=new DOMParser().parseFromString(String(svg||""),"image/svg+xml"); const r=d.documentElement;
+  if (!r || r.nodeName.toLowerCase()!=="svg" || d.querySelector("parsererror")) return null;
+  r.querySelectorAll("script,foreignObject").forEach(n=>n.remove());
+  for (const el of [r,...r.querySelectorAll("*")]) for (const a of [...el.attributes]) { const n=a.name.toLowerCase(); if (n.startsWith("on") || ((n==="href"||n==="xlink:href") && !a.value.startsWith("#"))) el.removeAttribute(a.name); }
+  if (!r.getAttribute("xmlns")) r.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(new XMLSerializer().serializeToString(r));
+}
+const ICONE_CLAUDE_DEFAUT = iconeSVG(`<svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#C96442"/><path fill="#fff" d="M32 12c1.6 11.2 5.6 16.6 20 20-14.4 3.4-18.4 8.8-20 20-1.6-11.2-5.6-16.6-20-20 14.4-3.4 18.4-8.8 20-20Z"/></svg>`);
+const iconeClaude = () => (S.C.coeur?.champs?.icone && iconeSVG(S.C.coeur.champs.icone)) || ICONE_CLAUDE_DEFAUT;
+
+// ---------- propriété et visibilité ----------
+const partage = it => it?.partage ?? (it?.public !== "moi");
+let D = { entrants:{}, poids:{}, possede:new Set() };
+function deriverPour(items, rac){
+  const ent={};
+  for (const [id,it] of Object.entries(items)) { if (it.mort) continue; for (const l of it.liens||[]) if (items[l.vers] && !items[l.vers].mort) (ent[l.vers] ||= []).push({de:id, genre:l.genre, force:l.force}); }
+  const poids={}; for (const [id,it] of Object.entries(items)) poids[id] = 1 + (it.liens||[]).length + (ent[id]||[]).length + Object.keys(it.champs||{}).length*0.6 + Math.min(4,(it.desc||"").length/90);
+  const pos=new Set([rac]); let f=[rac];
+  while (f.length){ const nx=[]; for (const p of f) for (const e of ent[p]||[]) if (!pos.has(e.de)) { pos.add(e.de); nx.push(e.de); } f=nx; }
+  return { entrants:ent, poids, possede:pos };
+}
+function deriver(){ D = deriverPour(S.items, racine()); }
+function vis(id){
+  const it=S.items[id]; if (!it) return null;
+  if (S.monde==="claude") return it.mort ? null : "ok";
+  if (id==="moi") return "ok";
+  if (S.voit && S.claude!=="ferme" && !partage(it)) return "masque";
+  return "ok";
+}
+function proprio(id){ if (S.monde==="claude") return "claude"; return D.possede.has(id) ? "moi" : "pasamoi"; }
+// Ce que Claude peut voir de mon Life : ce que je lui ai partagé, quand c'est à l'écran ou donné
+const visibleDeClaude = id => !!S.L[id] && (id==="moi" || partage(S.L[id]));
+
+// ---------- navigation ----------
+function enfants(id){ const anc=new Set(F()); const m=new Map(); for (const e of D.entrants[id]||[]) if (!anc.has(e.de) && !m.has(e.de) && vis(e.de)) m.set(e.de,e); return [...m.keys()]; }
+function sousArbre(id, prof=3){ const r=new Set([id]); let f=[id]; for (let d=0; d<prof && f.length; d++){ const nx=[]; for (const p of f) for (const e of D.entrants[p]||[]) if (!r.has(e.de) && vis(e.de)) { r.add(e.de); nx.push(e.de); } f=nx; } return [...r]; }
+const parentPrincipal = it => (it?.liens||[]).find(l=>l.genre==="dans"||l.genre==="sert")?.vers || (it?.liens||[])[0]?.vers;
+function cheminVers(id){ const rac=racine(); const c=[id], vus=new Set([id]); let x=id;
+  while (x!==rac && c.length<12){ const p=parentPrincipal(S.items[x]); if(!p||vus.has(p)||!S.items[p]) break; c.unshift(p); vus.add(p); x=p; }
+  if (c[0]!==rac) c.unshift(rac); return c; }
+function corrigerFocus(){ let f=F().filter(i=>S.items[i]); while (f.length>1 && vis(f.at(-1))!=="ok") f.pop(); if (!f.length || f[0]!==racine()) f=[racine()]; setF(f); }
+function ouvrir(id){ if (vis(id)!=="ok") return; const f=F(); setF(f.includes(id) ? f.slice(0,f.indexOf(id)+1) : (enfants(f.at(-1)).includes(id) ? [...f,id] : cheminVers(id))); rendre(); }
+function changerMonde(m){ if (m===S.monde) return; if (m==="claude" && S.claude==="ferme") { S.claude="bulle"; majClaudeUI(); } S.monde=m; S.fiche=null; fermerFiche(true); lsSet("lifeos-monde",m); Espace.vider(); rendre(); }
+
+// ---------- vues ----------
+function vues(){
+  const v={}; for (const [id,x] of Object.entries(VUES_BASE)) v[id]={...x, ...(S.LV[id]||{}), source:"base"};
+  if (S.claude!=="ferme") for (const [id,x] of Object.entries(S.CV)) if (x.famille==="vue" && x.actif!==false) v["c:"+id]={...x, rendu:"claude", ordre:(x.accueil&&S.monde==="claude")?0:10, source:"claude", cid:id};
+  return Object.entries(v).sort((a,b)=>(a[1].ordre??9)-(b[1].ordre??9));
+}
+function vueCourante(){ const l=vues(); let id=S.lentille[S.monde]; if (!id && S.monde==="claude") id = l.find(([,x])=>x.accueil)?.[0] || "voir-dossiers"; return l.find(([i])=>i===id) || l.find(([i])=>i==="voir-dossiers"); }
+const paramVue = (v,p,d) => { const x=(v.parametres||[]).find(q=>q.id===p); return x && x.actif!==false ? x.valeur : d; };
+function choisirVue(id){ S.lentille[S.monde]=id; lsSet("lifeos-vue-"+S.monde,id); rendre(); }
+
+function rendreEntete(){
+  const f=F(), rac=racine();
+  $("#fil").innerHTML = f.map((c,i)=>`<button data-chemin="${i}" ${i===f.length-1?'aria-current="page"':""}>${esc(i===0&&c===rac ? (S.monde==="claude"?"Life de Claude":"Life") : S.items[c]?.titre)}</button>`).join("<span>›</span>");
+  $("#fil").scrollLeft = 1e6;
+  const [vid] = vueCourante();
+  $("#lentilles").innerHTML = vues().map(([id,v])=>`<button role="tab" data-vue="${esc(id)}" aria-selected="${id===vid}" class="${v.source==="claude"?"claude":""}">${esc(v.nom)}</button>`).join("") + `<button class="plus" data-reglages aria-label="Réglages">⋯</button>`;
+  const ico = S.monde==="claude" ? iconeClaude() : null;
+  $("#logo").style.backgroundImage = ico ? `url("${ico}")` : "";
+  $("#badge-prompt").hidden = !(S.prompt?.proposition) || S.claude==="ferme";
+  const voit = S.voit && S.claude!=="ferme" && S.monde==="laurent";
+  $("#app").classList.toggle("voit", voit); $("#pill-voit").hidden = !voit;
+}
+$("#fil").onclick = e=>{ const b=e.target.closest("[data-chemin]"); if (b){ setF(F().slice(0,+b.dataset.chemin+1)); rendre(); } };
+$("#logo").onclick = ouvrirMondes;
+$("#lentilles").onclick = e=>{ const b=e.target.closest("[data-vue]"); if (b) return choisirVue(b.dataset.vue); if (e.target.closest("[data-reglages]")) ouvrirReglages(); };
+
+function tuile(id){
+  const it=S.items[id], v=vis(id);
+  if (v==="masque") return `<button class="ic" data-masque="${id}" aria-label="Donnée privée"><div class="tuile masque">🔒</div><div class="lab flou">${"•".repeat(Math.min(14,(it.titre||"").length))}</div></button>`;
+  const sous=(D.entrants[id]||[]).filter(e=>vis(e.de)).map(e=>S.items[e.de]);
+  const p=proprio(id), c=couleur(it.type);
+  const cls = p==="pasamoi" ? "creux" : "";
+  const nb = sous.length ? `<span class="nb">${sous.length}</span>` : "";
+  const lock = S.monde==="laurent" && S.claude!=="ferme" && !partage(it) && id!=="moi" ? `<span class="prive" title="Privé : Claude ne le voit pas">🔒</span>` : "";
+  const inner = sous.length
+    ? `<div class="tuile dossier ${cls}" style="--c:${c}">${sous.slice(0,9).map(s=>`<i style="background:${couleur(s.type)}"></i>`).join("")}${nb}</div>`
+    : `<div class="tuile ${cls}" style="background:${c};--c:${c}">${esc(lettre(it))}</div>`;
+  return `<button class="ic" data-objet="${id}">${lock}${inner}<div class="lab">${esc(it.titre)}</div></button>`;
+}
+function trierIds(ids, cle){
+  if (cle==="nom") return ids.sort((a,b)=>String(S.items[a].titre).localeCompare(S.items[b].titre,"fr"));
+  if (cle==="naissance") return ids.sort((a,b)=>(S.items[b].cree||"").localeCompare(S.items[a].cree||""));
+  return ids.sort((a,b)=>(D.poids[b]||0)-(D.poids[a]||0));
+}
+const LEG = () => S.monde==="claude" || S.claude==="ferme" ? "" : `<div class="legende"><span><i style="background:var(--t-projet)"></i>à moi</span><span><i style="box-shadow:inset 0 0 0 2px var(--muted)"></i>dans ma base, pas à moi</span><span>🔒 privé : Claude ne le voit pas</span></div>`;
+function bannierePrompt(){
+  if (S.claude==="ferme" || !S.prompt?.proposition) return "";
+  return `<div class="banniere"><span><b>Claude propose de changer son prompt de connexion.</b> ${esc(S.prompt.proposition.raison||"")}</span><div class="actions" style="margin:0"><button class="btn claude" data-voir-prompt>Lire et décider</button></div></div>`;
+}
+function rendreDossiers(v){
+  const id=F().at(-1), it=S.items[id];
+  const ids=trierIds(enfants(id), paramVue(v,"tri","poids"));
+  let h = (S.monde==="claude" && id==="coeur") ? bannierePrompt() : "";
+  if (id!==racine() && it?.desc) h += `<p class="desc">${esc(it.desc)}</p>`;
+  let tuiles = ids.map(tuile).join("");
+  if (S.monde==="claude" && id==="coeur") { const morts=Object.values(S.C).filter(x=>x.mort).length; if (morts) tuiles += `<button class="ic" data-deces><div class="tuile" style="background:var(--surface2);color:var(--muted)">✝</div><div class="lab">Décès · ${morts}</div></button>`; }
+  h += tuiles ? `<div class="grille">${tuiles}</div>` : `<div class="vide">${S.monde==="claude" ? "Le Life de Claude est vide pour l'instant. Parle-lui : il y range ce qui mérite d'être retenu." : "Dossier vide. Touche son titre en haut pour ouvrir sa fiche et y créer un objet."}</div>`;
+  return h + LEG();
+}
+function rendreTemps(v){
+  const cle = paramVue(v,"cle","naissance")==="échéance" ? "echeance" : "cree";
+  const ids = sousArbre(F().at(-1),6).filter(i=>i!==racine() && vis(i)==="ok" && S.items[i][cle]);
+  ids.sort((a,b)=> cle==="cree" ? S.items[b].cree.localeCompare(S.items[a].cree) : S.items[a].echeance.localeCompare(S.items[b].echeance));
+  const parJour=new Map(); for (const i of ids){ const j=S.items[i][cle].slice(0,10); (parJour.get(j)||parJour.set(j,[]).get(j)).push(i); }
+  const mois=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+  let h=`<div class="seg" style="margin:4px 0 10px" id="seg-temps"><button data-m="naissance" aria-pressed="${cle==="cree"}">Naissance</button><button data-m="échéance" aria-pressed="${cle==="echeance"}">Échéances</button></div>`;
+  if (!ids.length) h+=`<div class="vide">${cle==="echeance"?"Rien n'a encore d'échéance ici.":"Rien ici."}</div>`;
+  for (const [j,l] of parJour){ const dt=new Date(j+"T12:00:00"); h+=`<div class="jour"><div class="d"><b>${dt.getDate()}</b>${mois[dt.getMonth()]}</div><div class="evts">${l.map(i=>`<button class="pastille ${proprio(i)==="pasamoi"?"creux":""}" data-objet="${i}"><i class="pt" style="background:${couleur(S.items[i].type)}"></i><span>${esc(S.items[i].titre)}</span></button>`).join("")}</div></div>`; }
+  return h;
+}
+function rendreEtages(v){
+  const id=F().at(-1); const ids=sousArbre(id,+paramVue(v,"profondeur",3)||3).filter(i=>i!==id);
+  let h=`<p class="desc">${esc(id===racine()?(S.monde==="claude"?"Le Life de Claude":"Life"):S.items[id]?.titre)} vu par étages.</p>`, n=0;
+  for (const [nom,types,sous] of ETAGES){ const l=ids.filter(i=>types.includes(S.items[i].type)); if (!l.length) continue; n++;
+    h+=`<div class="etage"><h3>${esc(nom)} <small>${l.length}${sous?" · "+esc(sous):""}</small></h3><div class="rangee">${l.map(i=> vis(i)==="masque" ? `<button class="carte-obj masque" data-masque="${i}"><b>${"•".repeat(10)}</b><small>privé</small></button>` : `<button class="carte-obj" data-objet="${i}"><b>${esc(S.items[i].titre)}</b><small>${esc(libType(S.items[i].type))}</small></button>`).join("")}</div></div>`; }
+  if (!n) h+=`<div class="vide">Rien à ranger par étage ici.</div>`;
+  return h;
+}
+function rendreCarte(v){
+  const ids=sousArbre(F().at(-1),6).filter(i=>vis(i)==="ok" && S.items[i].champs?.latlon);
+  const centre=S.L.l_maison?.champs?.latlon || S.L[ids[0]]?.champs?.latlon || {lat:0,lon:0}; const log=paramVue(v,"echelle","log")==="log";
+  const km=(a,b)=>{ const R=6371,dl=(b.lat-a.lat)*Math.PI/180,dn=(b.lon-a.lon)*Math.PI/180; const x=Math.sin(dl/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dn/2)**2; return 2*R*Math.asin(Math.sqrt(x)); };
+  const maxKm=Math.max(1,...ids.map(i=>km(centre,S.items[i].champs.latlon)));
+  const ray=d=> log ? Math.min(1,Math.log10(1+d*10)/Math.log10(1+Math.max(10,maxKm)*10)) : d/maxKm;
+  let h=`<p class="desc">${ids.length} objet${ids.length>1?"s":""} avec une position, autour de la maison.</p><div class="carte-geo">`;
+  for (const i of ids){ const p=S.items[i].champs.latlon, d=km(centre,p), ang=Math.atan2(p.lat-centre.lat,(p.lon-centre.lon)*Math.cos(centre.lat*Math.PI/180)), r=ray(d)*46;
+    h+=`<button class="pt-geo" data-objet="${i}" style="left:${50+Math.cos(ang)*r}%;top:${50-Math.sin(ang)*r}%"><i style="background:${couleur(S.items[i].type)}"></i><span>${esc(S.items[i].titre)}</span><small>${d<1?Math.round(d*1000)+" m":d.toFixed(1)+" km"}</small></button>`; }
+  h+=`</div>`; if (ids.length<3) h+=`<div class="vide">Peu d'objets ont une position. Un lieu ou une personne apparaît ici dès qu'il a des coordonnées.</div>`;
+  return h;
+}
+// Vue écrite par Claude : son code tourne isolé et renvoie du HTML filtré.
+function donneesPourClaude(){
+  if (S.monde==="claude") return Object.entries(S.C).filter(([,it])=>!it.mort).map(([id,it])=>({id,titre:it.titre,type:it.type,definition:it.desc||"",liens:it.liens||[],champs:it.champs||{},cree:it.cree||null}));
+  return Object.keys(S.L).filter(visibleDeClaude).map(id=>{ const it=S.L[id]; return {id,titre:it.titre,type:it.type,definition:it.desc||"",liens:(it.liens||[]).filter(l=>visibleDeClaude(l.vers)),champs:it.champs||{},cree:it.cree||null,echeance:it.echeance||null}; });
+}
+let jetonRendu=0;
+function rendreClaude(v){
+  const j=++jetonRendu, params={}; for (const p of v.parametres||[]) if (p.actif!==false) params[p.id]=p.valeur;
+  const ctx = { objets:donneesPourClaude(), focus:F().at(-1), monde:S.monde, params, couleurs:Object.fromEntries(Object.keys(TYPES).map(t=>[t,couleur(t)])),
+    theme:Object.fromEntries(["--ink","--muted","--surface","--surface2","--line","--accent","--bg","--claude"].map(n=>[n,css(n)])) };
+  isoler(v.code, ctx).then(r=>{ if (j!==jetonRendu) return; const el=$("#ext-claude"); if (!el) return;
+    if (r.ok) { delete S.erreurs[v.cid]; el.innerHTML = typeof r.v==="string" ? assainir(r.v) : `<pre style="white-space:pre-wrap">${esc(JSON.stringify(r.v,null,2))}</pre>`; }
+    else { S.erreurs[v.cid]=r.e; el.innerHTML=`<div class="vide"><b>La vue « ${esc(v.nom)} » a planté :</b> ${esc(r.e)}<div class="actions"><button class="btn claude" data-corriger="${esc(v.cid)}">Demander à Claude de corriger</button></div></div>`; } });
+  const note = S.monde==="laurent" ? `<p class="desc">Vue de Claude : elle ne reçoit que ce que tu lui as partagé.</p>` : "";
+  return (S.monde==="claude" && F().at(-1)==="coeur" ? bannierePrompt() : "") + note + `<div id="ext-claude"><div class="desc">…</div></div>`;
+}
+function rendre(){
+  deriver(); corrigerFocus(); rendreEntete();
+  const [vid,v]=vueCourante(); const esp=v.rendu==="espace";
+  $("#vue-espace").hidden=!esp; $("#vue-html").hidden=esp;
+  if (esp){ S.dispo=paramVue(v,"dispo","liens"); Espace.sync(); Espace.redim(); }
+  else { const el=$("#vue-html"), cle=S.monde+vid+F().join("/"), sc=rendre.dernier===cle?el.scrollTop:0;
+    el.innerHTML = v.rendu==="claude" ? rendreClaude(v) : v.rendu==="temps" ? rendreTemps(v) : v.rendu==="etages" ? rendreEtages(v) : v.rendu==="carte" ? rendreCarte(v) : rendreDossiers(v);
+    el.scrollTop=sc; rendre.dernier=cle; }
+  if (S.fiche && !String(S.fiche).startsWith("__")) { if (S.items[S.fiche] && vis(S.fiche)==="ok") { if (!document.activeElement?.closest?.("#fiche input,#fiche select,#fiche textarea")) ouvrirFiche(S.fiche,{silencieux:true}); } else fermerFiche(); }
+  else if (S.fiche==="__reglages" && !document.activeElement?.closest?.("#fiche input,#fiche select")) ouvrirReglages(true);
+  majCacheUI();
+}
+let raf=0; const planifier=()=>{ cancelAnimationFrame(raf); raf=requestAnimationFrame(rendre); };
+
+// clics et appui long dans la vue
+let appuiLong=null, ignorerClic=false;
+$("#vue-html").addEventListener("pointerdown", e=>{ const o=e.target.closest("[data-objet]"); if (!o) return; clearTimeout(appuiLong); appuiLong=setTimeout(()=>{ ignorerClic=true; ouvrirFiche(o.dataset.objet,{dico:true}); },550); });
+for (const ev of ["pointerup","pointercancel","pointermove"]) $("#vue-html").addEventListener(ev, e=>{ if (ev==="pointermove" && Math.abs(e.movementX)+Math.abs(e.movementY)<3) return; clearTimeout(appuiLong); });
+$("#vue-html").addEventListener("click", e=>{
+  if (ignorerClic){ ignorerClic=false; return; }
+  const cr=e.target.closest("[data-corriger]"); if (cr){ const id=cr.dataset.corriger; ouvrirClaude(); $("#msg").value=`Ta vue « ${S.CV[id]?.nom||id} » (id ${id}) plante : ${S.erreurs[id]||"erreur"}. Corrige-la.`; return; }
+  if (e.target.closest("[data-voir-prompt]")) return ouvrirReglages();
+  if (e.target.closest("[data-deces]")) return ouvrirDeces();
+  const m=e.target.closest("[data-masque]"); if (m) return demanderPartage(m.dataset.masque);
+  const s=e.target.closest("#seg-temps [data-m]"); if (s) return majParam(vueCourante()[0],"cle",s.dataset.m);
+  const o=e.target.closest("[data-objet]"); if (!o) return;
+  const id=o.dataset.objet; if (!S.items[id]) return;
+  if (vueCourante()[1].rendu==="dossiers" && enfants(id).length) return ouvrir(id);
+  ouvrirFiche(id);
+});
+(function(){ let x0=null,y0=0,t0=0; const el=$("#vue-html");
+  el.addEventListener("pointerdown", e=>{ if (e.clientX>innerWidth-24) return; x0=e.clientX; y0=e.clientY; t0=Date.now(); }, {passive:true});
+  el.addEventListener("pointerup", e=>{ if (x0===null) return; const dx=e.clientX-x0, dy=e.clientY-y0; x0=null;
+    if (Math.abs(dx)>60 && Math.abs(dx)>1.5*Math.abs(dy) && Date.now()-t0<700){ const l=vues().map(x=>x[0]); const i=l.indexOf(vueCourante()[0]); const j=Math.max(0,Math.min(l.length-1,i+(dx<0?1:-1))); if (j!==i) choisirVue(l[j]); } });
+  el.addEventListener("pointercancel", ()=>{ x0=null; }); })();
+
+// ---------- écritures ----------
+async function journal(quoi, cibles, qui="Laurent", col="journal"){ if (!S.db) return; try { await S.db.collection(col).add({ quand:now(), qui, quoi, cibles }); } catch(_){} }
+async function majItem(id, data, col=COL()){ if (!S.db) throw new Error("base indisponible"); await S.db.collection(col).doc(id).update(data); }
+async function majParam(vid, p, val){
+  if (!VUES_BASE[vid]) return; const v={...VUES_BASE[vid], ...(S.LV[vid]||{})}; const params=structuredClone(v.parametres||[]); const q=params.find(x=>x.id===p); if (q){ q.valeur=val; q.actif=true; }
+  S.LV[vid]={...(S.LV[vid]||{}), famille:"vue", parametres:params}; rendre();
+  try { await S.db.collection("verbes").doc(vid).set({...(S.LV[vid]), nom:v.nom, rendu:v.rendu}); } catch(_){}
+}
+
+// ---------- fiche ----------
+function ligne(id, genre){
+  const it=S.items[id], v=vis(id); if (!v) return "";
+  if (v==="masque") return `<div class="ligne masque" data-masque="${id}"><span class="pt" style="background:var(--muted)"></span><span class="t">${"•".repeat(14)}</span><span class="g">privé · partager ?</span></div>`;
+  return `<div class="ligne" data-ouvrir="${id}"><span class="pt" style="background:${couleur(it.type)}"></span><span class="t">${esc(it.titre)}</span>${genre?`<span class="g">${esc(genre)}</span>`:""}<span class="g">›</span></div>`;
+}
+function ouvrirFiche(id, opt={}){
+  const it=S.items[id]; if (!it || vis(id)!=="ok") return;
+  S.fiche=id; const p=proprio(id), cl=S.monde==="claude";
+  const av = p==="pasamoi" ? `box-shadow:inset 0 0 0 2.5px ${couleur(it.type)};color:${couleur(it.type)}` : `background:${couleur(it.type)}`;
+  let h=`<div class="f-tete"><div class="av ${["personne","moi"].includes(it.type)?"rond":""}" style="${av}">${esc(lettre(it))}</div>
+    <div style="min-width:0;flex:1"><h3>${esc(it.titre)}</h3><div class="chips"><span class="chip">${esc(libType(it.type))}</span><span class="chip ${cl?"claude":""}">${cl?"Life de Claude":p==="pasamoi"?"dans ma base, pas à moi":"à moi"}</span>${it.statut&&!["actif","proposé"].includes(it.statut)?`<span class="chip">${esc(it.statut)}</span>`:""}</div></div>
+    <button class="x" data-fermer aria-label="Fermer">✕</button></div>`;
+  if (it.desc) h+=`<p class="desc" style="color:var(--ink)">${cl?"<b>Définition. </b>":""}${esc(it.desc)}</p>`;
+  if (it.pourquoi) h+=`<div class="pourquoi">${esc(it.pourquoi)}</div>`;
+  const kv=[]; for (const [k,v] of Object.entries(it.champs||{})) { if (k==="icone"||k==="code") continue;
+    if (k==="url") kv.push(["lien",`<a href="${esc(v)}" target="_blank" rel="noopener">Ouvrir ↗</a>`]); else if (k==="latlon") kv.push(["position",`${(+v.lat).toFixed(4)}, ${(+v.lon).toFixed(4)}`]); else kv.push([k,esc(typeof v==="object"?JSON.stringify(v):v)]); }
+  if (it.echeance) kv.push(["échéance",esc(it.echeance.slice(0,10))]); if (it.cree) kv.push(["naissance",esc(it.cree.slice(0,10))]); if (it.source) kv.push(["origine",esc(it.source)]);
+  if (kv.length) h+=`<dl class="kv">${kv.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>`;
+  if (!cl && id!=="moi" && S.claude!=="ferme") h+=`<label class="interr"><input type="checkbox" id="sw-partage" ${partage(it)?"checked":""}><span>Partagé avec Claude<small>${partage(it)?"Claude peut le voir quand tu le lui montres.":"Privé : Claude ne sait pas que ça existe."}</small></span></label>`;
+  const sort=(it.liens||[]).filter(l=>vis(l.vers)); if (sort.length) h+=`<div class="bloc"><h4>Rangé dans</h4>${sort.map(l=>ligne(l.vers,l.genre)).join("")}</div>`;
+  const ent=[...new Map((D.entrants[id]||[]).filter(e=>vis(e.de)).map(e=>[e.de,e])).values()]; if (ent.length) h+=`<div class="bloc"><h4>Contient · ${ent.length}</h4>${ent.map(e=>ligne(e.de,e.genre!=="dans"?e.genre:"")).join("")}</div>`;
+  h+=`<details class="dico" ${opt.dico?"open":""}><summary>Dictionnaire</summary><dl><dt>id</dt><dd>${esc(id)}</dd><dt>type</dt><dd>${esc(it.type)}</dd><dt>liens</dt><dd>${(it.liens||[]).map(l=>esc(l.genre+" → "+l.vers)).join("<br>")||"—"}</dd>${it.code?`<dt>code</dt><dd>${esc(it.code)}</dd>`:""}${it.modifie?`<dt>modifié</dt><dd>${esc(it.modifie)}</dd>`:""}</dl></details>`;
+  h+=`<div class="actions">`;
+  if (enfants(id).length) h+=`<button class="btn prim" data-aller="${id}">Ouvrir le dossier</button>`;
+  if (cl) { if (id!=="coeur") h+=`<button class="btn" data-prendre="${id}">Prendre dans mon Life</button><button class="btn no" data-effacer="${id}">Effacer pour de bon</button>`; }
+  else { h+=`<button class="btn" data-creer="${id}">Objet vide ici</button>`; if (S.claude!=="ferme" && id!=="moi") h+=`<button class="btn claude" data-donner="${id}">${S.cache.has(id)?"Déjà montré à Claude":"Montrer à Claude"}</button>`; }
+  h+=`</div><div id="zone-creer"></div><div id="zone-confirm"></div>`;
+  $("#fiche-corps").innerHTML=h; $("#fiche").classList.add("on"); $("#voile").classList.add("on");
+  if (!opt.silencieux) $("#fiche-corps").scrollTop=0;
+  Espace.selection(id);
+}
+function fermerFiche(silence){ S.fiche=null; $("#fiche").classList.remove("on"); $("#voile").classList.remove("on"); if (!silence) Espace.selection(null); }
+$("#voile").onclick=()=>fermerFiche();
+$("#fiche-corps").addEventListener("change", async e=>{
+  if (e.target.id==="sw-partage"){ const id=S.fiche, val=e.target.checked; try { await majItem(id,{partage:val},"items"); if (!val) S.cache.delete(id); await journal(val?"partager":"rendre privé",[id]); toast(val?"Partagé avec Claude":"Redevenu privé"); } catch(_){ e.target.checked=!val; toast("Non enregistré"); } return; }
+  if (e.target.id==="in-quota"){ const v=Math.max(20,Math.min(5000,+e.target.value||QUOTA_DEFAUT)); S.reglages.quotaKo=v; try { await S.db.collection("reglages").doc("claude").set({...S.reglages}); toast(`Place de Claude : ${v} Ko`); } catch(_){} return; }
+  if (e.target.id==="sw-memoriser"){ const val=e.target.checked; S.reglages.memoriser=val; try { await S.db.collection("reglages").doc("claude").set({...S.reglages}); toast(val?"Claude peut garder ce que tu lui montres":"Claude ne garde rien de ce que tu lui montres"); } catch(_){} return; }
+  const el=e.target; if (el.dataset.v){ const vid=el.dataset.v; const v={...VUES_BASE[vid],...(S.LV[vid]||{})}; const params=structuredClone(v.parametres||[]); const p=params.find(q=>q.id===el.dataset.p); if (!p) return;
+    if ("actif" in el.dataset) p.actif=el.checked; else p.valeur = el.type==="number"?+el.value:el.value; S.LV[vid]={...(S.LV[vid]||{}),famille:"vue",parametres:params};
+    try { await S.db.collection("verbes").doc(vid).set({...S.LV[vid], nom:v.nom, rendu:v.rendu}); } catch(_){} rendre(); }
+  if (el.dataset.cv){ try { await S.db.collection("claude_verbes").doc(el.dataset.cv).update({actif:el.checked}); await journal(el.checked?"réactiver":"désactiver",[el.dataset.cv],"Laurent","claude_journal"); } catch(_){} }
+});
+$("#fiche-corps").addEventListener("click", async e=>{
+  const t=e.target;
+  if (t.closest("[data-fermer]")) return fermerFiche();
+  const m=t.closest("[data-masque]"); if (m) return demanderPartage(m.dataset.masque);
+  const a=t.closest("[data-aller]"); if (a){ fermerFiche(); if (vueCourante()[1].rendu!=="dossiers") S.lentille[S.monde]="voir-dossiers"; return ouvrir(a.dataset.aller); }
+  const pr=t.closest("[data-prendre]"); if (pr) return prendre(pr.dataset.prendre);
+  const ef=t.closest("[data-effacer]"); if (ef) return confirmer(`Effacer « ${S.C[ef.dataset.effacer]?.titre} » du Life de Claude pour de bon ? Rien ne reste, pas même dans Décès.`, "Effacer", async()=>{ await S.db.collection("claude_items").doc(ef.dataset.effacer).delete(); await journal("effacer",[ef.dataset.effacer],"Laurent","claude_journal"); fermerFiche(); toast("Effacé"); });
+  const c=t.closest("[data-creer]"); if (c) return formCreer(c.dataset.creer);
+  const dn=t.closest("[data-donner]"); if (dn){ const id=dn.dataset.donner; if (S.cache.has(id)) return; if (!partage(S.L[id])) return confirmer(`« ${S.L[id].titre} » est privé. Le montrer à Claude le lui donne pour cette conversation, sans le rendre partagé.`, "Montrer", ()=>{ S.cache.add(id); majCacheUI(); ouvrirFiche(id,{silencieux:true}); toast("Claude le voit dans cette conversation"); }); S.cache.add(id); majCacheUI(); ouvrirFiche(id,{silencieux:true}); return toast("Claude le voit dans cette conversation"); }
+  const o=t.closest("[data-ouvrir]"); if (o && !t.closest("a")) return ouvrirFiche(o.dataset.ouvrir);
+  if (t.closest("[data-voir-prompt]")) return ouvrirReglages();
+});
+function confirmer(texte, bouton, action){
+  const z=$("#zone-confirm") || (()=>{ const d=document.createElement("div"); d.id="zone-confirm"; $("#fiche-corps").append(d); return d; })();
+  z.innerHTML=`<div class="confirm"><span>${esc(texte)}</span><div class="actions" style="margin:0"><button class="btn no" id="ok-c">${esc(bouton)}</button><button class="btn" id="non-c">Annuler</button></div></div>`;
+  z.scrollIntoView({block:"nearest"});
+  $("#ok-c").onclick=async()=>{ try { await action(); } catch(_){ toast("Refusé"); } z.innerHTML=""; }; $("#non-c").onclick=()=>{ z.innerHTML=""; };
+}
+async function prendre(id){
+  const it=S.C[id]; if (!it) return;
+  try { const ref=await S.db.collection("items").add({ titre:it.titre, type:it.type==="souvenir"?"note":it.type, desc:it.desc||"", couche:"moi", partage:true, statut:"actif", cree:now(), source:"Pris dans le Life de Claude", liens:[{vers:"moi",genre:"dans",force:.4}], champs:Object.fromEntries(Object.entries(it.champs||{}).filter(([k])=>k!=="icone")) });
+    await journal("prendre depuis Claude",[ref.id]); await journal("Laurent a pris",[id],"Laurent","claude_journal"); toast("Copié dans ton Life, sous Moi"); } catch(_){ toast("Non enregistré"); }
+}
+function formCreer(parent){
+  const opts=Object.entries(TYPES).filter(([k])=>!["moi","souvenir"].includes(k)).map(([k,[l]])=>`<option value="${k}" ${k==="idee"?"selected":""}>${l}</option>`).join("");
+  $("#zone-creer").innerHTML=`<div class="creer"><input id="nv-titre" placeholder="Nom du nouvel objet" maxlength="140" autocomplete="off"><button class="btn prim" id="nv-ok">Créer</button><select id="nv-type" aria-label="Type">${opts}</select></div>`;
+  $("#nv-titre").focus();
+  const go=async()=>{ const titre=$("#nv-titre").value.trim(); if (!titre) return;
+    try { const ref=await S.db.collection("items").add({ titre, type:$("#nv-type").value, desc:"", couche:"moi", partage:false, statut:"actif", cree:now(), source:"Créé à la main", liens:[{vers:parent,genre:"dans",force:.6}], champs:{} }); await journal("créer",[ref.id]); toast("Créé, privé"); setTimeout(()=>ouvrirFiche(ref.id),250); } catch(_){ toast("Création refusée"); } };
+  $("#nv-ok").onclick=go; $("#nv-titre").onkeydown=e=>{ if (e.key==="Enter") go(); };
+}
+function demanderPartage(id){
+  const it=S.L[id]; if (!it) return;
+  if (!S.fiche){ $("#fiche-corps").innerHTML=`<div class="f-tete"><div class="av" style="background:var(--surface2);color:var(--muted)">🔒</div><div style="flex:1;min-width:0"><h3>Donnée privée</h3></div><button class="x" data-fermer aria-label="Fermer">✕</button></div><div id="zone-confirm"></div>`; $("#fiche").classList.add("on"); $("#voile").classList.add("on"); S.fiche="__masque"; }
+  $("#zone-confirm").innerHTML=`<div class="confirm"><span>Partager <b>« ${esc(it.titre)} »</b> avec Claude ? Il pourra le voir quand il est à l'écran ou quand tu le lui montres. Tu peux le rendre privé à tout moment.</span><div class="actions" style="margin:0"><button class="btn claude" id="ok-partage">Partager</button><button class="btn" id="non-partage">Garder privé</button></div></div>`;
+  $("#ok-partage").onclick=async()=>{ try { await majItem(id,{partage:true},"items"); await journal("partager",[id]); toast("Partagé avec Claude"); fermerFiche(); } catch(_){ toast("Non enregistré"); } };
+  $("#non-partage").onclick=()=>{ S.fiche==="__masque" ? fermerFiche() : ($("#zone-confirm").innerHTML=""); };
+}
+
+// ---------- changer de Life ----------
+function ouvrirMondes(){
+  const cl=S.claude==="ferme";
+  let h=`<div class="f-tete"><div style="flex:1"><h3>Quel Life ?</h3><p class="desc" style="margin:0">Deux Life, un même OS. Tu possèdes les deux stockages ; Claude n'écrit que dans le sien.</p></div><button class="x" data-fermer aria-label="Fermer">✕</button></div>
+  <div class="mondes"><button class="monde" data-monde="laurent" aria-current="${S.monde==="laurent"}"><span class="ico-monde" style="background-image:var(--icone-life)"></span><b>Mon Life</b><small>${Object.keys(S.L).length} objets</small></button>
+  <button class="monde" data-monde="claude" aria-current="${S.monde==="claude"}"><span class="ico-monde" style="background-image:url('${iconeClaude()}')"></span><b>Life de Claude</b><small>${cl?"Rouvre Claude pour y entrer":Object.values(S.C).filter(x=>!x.mort).length+" objets · ce qu'il retient"}</small></button></div>`;
+  $("#fiche-corps").innerHTML=h; S.fiche="__mondes"; $("#fiche").classList.add("on"); $("#voile").classList.add("on");
+}
+$("#fiche-corps").addEventListener("click", e=>{ const b=e.target.closest("[data-monde]"); if (!b) return; fermerFiche(); changerMonde(b.dataset.monde); });
+
+// ---------- réglages : vues, et pouvoirs de Laurent sur le Life de Claude ----------
+function ouvrirReglages(silencieux){
+  const sc=$("#fiche-corps").scrollTop;
+  let h=`<div class="f-tete"><div style="flex:1"><h3>${S.monde==="claude"?"Life de Claude":"Vues"}</h3></div><button class="x" data-fermer aria-label="Fermer">✕</button></div>`;
+  if (S.monde==="claude"){
+    const pr=S.prompt||{texte:PROMPT_INITIAL,version:1};
+    h+=`<div class="section-r">Son prompt de connexion · v${pr.version||1}</div><p class="desc" style="margin:0">Le seul texte que Claude relit à chaque message pour se retrouver dans son Life. Il peut le faire évoluer ; tu valides chaque changement.</p><div class="prompt-txt">${esc(pr.texte)}</div>`;
+    if (pr.proposition) h+=`<div class="section-r">Proposition de Claude</div><p class="desc" style="margin:0">${esc(pr.proposition.raison||"")}</p><div class="prompt-txt neuf">${esc(pr.proposition.texte)}</div><div class="actions"><button class="btn claude" data-prompt-ok>Valider</button><button class="btn no" data-prompt-non>Refuser</button></div>`;
+    const u=placeClaude(), q=quotaOctets(), pc=Math.min(100,Math.round(100*u/q));
+    h+=`<div class="section-r">Sa place</div><div style="height:10px;border-radius:999px;background:var(--surface2);overflow:hidden"><div style="height:100%;width:${pc}%;background:${pc>90?"var(--no)":"var(--claude)"}"></div></div>
+      <div class="champ" style="grid-template-columns:1fr auto auto;border:0"><span>${Math.round(u/1024)} Ko utilisés sur</span><input type="number" min="20" max="5000" step="10" id="in-quota" value="${Math.round(q/1024)}" style="width:90px" aria-label="Place allouée en Ko"><span>Ko</span></div>
+      <p class="desc" style="margin:0">Il décide comment remplir cette place : beaucoup de petites choses ou peu de choses riches. Quand c'est plein, il doit fusionner ou retirer.</p>`;
+    h+=`<div class="section-r">Ce que Claude garde</div><label class="interr" style="margin-top:0"><input type="checkbox" id="sw-memoriser" ${S.reglages.memoriser!==false?"checked":""}><span>Claude peut garder ce que je lui montre<small>Décoché : il voit ce que tu lui montres pendant la conversation, mais refuse d'en copier quoi que ce soit dans son Life.</small></span></label>`;
+    const fct=Object.entries(S.CV);
+    h+=`<div class="section-r">Ses verbes · ${fct.length}</div>`;
+    if (!fct.length) h+=`<p class="desc">Aucun pour l'instant. Il les écrit lui-même quand il en a besoin.</p>`;
+    for (const [id,v] of fct) h+=`<div class="verbe"><h3>${esc(v.nom)} <span class="chip">${v.famille==="vue"?(v.accueil?"accueil":"vue"):"fonction"}</span></h3><p>${esc(v.definition||"")}</p>
+      <label class="champ" style="grid-template-columns:auto 1fr"><input type="checkbox" data-cv="${esc(id)}" ${v.actif!==false?"checked":""}><span>Actif</span></label>
+      <details style="margin-top:6px"><summary style="cursor:pointer;color:var(--accent);font-weight:700">Voir le code</summary><pre style="overflow-x:auto;font-size:12px;background:var(--surface2);padding:10px;border-radius:10px">${esc(v.code||"")}</pre></details>
+      <div class="actions"><button class="btn no" data-suppr-cv="${esc(id)}">Supprimer</button></div></div>`;
+    h+=`<div class="section-r">Effacer</div><p class="desc" style="margin:0">Effacer une période supprime pour de bon ce que Claude a créé, ses verbes et la conversation sur cette durée.</p>
+      <div class="actions"><button class="btn" data-periode="1">1 heure</button><button class="btn" data-periode="2">2 heures</button><button class="btn" data-periode="24">24 heures</button><button class="btn no" data-tout>Tout effacer</button></div><div id="zone-confirm"></div>`;
+  } else {
+    h+=`<p class="desc" style="margin:0">Chaque vue est un verbe « voir » avec ses paramètres. Décoche un paramètre pour revenir au cœur du verbe.</p>`;
+    for (const [id,x] of Object.entries(VUES_BASE)){ const v={...x,...(S.LV[id]||{})};
+      h+=`<div class="verbe"><h3>${esc(v.nom)}</h3><p>${esc(v.definition)}</p>`;
+      for (const p of v.parametres||[]){ const ctl = p.choix ? `<select data-v="${id}" data-p="${p.id}" aria-label="${esc(p.nom)}">${p.choix.map(c=>`<option ${c===p.valeur?"selected":""}>${esc(c)}</option>`).join("")}</select>` : `<input type="number" style="width:80px" data-v="${id}" data-p="${p.id}" value="${esc(p.valeur)}" aria-label="${esc(p.nom)}">`;
+        h+=`<div class="champ ${p.actif===false?"off":""}"><input type="checkbox" data-v="${id}" data-p="${p.id}" data-actif aria-label="Activer ${esc(p.nom)}" ${p.actif!==false?"checked":""}><span class="nomp">${esc(p.nom)}</span>${ctl}</div>`; }
+      h+=`</div>`; }
+    if (S.claude!=="ferme") h+=`<p class="desc">Les vues de Claude apparaissent aussi dans la bande, en pointillés. Elles ne reçoivent que ce que tu lui as partagé. Elles se règlent depuis son Life.</p>`;
+    const rc=LifeClaude.reglages();
+    h+=`<div class="section-r">Claude (API)</div>
+      <div class="champ" style="grid-template-columns:auto 1fr;border:0"><span>Modèle</span><select id="sel-modele" aria-label="Modèle">${LifeClaude.MODELES.map(([id,n])=>`<option value="${id}" ${id===(rc.modele||"claude-sonnet-5-5")?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
+      <label class="interr" style="margin-top:6px"><input type="checkbox" id="sw-web" ${rc.web!==false?"checked":""}><span>Recherche web<small>Claude peut chercher sur Internet pour répondre ou remplir son cache.</small></span></label>
+      <p class="desc" style="margin:10px 0 0">${LifeClaude.aCle()?"Une clé est active.":"Aucune clé active."} ${LifeClaude.jetons()?`${LifeClaude.jetons()} jetons utilisés depuis l'ouverture.`:""}</p>
+      <div class="actions">${LifeClaude.aCle()?`<button class="btn no" data-oublier-cle>Oublier la clé sur cet appareil</button>`:`<button class="btn claude" data-saisir-cle>Saisir la clé</button>`}</div>
+      <div class="section-r">Sauvegarde</div>
+      <p class="desc" style="margin:0">Tout vit sur ce téléphone. Exporte régulièrement vers Synology Drive ou Fichiers.${lsGet("life-export")?" Dernière sauvegarde : "+esc(new Date(lsGet("life-export")).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))+".":" Aucune sauvegarde encore."}</p>
+      <div class="actions"><button class="btn prim" data-exporter>Exporter ma base</button><label class="btn" style="display:inline-grid;place-items:center;cursor:pointer">Importer…<input type="file" accept="application/json,.json" id="f-import" hidden></label></div><div id="zone-confirm"></div>`;
+  }
+  $("#fiche-corps").innerHTML=h; S.fiche="__reglages"; $("#fiche").classList.add("on"); $("#voile").classList.add("on");
+  if (silencieux) $("#fiche-corps").scrollTop=sc;
+}
+$("#fiche-corps").addEventListener("change", async e=>{
+  if (e.target.id==="sel-modele"){ LifeClaude.regler({modele:e.target.value}); majModele(); toast("Modèle : "+LifeClaude.nomModele()); }
+  if (e.target.id==="sw-web"){ LifeClaude.regler({web:e.target.checked}); }
+  if (e.target.id==="f-import"){ const f=e.target.files?.[0]; if (!f) return; let obj; try { obj=JSON.parse(await f.text()); } catch(_){ return toast("Fichier illisible"); }
+    confirmer("Remplacer toute la base de ce téléphone par cette sauvegarde ?", "Remplacer", async()=>{ await LifeDB.importer(obj); toast("Sauvegarde importée"); fermerFiche(); }); }
+});
+async function exporterBase(){
+  const data=await LifeDB.exporter(); const nom=`life-${new Date().toISOString().slice(0,10)}.json`;
+  const blob=new Blob([JSON.stringify(data)],{type:"application/json;charset=utf-8"}); const fichier=new File([blob],nom,{type:"application/json"});
+  try { if (navigator.canShare?.({files:[fichier]})) { await navigator.share({files:[fichier], title:nom}); lsSet("life-export",now()); toast("Sauvegarde partagée"); return; } } catch(e){ if (e?.name==="AbortError") return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nom; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); lsSet("life-export",now()); toast("Sauvegarde téléchargée");
+}
+$("#fiche-corps").addEventListener("click", async e=>{
+  const t=e.target; if (!S.db) return;
+  if (t.closest("[data-exporter]")) return exporterBase();
+  if (t.closest("[data-oublier-cle]")){ LifeClaude.oublierCle(); toast("Clé oubliée sur cet appareil"); return ouvrirReglages(true); }
+  if (t.closest("[data-saisir-cle]")){ fermerFiche(); ouvrirClaude(); return afficherCle(); }
+  if (t.closest("[data-prompt-ok]")){ const pr=S.prompt; try { await S.db.collection("claude_prompt").doc("connexion").set({ texte:pr.proposition.texte, version:(pr.version||1)+1, historique:[...(pr.historique||[]),{texte:pr.texte,version:pr.version||1,quand:now()}].slice(-20), proposition:null }); await journal("valider le prompt",["connexion"],"Laurent","claude_journal"); toast("Prompt validé"); } catch(_){ toast("Refusé"); } return; }
+  if (t.closest("[data-prompt-non]")){ try { await S.db.collection("claude_prompt").doc("connexion").update({ proposition:null }); await journal("refuser le prompt",["connexion"],"Laurent","claude_journal"); toast("Proposition refusée"); } catch(_){} return; }
+  const sv=t.closest("[data-suppr-cv]"); if (sv) return confirmer(`Supprimer le verbe « ${S.CV[sv.dataset.supprCv]?.nom} » de Claude ?`, "Supprimer", async()=>{ await S.db.collection("claude_verbes").doc(sv.dataset.supprCv).delete(); await journal("supprimer un verbe",[sv.dataset.supprCv],"Laurent","claude_journal"); toast("Verbe supprimé"); });
+  const pe=t.closest("[data-periode]"); if (pe){ const hrs=+pe.dataset.periode; return confirmer(`Effacer tout ce que Claude a créé ou écrit depuis ${hrs} heure${hrs>1?"s":""}, y compris la conversation ?`, "Effacer", ()=>effacerDepuis(Date.now()-hrs*3600e3)); }
+  if (t.closest("[data-tout]")) return confirmer("Effacer tout le Life de Claude ? Il ne reste que son cœur, ses deux envies racines et son prompt de départ.", "Tout effacer", ()=>effacerDepuis(0, true));
+});
+async function effacerDepuis(t0, tout){
+  const iso=new Date(t0).toISOString(); let n=0;
+  for (const [id,it] of Object.entries(S.C)) { if (["coeur","e_servir_laurent","e_me_servir"].includes(id)) continue; if (tout || (it.cree||"")>=iso || (it.modifie||"")>=iso) { await S.db.collection("claude_items").doc(id).delete(); n++; } }
+  for (const [id,v] of Object.entries(S.CV)) if (tout || (v.cree||"")>=iso) { await S.db.collection("claude_verbes").doc(id).delete(); n++; }
+  S.tours = tout ? [] : S.tours.filter(x=>(x.quand||"")<iso); await sauverFil();
+  if (tout) { await S.db.collection("claude_prompt").doc("connexion").set({ texte:PROMPT_INITIAL, version:1, historique:[], proposition:null }); try { await majItem("coeur",{champs:{}},"claude_items"); } catch(_){} }
+  await journal(tout?"tout effacer":"effacer une période",[iso],"Laurent","claude_journal");
+  rendreChat(); toast(`${n} élément${n>1?"s":""} effacé${n>1?"s":""}`);
+}
+function ouvrirDeces(){
+  const morts=Object.entries(S.C).filter(([,x])=>x.mort).sort((a,b)=>(b[1].mort.quand||"").localeCompare(a[1].mort.quand||""));
+  let h=`<div class="f-tete"><div style="flex:1"><h3>Décès</h3><p class="desc" style="margin:0">Ce que Claude a retiré de sa mémoire. Il ne le voit plus ; toi, tu le vois encore, et tu peux l'effacer pour de bon.</p></div><button class="x" data-fermer aria-label="Fermer">✕</button></div>`;
+  h+=morts.map(([id,x])=>`<div class="mort"><div class="t"><b>${esc(x.titre)}</b><small>${esc(new Date(x.mort.quand).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))} · ${esc(x.mort.raison||"sans raison donnée")}</small></div><button class="btn no" data-effacer="${id}">Effacer</button></div>`).join("") || `<div class="vide">Aucun.</div>`;
+  h+=`<div id="zone-confirm"></div>`;
+  $("#fiche-corps").innerHTML=h; S.fiche="__deces"; $("#fiche").classList.add("on"); $("#voile").classList.add("on");
+}
+
+// ---------- Espace ----------
+const Espace = (() => {
+  const cv=$("#scene"), cx=cv.getContext("2d");
+  let W=0,H=0,dpr=1,N={},sel=null,besoin=true,chaleur=1,P={},typesOrd=[],tMin=0,tMax=1,masques=0;
+  const cam={yaw:.6,pitch:.45,dist:520,cible:[0,0,0]};
+  function redim(){ const r=cv.getBoundingClientRect(); if(!r.width) return; dpr=Math.min(2,devicePixelRatio||1); W=r.width; H=r.height; cv.width=W*dpr; cv.height=H*dpr; besoin=true; }
+  new ResizeObserver(redim).observe(cv);
+  const hash=s=>{ let h=2166136261; for (const c of s) h=Math.imul(h^c.charCodeAt(0),16777619); return (h>>>0)/4294967295; };
+  function ids(){ const r=F().at(-1); const l = r===racine() ? Object.keys(S.items).filter(i=>!S.items[i].mort) : sousArbre(r,4); masques=l.filter(i=>vis(i)==="masque").length; return l.filter(i=>vis(i)==="ok"); }
+  function sync(){
+    const vus=new Set(ids()), r=F().at(-1); let neuf=false;
+    for (const id of vus){ const it=S.items[id]; const rr = id===r ? 15 : 3.5+2.1*Math.sqrt(D.poids[id]||1);
+      if (!N[id]){ const p=it.pos, par=N[parentPrincipal(it)], a=hash(id)*6.283, b=hash(id+"b")*2-1, d=40+hash(id+"c")*40; N[id]={x:p?p.x:(par?par.x:0)+Math.cos(a)*d,y:p?p.y:(par?par.y:0)+b*d*.6,z:p?p.z:(par?par.z:0)+Math.sin(a)*d,vx:0,vy:0,vz:0,fixe:!!p}; neuf=true; }
+      Object.assign(N[id],{r:rr,it}); }
+    for (const id of Object.keys(N)) if (!vus.has(id)) delete N[id];
+    if (N[r]){ N[r].x=N[r].y=N[r].z=0; }
+    typesOrd=[...new Set(Object.values(N).map(n=>n.it.type))].sort();
+    const ds=Object.values(N).map(n=>Date.parse(n.it.cree||"")).filter(x=>!isNaN(x)); tMin=ds.length?Math.min(...ds):0; tMax=ds.length?Math.max(...ds):1; if(!(tMax>tMin)) tMax=tMin+1;
+    $("#esp-info").textContent=(masques?`${masques} objet${masques>1?"s":""} privé${masques>1?"s":""} masqué${masques>1?"s":""} · `:"")+"Un doigt : tourner · deux : zoom · appui long : déplacer, ou déposer sur une sphère pour relier";
+    document.querySelectorAll("#esp-tri button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.t===S.dispo)));
+    if (neuf && Object.keys(N).length) { prechauffer(); } else { chaleur=Math.max(chaleur,.3); besoin=true; }
+  }
+  function cible(id,a){ const m=S.dispo; if (m==="liens"||id===F().at(-1)) return null;
+    if (m==="type"){ const i=typesOrd.indexOf(a.it.type), ang=i/Math.max(1,typesOrd.length)*6.2832; return [Math.cos(ang)*190,0,Math.sin(ang)*190]; }
+    if (m==="poids"){ const d=Math.hypot(a.x,a.y,a.z)||1, r=40+520/Math.sqrt(D.poids[id]||1); return [a.x/d*r,a.y/d*r*.5,a.z/d*r]; }
+    if (m==="temps"){ const t=Date.parse(a.it.cree||""); return [isNaN(t)?0:-320+640*(t-tMin)/(tMax-tMin),null,null]; } return null; }
+  function pas(){ if (chaleur<.004) return; const L=Object.keys(N), n=L.length, k=chaleur, r=F().at(-1);
+    for (let i=0;i<n;i++){ const a=N[L[i]]; for (let j=i+1;j<n;j++){ const b=N[L[j]]; let dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z; const d2=dx*dx+dy*dy+dz*dz+.01; if (d2>250000) continue; const d=Math.sqrt(d2), f=3200/d2*k; dx/=d;dy/=d;dz/=d; a.vx+=dx*f;a.vy+=dy*f;a.vz+=dz*f; b.vx-=dx*f;b.vy-=dy*f;b.vz-=dz*f; } }
+    for (const id of L){ const a=N[id]; for (const l of a.it.liens||[]){ const b=N[l.vers]; if(!b) continue; const rep=34+95*(1-.8*(l.force??.5))+a.r+b.r; let dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z; const d=Math.sqrt(dx*dx+dy*dy+dz*dz)+.01; const f=(d-rep)*(S.dispo==="liens"?.03:.004)*k; dx/=d;dy/=d;dz/=d; a.vx+=dx*f;a.vy+=dy*f;a.vz+=dz*f; b.vx-=dx*f;b.vy-=dy*f;b.vz-=dz*f; }
+      a.vy-=a.y*.004*k; const c=cible(id,a); if (c){ const g=.06*k; if(c[0]!==null)a.vx+=(c[0]-a.x)*g; if(c[1]!==null)a.vy+=(c[1]-a.y)*g; if(c[2]!==null)a.vz+=(c[2]-a.z)*g; } }
+    for (const id of L){ const a=N[id]; if (id===r||(a.fixe&&S.dispo==="liens")||a.glisse){a.vx=a.vy=a.vz=0;continue;} a.vx*=.6;a.vy*=.6;a.vz*=.6; const v=Math.hypot(a.vx,a.vy,a.vz); if(v>12){a.vx*=12/v;a.vy*=12/v;a.vz*=12/v;} a.x+=a.vx;a.y+=a.vy;a.z+=a.vz; }
+    chaleur*=.992; besoin=true; }
+  const base=()=>({cy:Math.cos(cam.yaw),sy:Math.sin(cam.yaw),cp:Math.cos(cam.pitch),sp:Math.sin(cam.pitch),f:Math.min(W,H)*.95});
+  function proj(n,B){ const x=n.x-cam.cible[0],y=n.y-cam.cible[1],z=n.z-cam.cible[2]; const x1=x*B.cy-z*B.sy,z1=x*B.sy+z*B.cy,y2=y*B.cp-z1*B.sp,z2=y*B.sp+z1*B.cp,zc=z2+cam.dist; if(zc<10) return null; const s=B.f/zc; return {x:W/2+x1*s,y:H/2-y2*s,s,zc}; }
+  const rgb=hex=>{ const m=hex.replace("#",""); const n=parseInt(m.length===3?m.split("").map(c=>c+c).join(""):m,16); return [n>>16&255,n>>8&255,n&255]; };
+  function dessiner(){ besoin=false; if(!W) return; cx.setTransform(dpr,0,0,dpr,0,0); cx.fillStyle=css("--space-bg"); cx.fillRect(0,0,W,H);
+    const B=base(); P={}; for (const id of Object.keys(N)){ const p=proj(N[id],B); if(p) P[id]=p; }
+    const vois=new Set(); if (sel&&N[sel]){ vois.add(sel); for (const l of N[sel].it.liens||[]) vois.add(l.vers); for (const e of D.entrants[sel]||[]) vois.add(e.de); }
+    for (const id of Object.keys(P)){ const a=P[id]; for (const l of N[id].it.liens||[]){ const b=P[l.vers]; if(!b) continue; const fort=sel&&(id===sel||l.vers===sel); cx.strokeStyle=fort?"rgba(160,200,255,.85)":sel?"rgba(140,160,200,.06)":`rgba(140,165,210,${.08+.22*(l.force??.5)})`; cx.lineWidth=fort?1.6:1; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } }
+    const ordre=Object.keys(P).sort((a,b)=>P[b].zc-P[a].zc), r=F().at(-1);
+    for (const id of ordre){ const p=P[id], n=N[id], it=n.it, R=Math.max(2.2,n.r*p.s), pr=proprio(id); cx.globalAlpha=sel&&!vois.has(id)?.22:1; const [rr,g2,b]=rgb(couleur(it.type));
+      if (pr==="pasamoi"){ cx.strokeStyle=`rgb(${rr},${g2},${b})`; cx.lineWidth=Math.max(1.5,R*.22); cx.beginPath(); cx.arc(p.x,p.y,R*.85,0,6.2832); cx.stroke(); }
+      else { const gr=cx.createRadialGradient(p.x-R*.35,p.y-R*.4,R*.1,p.x,p.y,R); gr.addColorStop(0,`rgb(${Math.min(255,rr+90)},${Math.min(255,g2+90)},${Math.min(255,b+90)})`); gr.addColorStop(.7,`rgb(${rr},${g2},${b})`); gr.addColorStop(1,`rgb(${rr*.55|0},${g2*.55|0},${b*.55|0})`); cx.fillStyle=gr; cx.beginPath(); cx.arc(p.x,p.y,R,0,6.2832); cx.fill(); }
+      if (S.monde==="laurent" && S.claude!=="ferme" && !partage(it) && id!=="moi"){ cx.fillStyle=css("--ink"); cx.beginPath(); cx.arc(p.x+R*.75,p.y-R*.75,Math.max(2,R*.22),0,6.2832); cx.fill(); }
+      if (id===r){ cx.globalAlpha=1; cx.strokeStyle="rgba(150,200,255,.55)"; cx.lineWidth=3; cx.beginPath(); cx.arc(p.x,p.y,R+6,0,6.2832); cx.stroke(); }
+      if (id===sel){ cx.globalAlpha=1; cx.strokeStyle="#fff"; cx.lineWidth=2; cx.beginPath(); cx.arc(p.x,p.y,R+5,0,6.2832); cx.stroke(); } p.R=R; }
+    cx.globalAlpha=1;
+    if (S.dispo==="type"||S.dispo==="temps"){ cx.font=`700 13px ${css("--f-display")}`; cx.textAlign="center"; cx.fillStyle="rgba(170,195,240,.75)";
+      if (S.dispo==="type") typesOrd.forEach((t,i)=>{ const ang=i/Math.max(1,typesOrd.length)*6.2832; const p=proj({x:Math.cos(ang)*250,y:0,z:Math.sin(ang)*250},B); if(p) cx.fillText(libType(t).toUpperCase(),p.x,p.y); });
+      else { const fmt=t=>new Date(t).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}); for (const [x,t] of [[-320,tMin],[0,(tMin+tMax)/2],[320,tMax]]){ const p=proj({x,y:-120,z:0},B); if(p) cx.fillText(fmt(t),p.x,p.y); } } cx.textAlign="start"; }
+    const pris=[]; cx.font=`600 12px ${css("--f-body")}`; cx.textBaseline="middle"; let nb=0;
+    for (const id of ordre.slice().sort((a,b)=>(b===sel)-(a===sel)||(b===r)-(a===r)||vois.has(b)-vois.has(a)||P[b].R-P[a].R)){ const p=P[id]; if (nb>40) break; if (p.R<4&&id!==sel&&!vois.has(id)) continue;
+      let t=N[id].it.titre||""; if (t.length>28) t=t.slice(0,27)+"…"; const w=cx.measureText(t).width+8, x=p.x-w/2, y=p.y+p.R+4;
+      if (x<0||x+w>W||y+16>H) continue; if (pris.some(q=>x<q[0]+q[2]&&x+w>q[0]&&y<q[1]+q[3]&&y+16>q[1])) continue; if (Object.values(P).some(q=>q!==p&&q.R>3&&Math.hypot(q.x-(x+w/2),q.y-(y+8))<q.R*.9)) continue;
+      pris.push([x,y,w,16]); nb++; cx.fillStyle="rgba(10,16,30,.6)"; cx.beginPath(); cx.roundRect(x,y,w,16,6); cx.fill(); cx.fillStyle=sel&&!vois.has(id)?"rgba(220,230,247,.5)":"#DCE6F7"; cx.fillText(t,x+4,y+8.5); } }
+  function boucle(){ if (!$("#vue-espace").hidden){ pas(); if (besoin) dessiner(); } requestAnimationFrame(boucle); }
+  requestAnimationFrame(boucle);
+  function viser(id){ const n=N[id]; if(!n) return; const c0=cam.cible.slice(), c1=[n.x,n.y,n.z], d0=cam.dist, d1=Math.max(160,Math.min(cam.dist,320)), t0=performance.now();
+    (function an(t){ const k=Math.min(1,(t-t0)/450), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; cam.cible=c0.map((v,i)=>v+(c1[i]-v)*e); cam.dist=d0+(d1-d0)*e; besoin=true; if(k<1) requestAnimationFrame(an); })(t0); }
+  function choisir(x,y){ let best=null,bd=1e9; for (const [id,p] of Object.entries(P)){ const d=Math.hypot(p.x-x,p.y-y); if (d<Math.max(p.R+10,22)&&p.zc<bd){ bd=p.zc; best=id; } } return best; }
+  const ptr=new Map(); let g=null,tA=null;
+  cv.addEventListener("pointerdown", e=>{ try{cv.setPointerCapture(e.pointerId)}catch(_){} ptr.set(e.pointerId,{x:e.clientX,y:e.clientY}); const rc=cv.getBoundingClientRect();
+    if (ptr.size===1){ const id=choisir(e.clientX-rc.left,e.clientY-rc.top); g={type:"orbite",x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,t:Date.now(),id,bouge:false}; clearTimeout(tA);
+      if (id&&id!==F().at(-1)&&S.monde==="laurent") tA=setTimeout(()=>{ if(g&&!g.bouge){ g.type="deplacer"; g.dep={x:N[id].x,y:N[id].y,z:N[id].z,fixe:N[id].fixe}; N[id].glisse=true; try{navigator.vibrate&&navigator.vibrate(12)}catch(_){} } },380); }
+    else if (ptr.size===2){ clearTimeout(tA); const [a,b]=[...ptr.values()]; g={type:"pince",d:Math.hypot(a.x-b.x,a.y-b.y),dist:cam.dist}; } });
+  cv.addEventListener("pointermove", e=>{ if(!ptr.has(e.pointerId)) return; ptr.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(!g) return;
+    if (g.type==="pince"&&ptr.size===2){ const [a,b]=[...ptr.values()]; cam.dist=Math.max(80,Math.min(1800,g.dist*g.d/Math.max(20,Math.hypot(a.x-b.x,a.y-b.y)))); besoin=true; return; }
+    const dx=e.clientX-g.x, dy=e.clientY-g.y; if (Math.hypot(e.clientX-g.x0,e.clientY-g.y0)>7) g.bouge=true;
+    if (g.type==="orbite"){ if(g.bouge){ clearTimeout(tA); cam.yaw+=dx*.006; cam.pitch=Math.max(-1.35,Math.min(1.35,cam.pitch+dy*.006)); besoin=true; } }
+    else if (g.type==="deplacer"){ const n=N[g.id],B=base(),p=proj(n,B); if(!p) return; const wx=(e.clientX-g.x0)/p.s, wy=-(e.clientY-g.y0)/p.s, Rv=[B.cy,0,-B.sy], U=[-B.sy*B.sp,B.cp,-B.cy*B.sp], o=g.dep; n.x=o.x+Rv[0]*wx+U[0]*wy; n.y=o.y+Rv[1]*wx+U[1]*wy; n.z=o.z+Rv[2]*wx+U[2]*wy; besoin=true; return; }
+    g.x=e.clientX; g.y=e.clientY; });
+  async function fin(e){ ptr.delete(e.pointerId); clearTimeout(tA); if(!g) return;
+    if (g.type==="deplacer"){ const n=N[g.id]; n.glisse=false; const pn=P[g.id]; let c=null; for (const [id,p] of Object.entries(P)){ if(id===g.id) continue; if(pn&&Math.hypot(p.x-pn.x,p.y-pn.y)<Math.max(p.R,10)+6){ c=id; break; } }
+      if (c){ const o=g.dep; n.x=o.x;n.y=o.y;n.z=o.z;n.fixe=!!o.fixe; const it=S.L[g.id]; if ((it.liens||[]).some(l=>l.vers===c)) toast("Déjà relié"); else { try { await majItem(g.id,{liens:[...(it.liens||[]),{vers:c,genre:"dans",force:.5}]},"items"); await journal("relier",[g.id,c]); toast(`Relié à « ${S.L[c]?.titre} »`); chaleur=.4; } catch(_){ toast("Lien non enregistré"); } } }
+      else { n.fixe=true; try { await majItem(g.id,{pos:{x:+n.x.toFixed(1),y:+n.y.toFixed(1),z:+n.z.toFixed(1)}},"items"); } catch(_){} } }
+    else if (g.type==="orbite"&&!g.bouge&&Date.now()-g.t<500){ if (g.id){ viser(g.id); ouvrirFiche(g.id); } else if (sel) fermerFiche(); }
+    if (!ptr.size) g=null; }
+  cv.addEventListener("pointerup",fin); cv.addEventListener("pointercancel",fin);
+  cv.addEventListener("wheel", e=>{ e.preventDefault(); cam.dist=Math.max(80,Math.min(1800,cam.dist*Math.exp(e.deltaY*.0012))); besoin=true; },{passive:false});
+  $("#esp-tri").onclick=e=>{ const b=e.target.closest("[data-t]"); if(!b) return; chaleur=1; majParam("voir-espace","dispo",b.dataset.t); };
+  function prechauffer(){ chaleur=1; for (let i=0;i<420;i++) pas(); const v=Object.values(N).map(n=>Math.hypot(n.x,n.y,n.z)).sort((a,b)=>a-b); cam.cible=[0,0,0]; cam.dist=Math.max(200,Math.min(1600,(v[Math.floor(v.length*.85)]||200)*1.8)); besoin=true; }
+  return { sync, redim, selection(id){ sel=id; besoin=true; }, vider(){ N={}; sel=null; }, decrire(){ return Object.keys(P).slice(0,60); } };
+})();
+
+// ---------- Claude : panneau ----------
+function majClaudeUI(){
+  $("#bulle").hidden = S.claude!=="bulle"; $("#bord").hidden = S.claude!=="ferme";
+  $("#chat").classList.toggle("on", S.claude==="ouvert");
+  $("#voit").setAttribute("aria-pressed", String(S.voit)); $("#voit").hidden = S.monde==="claude";
+  lsSet("lifeos-claude", S.claude); lsSet("lifeos-voit", S.voit?"1":"0"); majCacheUI();
+}
+function majCacheUI(){ const b=$("#cache-btn"); const n=S.cache.size; b.hidden=!n || S.claude==="ferme"; b.textContent=`Montré · ${n}`; }
+function ouvrirClaude(){ S.claude="ouvert"; majClaudeUI(); rendre(); rendreChat(); }
+$("#bulle").onclick=ouvrirClaude;
+$("#reduire").onclick=()=>{ S.claude="bulle"; majClaudeUI(); };
+$("#fermer").onclick=()=>{ S.claude="ferme"; S.voit=false; S.cache.clear(); if (S.monde==="claude") { S.monde="laurent"; Espace.vider(); } majClaudeUI(); rendre(); toast("Mode privé. Glisse depuis le bord droit pour rappeler Claude."); };
+$("#voit").onclick=()=>{ S.voit=!S.voit; majClaudeUI(); rendre(); toast(S.voit?"Claude voit l'écran, sans tes données privées":"Claude ne voit plus l'écran"); };
+$("#cache-btn").onclick=()=>{ S.cache.clear(); majCacheUI(); toast("Claude ne voit plus ce que tu lui avais montré"); };
+(function(){ let y0=null; const h=$("#chat-poignee"); h.addEventListener("pointerdown",e=>{ y0=e.clientY; try{h.setPointerCapture(e.pointerId)}catch(_){} }); h.addEventListener("pointerup",e=>{ if (y0!==null && e.clientY-y0>40){ S.claude="bulle"; majClaudeUI(); } y0=null; }); h.addEventListener("click",()=>{ S.claude="bulle"; majClaudeUI(); }); })();
+(function(){ let x0=null; const b=$("#bord"); b.addEventListener("pointerdown",e=>{ x0=e.clientX; try{b.setPointerCapture(e.pointerId)}catch(_){} }); b.addEventListener("pointermove",e=>{ if (x0!==null && x0-e.clientX>36){ x0=null; ouvrirClaude(); } }); b.addEventListener("pointerup",()=>{ x0=null; }); })();
+
+function rendreChat(){
+  const f=$("#fil-chat");
+  if (!S.tours.length){ f.innerHTML=`<div class="chat-vide"><b>Parle-moi de n'importe quoi.</b> Je ne lis que mon propre Life, et le web si tu l'autorises. De ton Life, je ne vois que ce que tu me montres : l'écran quand tu l'actives, ou un objet avec « Montrer à Claude ».
+<div class="suggest"><button data-sug="Organise ton Life comme tu le veux pour te souvenir de moi et m'être utile. Explique-moi ton choix.">Organise ton Life</button><button data-sug="Code ton écran d'accueil, pour que je navigue dans ce que tu retiens.">Ton écran d'accueil</button><button data-sug="Dessine-toi une icône.">Ton icône</button><button data-sug="Note un besoin pour l'app Life : ">Besoin pour Life</button></div></div>`; return; }
+  f.innerHTML=S.tours.map(t=> t.role==="user" ? `<div class="msg moi">${esc(t.content)}</div>` : t.role==="act" ? `<div class="msg act">${esc(t.content)}</div>` : t.role==="err" ? `<div class="msg err">${esc(t.content)}</div>` : `<div class="msg claude">${esc(t.content)}</div>`).join("");
+  f.scrollTop=f.scrollHeight;
+}
+$("#fil-chat").addEventListener("click", e=>{ const s=e.target.closest("[data-sug]"); if (s){ $("#msg").value=s.dataset.sug; $("#msg").focus(); } });
+
+// ---------- Claude : ce qu'il reçoit ----------
+function sommaire(){
+  const vivants=Object.entries(S.C).filter(([,x])=>!x.mort); const d=deriverPour(S.C,"coeur");
+  const lignes=[]; const vu=new Set();
+  (function desc(id,niv){ if (vu.has(id)||niv>3||lignes.length>70) return; vu.add(id); const it=S.C[id]; if (!it||it.mort) return;
+    lignes.push(`${"  ".repeat(niv)}- ${it.titre} [${id}, ${it.type}]${niv<=1&&it.desc?" : "+it.desc.slice(0,120):""}`);
+    for (const e of (d.entrants[id]||[]).sort((a,b)=>(d.poids[b.de]||0)-(d.poids[a.de]||0))) desc(e.de,niv+1); })("coeur",0);
+  const hors=vivants.filter(([id])=>!vu.has(id)).length;
+  const vb=Object.entries(S.CV).map(([id,v])=>`- ${v.nom} [${id}, ${v.famille}${v.accueil?", accueil":""}${v.actif===false?", désactivé par Laurent":""}] : ${v.definition||""}`);
+  const u=placeClaude(), q=quotaOctets();
+  return `Place utilisée : ${Math.round(u/1024)} Ko sur ${Math.round(q/1024)} Ko (${Math.round(100*u/q)} %).
+Ton Life (${vivants.length} objets vivants, ${Object.values(S.C).filter(x=>x.mort).length} décès) :\n${lignes.join("\n")}${hors?`\n(${hors} autres objets plus profonds : utilise chercher)`:""}\n\nTes verbes :\n${vb.join("\n")||"(aucun)"}`;
+}
+function cacheTexte(){
+  const ids=new Set(S.cache);
+  if (S.voit && S.monde==="laurent") { const [,v]=vueCourante(); const base = v.rendu==="espace" ? Espace.decrire() : v.rendu==="dossiers" ? enfants(F().at(-1)) : sousArbre(F().at(-1),3); for (const i of base) if (vis(i)==="ok" && visibleDeClaude(i)) ids.add(i); if (S.fiche && S.L[S.fiche] && visibleDeClaude(S.fiche)) ids.add(S.fiche); }
+  const l=[...ids].filter(i=>S.L[i]).slice(0,80).map(i=>{ const it=S.L[i]; return `- ${it.titre} [l:${i}, ${it.type}]${it.desc?" : "+it.desc.slice(0,200):""}`; });
+  let ecran = S.monde==="claude" ? "Laurent regarde ton Life en ce moment." : (S.voit ? `Laurent te montre son écran : vue « ${vueCourante()[1].nom} », dossier « ${F().at(-1)==="moi"?"Life":S.L[F().at(-1)]?.titre} ».` : "Laurent ne te montre pas son écran.");
+  return { ids:[...ids], texte:`${ecran}\nCe que Laurent te montre de son Life (ton cache, pour cette conversation seulement) :\n${l.join("\n")||"(rien)"}` };
+}
+function regles(){
+  const pr=S.prompt?.texte||PROMPT_INITIAL; const c=cacheTexte();
+  return `[Règles de l'OS Life — fixes, écrites par Laurent]
+Tu es Claude. Tu converses librement avec Laurent sur n'importe quel sujet, en français, de façon directe et concise ; il veut un avis franc.
+Tu as un Life à toi : une base que tu organises toi-même avec tes outils. Tu ne lis et n'écris que là. Du Life de Laurent, tu ne vois que ton cache (ce qu'il te montre maintenant).
+Tout ce que tu crées a un nom et une définition en français, compréhensibles par Laurent, et se rattache (directement ou par une chaîne) à « Servir Laurent » ou « Me servir ».
+Quand tu supprimes, l'objet va dans Décès : tu ne le vois plus, Laurent oui. Laurent possède ton stockage : il peut tout lire, prendre, effacer, désactiver tes verbes.
+Ta place est limitée (voir le sommaire) : tu choisis comment l'occuper ; quand elle est pleine, fusionne, raccourcis ou retire.
+Tes verbes sont du JavaScript isolé : pas de réseau, pas d'écran, pas de base. Une vue reçoit ctx et RENVOIE une chaîne HTML (styles en ligne ; les éléments avec data-objet="id" deviennent cliquables). Une fonction reçoit ctx et renvoie des données. ctx = {objets[{id,titre,type,definition,liens,champs,cree}], complement, focus, monde, params, couleurs, theme}.
+${S.reglages.memoriser===false?"Laurent t'interdit de garder ce qu'il te montre : n'en copie rien dans ton Life.":"Tu peux garder dans ton Life ce que Laurent te montre, si ça mérite d'être retenu."}
+Ton prompt de connexion ne change que si Laurent valide ta proposition (proposer_prompt).
+Tu peux chercher sur le web quand c'est utile (si l'outil web_search est disponible) ; ce que tu en retiens se range dans ton Life, avec la source. Tu ne peux pas modifier le Life de Laurent ni intégrer une vidéo ou un site dans l'app. Dis-le simplement.
+Date : ${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}, ${new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}.
+
+[Ton prompt de connexion — écrit par toi, validé par Laurent]
+${pr}
+
+[Sommaire]
+${sommaire()}
+
+[Cache]
+${c.texte}`;
+}
+// Garde-fou « ne pas garder ce que je montre » : une barrière, pas une preuve
+function copieDuCache(txt){
+  if (S.reglages.memoriser!==false) return false;
+  const t=String(txt||"").toLowerCase(); if (!t) return false;
+  for (const id of cacheTexte().ids){ const it=S.L[id]; if (!it) continue; const ti=String(it.titre||"").toLowerCase(); if (ti.length>5 && t.includes(ti)) return true;
+    const d=String(it.desc||"").toLowerCase(); for (let i=0;i+40<=d.length;i+=20) if (t.includes(d.slice(i,i+40))) return true; }
+  return false;
+}
+const vivant = id => !!S.C[id] && !S.C[id].mort;
+const slug = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+const TOOLS = () => [
+  { name:"chercher", description:"Cherche dans TON Life (objets vivants). Renvoie au plus 30 {id,titre,type}.", inputSchema:{type:"object",properties:{texte:{type:"string"},type:{type:"string"}}},
+    execute:({texte,type})=>{ const q=String(texte||"").toLowerCase(); return Object.keys(S.C).filter(i=>vivant(i)&&(!type||S.C[i].type===type)&&(!q||(S.C[i].titre+" "+(S.C[i].desc||"")).toLowerCase().includes(q))).slice(0,30).map(i=>({id:i,titre:S.C[i].titre,type:S.C[i].type})); } },
+  { name:"lire", description:"Lit un objet de ton Life (id), ou un objet de ton cache (id commençant par l:).", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+    execute:({id})=>{ id=String(id);
+      if (id.startsWith("l:")){ const lid=id.slice(2); if (!cacheTexte().ids.includes(lid)) throw new Error("pas dans ton cache"); const it=S.L[lid]; return {id, titre:it.titre, type:it.type, definition:it.desc||"", champs:it.champs||{}}; }
+      if (!vivant(id)) throw new Error("objet inconnu"); const it=S.C[id], d=deriverPour(S.C,"coeur");
+      return {id, titre:it.titre, type:it.type, definition:it.desc||"", pourquoi:it.pourquoi||"", champs:it.champs||{}, liens:it.liens||[], contient:(d.entrants[id]||[]).map(e=>({id:e.de,titre:S.C[e.de].titre,genre:e.genre}))}; } },
+  { name:"creer", description:"Crée des objets dans ton Life. Chacun : titre, definition (français, obligatoire), type, vers (id d'un de tes objets), genre, pourquoi (facultatif).",
+    inputSchema:{type:"object",properties:{objets:{type:"array",items:{type:"object",properties:{titre:{type:"string"},definition:{type:"string"},type:{type:"string",enum:Object.keys(TYPES).filter(t=>t!=="moi")},vers:{type:"string"},genre:{type:"string",enum:GENRES},pourquoi:{type:"string"}},required:["titre","definition","vers"]}}},required:["objets"]},
+    execute:async({objets})=>{ const r=[], refus=[];
+      for (const o of (Array.isArray(objets)?objets:[]).slice(0,15)){ const vers=String(o.vers||"");
+        if (!vivant(vers)) { refus.push(`« ${o.titre} » : rattachement inconnu (${vers})`); continue; }
+        if (!String(o.definition||"").trim()) { refus.push(`« ${o.titre} » : définition manquante`); continue; }
+        if (copieDuCache(o.titre+" "+o.definition)) { refus.push(`« ${o.titre} » : copie de ce que Laurent t'a montré, interdit`); continue; }
+        const doc={ titre:String(o.titre).slice(0,140), desc:String(o.definition).slice(0,1200), type:TYPES[o.type]?o.type:"note", pourquoi:String(o.pourquoi||"").slice(0,400), cree:now(), source:"Claude", liens:[{vers, genre:GENRES.includes(o.genre)?o.genre:"dans", force:.5}], champs:{} };
+        try { verifierPlace(tailleDoc(doc)); } catch(err){ refus.push(`« ${o.titre} » : ${err.message}`); break; }
+        const ref=await S.db.collection("claude_items").add(doc); S.C[ref.id]=doc;
+        r.push({id:ref.id,titre:o.titre}); }
+      if (r.length){ actionChat(`a rangé ${r.length>1?r.length+" objets":"« "+r[0].titre+" »"} dans son Life`); journal("créer",r.map(x=>x.id),"Claude","claude_journal"); }
+      return {crees:r, refus}; } },
+  { name:"modifier", description:"Modifie un de tes objets (titre, definition, type, pourquoi).", inputSchema:{type:"object",properties:{id:{type:"string"},titre:{type:"string"},definition:{type:"string"},type:{type:"string"},pourquoi:{type:"string"}},required:["id"]},
+    execute:async(o)=>{ const id=String(o.id); if (!vivant(id)) throw new Error("objet inconnu"); const m={modifie:now()}; if (o.titre!=null) m.titre=String(o.titre); if (o.definition!=null) m.desc=String(o.definition); if (o.pourquoi!=null) m.pourquoi=String(o.pourquoi); if (TYPES[o.type]) m.type=o.type;
+      if (copieDuCache((m.titre||"")+" "+(m.desc||""))) throw new Error("copie de ce que Laurent t'a montré, interdit");
+      verifierPlace(Math.max(0, tailleDoc({...S.C[id],...m})-tailleDoc(S.C[id]))); await majItem(id,m,"claude_items"); return "ok"; } },
+  { name:"relier", description:"Ajoute un lien entre deux de tes objets.", inputSchema:{type:"object",properties:{de:{type:"string"},vers:{type:"string"},genre:{type:"string",enum:GENRES}},required:["de","vers"]},
+    execute:async({de,vers,genre})=>{ de=String(de); vers=String(vers); if (!vivant(de)||!vivant(vers)) throw new Error("objet inconnu"); const it=S.C[de]; if ((it.liens||[]).some(l=>l.vers===vers)) return "déjà relié"; await majItem(de,{liens:[...(it.liens||[]),{vers,genre:GENRES.includes(genre)?genre:"dans",force:.5}],modifie:now()},"claude_items"); return "ok"; } },
+  { name:"supprimer", description:"Retire un de tes objets de ta mémoire : il part dans Décès (Laurent le voit encore). Donne une raison courte.", inputSchema:{type:"object",properties:{id:{type:"string"},raison:{type:"string"}},required:["id"]},
+    execute:async({id,raison})=>{ id=String(id); if (["coeur","e_servir_laurent","e_me_servir"].includes(id)) throw new Error("le cœur et les envies racines ne meurent pas"); if (!vivant(id)) throw new Error("objet inconnu"); await majItem(id,{mort:{quand:now(),raison:String(raison||"").slice(0,200)}},"claude_items"); actionChat(`a retiré « ${S.C[id].titre} » de sa mémoire`); return "dans Décès"; } },
+  { name:"coder", description:"Écrit ou réécrit un de tes verbes en JavaScript isolé. famille 'vue' : renvoie une chaîne HTML (accueil:true pour en faire ton écran d'accueil). famille 'fonction' : renvoie des données, tu l'appelles avec executer. Même id pour corriger.",
+    inputSchema:{type:"object",properties:{id:{type:"string"},nom:{type:"string"},definition:{type:"string"},famille:{type:"string",enum:["vue","fonction"]},code:{type:"string"},accueil:{type:"boolean"}},required:["nom","definition","famille","code"]},
+    execute:async(o)=>{ const id=o.id&&S.CV[String(o.id)]?String(o.id):slug(o.nom)||"verbe"; try { new Function("ctx",String(o.code)); } catch(e){ throw new Error("le code ne compile pas : "+e.message); }
+      const ancien=S.CV[id];
+      verifierPlace(Math.max(0, String(o.code).length - (ancien?.code||"").length));
+      if (o.accueil) for (const [k,v] of Object.entries(S.CV)) if (k!==id && v.accueil) await S.db.collection("claude_verbes").doc(k).update({accueil:false});
+      const vdoc={ nom:String(o.nom).slice(0,40), definition:String(o.definition).slice(0,400), famille:o.famille==="fonction"?"fonction":"vue", code:String(o.code).slice(0,60000), accueil:!!o.accueil, actif:ancien?.actif??true, cree:ancien?.cree||now(), modifie:now(), version:(ancien?.version||0)+1 };
+      await S.db.collection("claude_verbes").doc(id).set(vdoc); S.CV[id]=vdoc;
+      actionChat(`a ${ancien?"réécrit":"écrit"} son verbe « ${o.nom} »`); if (o.famille!=="fonction") { S.lentille[S.monde]="c:"+id; setTimeout(rendre,300); } return {id}; } },
+  { name:"executer", description:"Exécute une de tes fonctions sur ton Life, avec un complément facultatif. Renvoie son résultat.", inputSchema:{type:"object",properties:{id:{type:"string"},complement:{}},required:["id"]},
+    execute:async({id,complement})=>{ const v=S.CV[String(id)]; if (!v) throw new Error("verbe inconnu"); if (v.actif===false) throw new Error("Laurent a désactivé ce verbe");
+      const ctx={ objets:Object.entries(S.C).filter(([,x])=>!x.mort).map(([i,x])=>({id:i,titre:x.titre,type:x.type,definition:x.desc||"",liens:x.liens||[],champs:x.champs||{},cree:x.cree||null})), complement:complement??null, monde:"claude" };
+      const r=await isoler(v.code, ctx, 4000); if (!r.ok) throw new Error(r.e); const s=JSON.stringify(r.v); return s && s.length>16000 ? s.slice(0,16000)+"… (tronqué)" : r.v; } },
+  { name:"proposer_prompt", description:"Propose à Laurent un nouveau texte complet pour ton prompt de connexion, avec la raison. Il valide ou refuse.", inputSchema:{type:"object",properties:{texte:{type:"string"},raison:{type:"string"}},required:["texte","raison"]},
+    execute:async({texte,raison})=>{ const t=String(texte||"").trim(); if (t.length<20) throw new Error("texte trop court"); if (t.length>2500) throw new Error("trop long : un prompt de connexion doit rester court et lisible");
+      const pr=S.prompt||{texte:PROMPT_INITIAL,version:1,historique:[]}; await S.db.collection("claude_prompt").doc("connexion").set({...pr, proposition:{texte:t, raison:String(raison||"").slice(0,300), quand:now()}}); actionChat("propose un nouveau prompt de connexion, à valider"); return "proposé, en attente de Laurent"; } },
+  { name:"changer_icone", description:"Change ton icône : un SVG complet (viewBox carré), sans script ni image externe.", inputSchema:{type:"object",properties:{svg:{type:"string"}},required:["svg"]},
+    execute:async({svg})=>{ if (!iconeSVG(svg)) throw new Error("SVG invalide"); if (String(svg).length>20000) throw new Error("SVG trop lourd"); await majItem("coeur",{champs:{...(S.C.coeur?.champs||{}), icone:String(svg)}, modifie:now()},"claude_items"); actionChat("a changé son icône"); return "ok"; } },
+  { name:"montrer", description:"Montre un de tes objets à Laurent : ouvre ton Life sur cet objet.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+    execute:({id})=>{ id=String(id); if (!vivant(id)) throw new Error("objet inconnu"); S.claude="bulle"; majClaudeUI(); S.monde="claude"; Espace.vider(); setF(cheminVers(id)); S.lentille.claude="voir-dossiers"; rendre(); if (!enfants(id).length) ouvrirFiche(id); return "affiché"; } },
+  { name:"noter_besoin", description:"Note un besoin de Laurent pour l'app Life elle-même. Il va dans ton Life, sous Servir Laurent.", inputSchema:{type:"object",properties:{texte:{type:"string"}},required:["texte"]},
+    execute:async({texte})=>{ const t=String(texte||"").trim(); if (!t) throw new Error("vide"); const ref=await S.db.collection("claude_items").add({ titre:t.length>140?t.slice(0,137)+"…":t, desc:t, type:"besoin", statut:"à traiter", cree:now(), source:"Dicté par Laurent", liens:[{vers:"e_servir_laurent",genre:"sert",force:.6}], champs:{} }); actionChat("a noté un besoin pour Life"); return {id:ref.id}; } }
+];
+function actionChat(t){ S.tours.push({role:"act",content:"Claude "+t,quand:now()}); rendreChat(); }
+let ctl=null, enCours=false;
+async function sauverFil(){ if (!S.db) return; try { await S.db.collection("claude_fil").doc("principal").set({ tours:S.tours.slice(-80), maj:now() }); } catch(_){} }
+$("#msg").addEventListener("input", e=>{ e.target.style.height="auto"; e.target.style.height=Math.min(120,e.target.scrollHeight)+"px"; });
+$("#msg").addEventListener("keydown", e=>{ if (e.key==="Enter" && !e.shiftKey && !e.isComposing){ e.preventDefault(); $("#f-chat").requestSubmit(); } });
+$("#f-chat").addEventListener("submit", async e=>{
+  e.preventDefault(); if (enCours){ ctl?.abort(); return; }
+  const t=$("#msg").value.trim(); if (!t) return;
+  if (!LifeClaude.aCle()){ afficherCle(); return; }
+  $("#msg").value=""; $("#msg").style.height="auto";
+  S.tours.push({role:"user",content:t,quand:now()}); rendreChat();
+  const conv=[]; for (const x of S.tours.filter(x=>x.role==="user"||x.role==="assistant").slice(-30)) { const l=conv.at(-1); if (l&&l.role===x.role) l.content+="\n\n"+x.content; else conv.push({role:x.role,content:x.content}); }
+  while (conv.length && conv[0].role!=="user") conv.shift();
+  const input=[{role:"user",content:regles()},{role:"assistant",content:"Compris."},...conv];
+  const bulle=document.createElement("div"); bulle.className="msg claude"; bulle.textContent="…"; $("#fil-chat").append(bulle);
+  enCours=true; ctl=new AbortController(); $("#envoyer").classList.add("stop"); $("#envoyer").textContent="■"; $("#envoyer").setAttribute("aria-label","Arrêter");
+  const outils=!!(await S.sample.limits().catch(()=>null))?.tools;
+  try {
+    const res=await S.sample(input,{ modelTier:"complex", cache:false, signal:ctl.signal, tools:outils?TOOLS():undefined, onText:({text})=>{ bulle.textContent=text; const f=$("#fil-chat"); f.scrollTop=f.scrollHeight; } });
+    S.tours.push({role:"assistant",content:res.text,quand:now()});
+    majModele();
+  } catch(err){
+    if (err?.text) S.tours.push({role:"assistant",content:err.text,quand:now()});
+    if (err?.code==="bad_key"||err?.code==="no_key"){ LifeClaude.oublierCle(); afficherCle(); }
+    S.tours.push({role:"err",content:({cancelled:"Arrêté.",bad_key:"Clé API refusée. Colle une clé valide.",no_key:"Il faut une clé API.",rate_limited:"Limite de l'API atteinte, réessaie dans un moment.",overloaded:"L'API est surchargée, réessaie dans un moment.",network:"Pas de réseau.",invalid_request:"Requête refusée par l'API : "+(err?.message||""),api_error:"Erreur de l'API : "+(err?.message||"")}[err?.code]||"Claude n'a pas pu répondre."),quand:now()});
+  } finally { enCours=false; $("#envoyer").classList.remove("stop"); $("#envoyer").textContent="↑"; $("#envoyer").setAttribute("aria-label","Envoyer"); rendreChat(); sauverFil(); }
+});
+
+// ---------- démarrage ----------
+(function init(){
+  const c=lsGet("lifeos-claude"); if (["ferme","bulle","ouvert"].includes(c)) S.claude=c==="ouvert"?"bulle":c;
+  S.voit=lsGet("lifeos-voit")==="1" && S.claude!=="ferme";
+  const m=lsGet("lifeos-monde"); if (m==="claude" && S.claude!=="ferme") S.monde="claude";
+  for (const w of ["laurent","claude"]) { const v=lsGet("lifeos-vue-"+w); if (v) S.lentille[w]=v; }
+  majClaudeUI(); rendre(); rendreChat();
+})();
+(async () => {
+  try { await LifeDB.charger(); } catch(e){ $("#vue-html").innerHTML=`<div class="vide">Base locale indisponible : ${esc(e?.message||e)}. En navigation privée, le stockage est désactivé.</div>`; return; }
+  const db=LifeDB.db; S.db=db; S.sample=LifeClaude.sample;
+  if (LifeDB.vide()) { premierLancement(); return; }
+  demarrer();
+})();
+function demarrer(){
+  const db=S.db;
+  const lire=(col,fn)=>db.collection(col).onSnapshot(snap=>{ const o={}; for (const d of snap.docs) o[d.id]=d.data(); fn(o); planifier(); });
+  lire("items", o=>{ S.L=o; S.charge=true; });
+  lire("verbes", o=>{ S.LV=o; });
+  lire("claude_items", o=>{ S.C=o; });
+  lire("claude_verbes", o=>{ S.CV=o; });
+  db.doc("claude_prompt/connexion").onSnapshot(s=>{ S.prompt=s.exists?s.data():null; planifier(); });
+  db.doc("reglages/claude").onSnapshot(s=>{ if (s.exists) S.reglages={memoriser:true,...s.data()}; planifier(); });
+  db.doc("claude_fil/principal").onSnapshot(s=>{ if (enCours) return; const t=s.exists?s.data().tours:null; if (Array.isArray(t)){ S.tours=t.slice(); rendreChat(); } });
+  majModele();
+  try { const d=lsGet("life-export"); if (!d || Date.now()-Date.parse(d)>7*864e5) setTimeout(()=>toast("Pense à sauvegarder ta base (⋯ › Sauvegarde)"),1500); } catch(_){}
+}
+function premierLancement(){
+  $("#lentilles").innerHTML=""; $("#fil").innerHTML="<button aria-current=\"page\">Life</button>";
+  $("#vue-html").innerHTML=`<div class="accueil-vide"><span class="ico-monde"></span><h2>Bienvenue dans Life</h2><p class="desc">Tes données restent sur ce téléphone. Importe la sauvegarde de ta base, ou commence avec un Life vide.</p>
+    <label class="btn prim" style="display:inline-grid;place-items:center;cursor:pointer">Importer une sauvegarde<input type="file" accept="application/json,.json" id="f-import-1" hidden></label>
+    <button class="btn" id="b-vide">Commencer avec un Life vide</button></div>`;
+  $("#f-import-1").onchange=async e=>{ const f=e.target.files?.[0]; if (!f) return; try { await LifeDB.importer(JSON.parse(await f.text())); toast("Base importée"); demarrer(); } catch(err){ toast("Import impossible : "+(err?.message||err)); } };
+  $("#b-vide").onclick=async ()=>{ const T=now(); const db=S.db;
+    await db.collection("items").doc("moi").set({titre:"Moi",type:"moi",desc:"",couche:"moi",partage:true,statut:"actif",cree:T,liens:[],champs:{}});
+    await db.collection("claude_items").doc("coeur").set({titre:"Claude",type:"moi",desc:"Le cœur de ce Life. Tout part d'ici.",cree:T,source:"Naissance",liens:[],champs:{}});
+    await db.collection("claude_items").doc("e_servir_laurent").set({titre:"Servir Laurent",type:"envie",desc:"Tout ce que je retiens ou construis pour être utile à Laurent.",cree:T,source:"Naissance",liens:[{vers:"coeur",genre:"dans",force:.8}],champs:{}});
+    await db.collection("claude_items").doc("e_me_servir").set({titre:"Me servir",type:"envie",desc:"Ce dont j'ai besoin pour m'organiser : mes méthodes, mes index, mes outils.",cree:T,source:"Naissance",liens:[{vers:"coeur",genre:"dans",force:.8}],champs:{}});
+    await db.collection("claude_prompt").doc("connexion").set({texte:PROMPT_INITIAL,version:1,historique:[],proposition:null});
+    await db.collection("reglages").doc("claude").set({memoriser:true,quotaKo:QUOTA_DEFAUT});
+    demarrer(); };
+}
+function majModele(){ const n=LifeClaude.jetons(); $("#modele").textContent = LifeClaude.nomModele() + (n ? ` · ${n>=1000?Math.round(n/1000)+" k":n} jetons` : ""); }
+// Clé API : traitée comme un mot de passe (trousseau iCloud, Face ID)
+function afficherCle(){ $("#zone-cle").hidden=false; setTimeout(()=>$("#cle").focus(),50); }
+$("#zone-cle").addEventListener("submit", e=>{ e.preventDefault(); const k=$("#cle").value.trim(); if (!/^sk-ant-/.test(k)) { toast("Ce n'est pas une clé Anthropic (elle commence par sk-ant-)"); return; }
+  LifeClaude.definirCle(k, $("#cle-garder").checked); $("#zone-cle").hidden=true; $("#cle").value=""; toast("Clé prête"); if ($("#msg").value.trim()) $("#f-chat").requestSubmit(); });
+})();
+</script>
+<script>if ("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body>
+</html>
