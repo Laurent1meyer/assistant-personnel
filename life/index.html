@@ -32,7 +32,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .ic{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .tuile{width:62px;height:62px;border-radius:15px;display:grid;place-items:center;color:#fff;font-size:26px;font-weight:700;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tuile.dossier{background:color-mix(in srgb,var(--doux) 22%,var(--carte));grid-template-columns:repeat(3,12px);grid-auto-rows:12px;gap:4px;align-content:center;justify-content:center}
-.tuile.dossier i{border-radius:3px;display:block}
+.tuile.dossier i{border-radius:3px;display:block;width:12px;height:12px}
 .tuile .nb{position:absolute;right:-6px;top:-6px;background:var(--accent);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
 .tuile .joue{position:absolute;right:4px;bottom:2px;font-size:12px}
 .lab{font-size:12px;text-align:center;line-height:1.2;max-width:84px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -76,12 +76,30 @@ input,textarea{width:100%;font:inherit;font-size:16px;color:var(--encre);backgro
 .q{display:block;font-weight:700;margin-bottom:6px}
 #toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);background:var(--encre);color:var(--fond);padding:9px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+#oeil{width:34px;height:34px;border-radius:50%;font-size:18px;color:var(--doux);border:1.5px solid var(--trait);flex:none}
+#oeil.on{background:var(--claude);border-color:var(--claude);color:#fff}
+#vision{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 16px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--claude) 14%,var(--carte));font-size:13px}
+#vision span{flex:1;min-width:150px}
+#vision button{font-size:13px;font-weight:600;color:var(--claude);padding:4px 6px}
+.claude-on .cache-claude .tuile,.claude-on .cache-claude.ligne{outline:2px dashed var(--claude);outline-offset:3px;filter:saturate(.35)}
+.claude-on .cache-claude::after{content:"✦̸";position:absolute;left:4px;bottom:34px;font-size:12px;color:var(--claude)}
+.claude-on .cache-claude.ligne::after{left:auto;right:12px;bottom:auto;top:10px}
+.claude-on #vue.cache-claude-tout{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--claude) 55%,transparent);border-radius:14px}
+.marque{position:absolute;right:2px;top:-6px;z-index:1;font-size:10px;font-weight:700;border-radius:8px;padding:1px 5px;color:#fff}
+.marque.ok{background:#12976B}.marque.bloque{background:var(--rouge)}.marque.toi{background:var(--accent)}
+.claude-on .cache-claude .marque{display:none}
+pre.code{font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--carte);border:1px solid var(--trait);border-radius:10px;padding:10px;max-height:40vh;overflow:auto;white-space:pre-wrap}
+details summary{cursor:pointer;margin-top:10px}
+#fil{position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0));background:var(--encre);color:var(--fond);border-radius:14px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:flex-end;z-index:9;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+#fil-l{flex:1;display:flex;flex-direction:column;gap:2px}#fil-l div:not(:last-child){opacity:.6}
+#fil-stop{color:var(--fond);font-weight:700;font-size:13px;opacity:.8}
 body.secours .haut{background:color-mix(in srgb,var(--rouge) 12%,transparent)}
 </style>
 </head>
 <body>
 <button id="bandeau" hidden>Mode secours : verbes d'origine. Touche pour revenir aux tiens.</button>
-<header class="haut"><button id="retour" hidden aria-label="Retour">‹</button><h1 id="titre">Life</h1><button id="logo" aria-label="Accueil (appui long : mode secours)"></button></header>
+<header class="haut"><button id="retour" hidden aria-label="Retour">‹</button><h1 id="titre">Life</h1><button id="oeil" aria-pressed="false" aria-label="Claude voit l'écran">✦</button><button id="logo" aria-label="Accueil (appui long : mode secours)"></button></header>
+<div id="vision" hidden></div>
 <main id="vue"><p class="doux">Ouverture…</p></main>
 <nav class="barre">
   <button data-barre="accueil"><b>⌂</b>Accueil</button>
@@ -91,6 +109,7 @@ body.secours .haut{background:color-mix(in srgb,var(--rouge) 12%,transparent)}
 </nav>
 <div id="voile"></div>
 <div id="feuille" role="dialog"><div id="feuille-corps"></div></div>
+<div id="fil" hidden><div id="fil-l"></div><button id="fil-stop">Arrêter</button></div>
 <div id="toast" role="status"></div>
 <script>
 // Pas de console sur iPhone : les erreurs s'affichent.
@@ -209,7 +228,7 @@ const LifeClaude = (() => {
     const outils = (opts.tools || []).map(t => ({ name: t.name, description: t.description, input_schema: t.inputSchema || { type: "object", properties: {} } }));
     if (r.web === true && webOK) outils.push({ type: "web_search_20250305", name: "web_search", max_uses: 5 });
     let texte = "";
-    for (let tour = 0; tour < 12; tour++) {
+    for (let tour = 0; tour < (opts.maxTours || 12); tour++) {
       let j;
       try { j = await appel({ model, max_tokens: 8192, system, messages: msgs, ...(outils.length ? { tools: outils } : {}) }, opts.signal); }
       catch (e) {
@@ -255,7 +274,14 @@ const corps = fn => { const s = fn.toString(); return s.slice(s.indexOf("{") + 1
 function lsGet(k){ try { return localStorage.getItem(k); } catch(_) { return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(_) {} }
 
-const K = { O:{}, V:{}, db:null, secours:false, sujet:null, pile:[], actions:{}, pret:false };
+const K = { O:{}, V:{}, db:null, secours:false, sujet:null, pile:[], actions:{}, pret:false,
+  claude:{ actif:false, montre:new Set(), travaille:null }, capture:null };
+// Ce que Claude connaît : ce que Laurent a partagé (ou que Claude a créé, qui naît partagé).
+const connu = id => id==="moi" || K.O[id]?.partage===true;
+// Ce que Claude voit à cet instant : ce qu'il connaît + ce que Laurent vient de lui montrer.
+const vu = id => connu(id) || K.claude.montre.has(id);
+// Verbes écrits par Claude qui touchent au réseau, aux secrets ou aux données brutes : Laurent valide avant.
+const SENSIBLE = /\b(fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|secret|importScripts|localStorage|indexedDB|LifeDB|LifeClaude)\b|import\s*\(/;
 
 // ---------- couleurs par type ----------
 const COULEURS = { moi:"#1D74F5", envie:"#E8467C", projet:"#2F6BD8", tache:"#F07A1A", idee:"#8E5CF0", personne:"#D9A20B", lieu:"#0E9B73", bien:"#5E6E80",
@@ -277,7 +303,7 @@ const base = {
   chemin: id => { const c=[]; let x=id, n=0; while (x && K.O[x] && n++<20) { c.unshift(avecId(x)); x=K.O[x].parent; } return c; },
   tous: () => Object.keys(K.O).filter(i=>!K.O[i].supprime).map(avecId),
   chercher: txt => { const q=String(txt||"").toLowerCase().trim(); return base.tous().filter(o => !q || (o.titre+" "+(o.desc||"")+" "+(o.type||"")).toLowerCase().includes(q)).slice(0,60); },
-  creer: async o => { const doc={ titre:String(o.titre||"Sans nom"), type:o.type||"note", parent:o.parent??"moi", desc:o.desc||"", champs:o.champs||{}, relations:o.relations||[], partage:o.partage??false, cree:now(), ...(o.phrase?{phrase:o.phrase}:{}), ...(o.emoji?{emoji:o.emoji}:{}) };
+  creer: async o => { const doc={ titre:String(o.titre||"Sans nom"), type:o.type||"note", parent:o.parent??"moi", desc:o.desc||"", champs:o.champs||{}, relations:o.relations||[], partage:o.partage??false, cree:now(), ...(o.phrase?{phrase:o.phrase}:{}), ...(o.emoji?{emoji:o.emoji}:{}), ...(o.auteur?{auteur:o.auteur}:{}) };
     const ref=await K.db.collection("objets").add(doc); K.O[ref.id]=doc; await journal("créer",ref.id); return ref.id; },
   modifier: async (id, m) => { if (!K.O[id]) throw new Error("objet inconnu"); const avant=copie(K.O[id]); const n={...K.O[id], ...copie(m), modifie:now()}; K.O[id]=n; await K.db.collection("objets").doc(id).set(n); await journal("modifier",id,avant); },
   supprimer: async id => { if (!K.O[id]) return; await base.modifier(id,{supprime:now()}); }
@@ -304,9 +330,10 @@ async function faire(nom, sujetId, c={}){
   const tv = trouver(nom, sujet);
   if (!tv) { dire(`Aucun verbe « ${nom} » pour ${sujet ? "un objet de type « "+(sujet.type||"?")+" »" : "ce cas"}.`); return; }
   const [vid, v] = tv;
+  if (v.aValider && !K.secours) { if (!(await validerVerbe(vid))) { dire(`« ${v.nom} » n'est pas autorisé`); if (K.capture) K.capture.erreurs.push(`Laurent n'a pas autorisé le verbe « ${v.nom} »`); return; } }
   if (++profondeur > 20) { profondeur=0; throw new Error("trop d'appels imbriqués"); }
-  try { return await compiler(codeActif(v))(sujet, c||{}, ctx(vid)); }
-  catch(err){ afficherErreur(vid, v, err); }
+  try { return await compiler(codeActif(K.secours ? v : (K.V[vid]||v)))(sujet, c||{}, ctx(vid)); }
+  catch(err){ if (K.capture) K.capture.erreurs.push(`« ${v.nom} » : ${err?.message||err}`); else afficherErreur(vid, v, err); }
   finally { profondeur--; }
 }
 async function sauverVerbe(id, m, auteur="Laurent"){
@@ -316,6 +343,7 @@ async function sauverVerbe(id, m, auteur="Laurent"){
     ? { ...ancien, ...m, version:(ancien.version||1)+(m.code!=null&&m.code!==ancien.code?1:0), epingle:null, modifie:now(), auteur,
         historique: m.code!=null&&m.code!==ancien.code ? [...(ancien.historique||[]), {version:ancien.version||1, code:ancien.code, quand:ancien.modifie||ancien.cree||now(), auteur:ancien.auteur||"origine"}].slice(-30) : (ancien.historique||[]) }
     : { nom:m.nom, pour:m.pour||["*"], definition:m.definition||"", code:m.code||"", version:1, historique:[], cree:now(), modifie:now(), auteur, actif:true, ...m };
+  if (auteur==="Claude" && SENSIBLE.test(n.code||"")) n.aValider = true; else if (auteur!=="Claude") delete n.aValider;
   K.V[id]=n; await K.db.collection("verbes").doc(id).set(n); await journal("verbe "+(ancien?"modifié":"créé"), id);
 }
 
@@ -325,9 +353,11 @@ function ecran(html, opt={}){
   K.actions = opt.actions || {};
   $("#titre").textContent = opt.titre ?? (K.sujet ? K.O[K.sujet]?.titre : "Life") ?? "Life";
   $("#retour").hidden = !K.pile.length;
+  if (opt.sujet !== undefined) K.claude.montre.clear();   // montrer à Claude ne vaut que pour l'écran du moment
   $("#vue").innerHTML = html; $("#vue").scrollTop = 0;
+  majVision();
 }
-function dire(t){ const e=$("#toast"); e.textContent=t; e.classList.add("on"); clearTimeout(dire.h); dire.h=setTimeout(()=>e.classList.remove("on"),2600); }
+function dire(t){ if (K.capture) K.capture.dits.push(String(t)); const e=$("#toast"); e.textContent=t; e.classList.add("on"); clearTimeout(dire.h); dire.h=setTimeout(()=>e.classList.remove("on"),2600); }
 function feuille(html){ $("#feuille-corps").innerHTML=html; $("#feuille").classList.add("on"); $("#voile").classList.add("on"); }
 function fermerFeuille(){ $("#feuille").classList.remove("on"); $("#voile").classList.remove("on"); if (fermerFeuille.annuler) { const f=fermerFeuille.annuler; fermerFeuille.annuler=null; f(); } }
 $("#voile").onclick = fermerFeuille;
@@ -355,17 +385,99 @@ function ouvrir(url){ const u=String(url||""); if (!/^https?:\/\//i.test(u)) { d
 function tuile(o){
   const nb = enfants(o.id).length, c=couleur(o.type);
   const priv = !o.partage && o.id!=="moi" ? `<span class="prive" title="Privé : Claude ne le voit pas">🔒</span>` : "";
+  const st = o.champs?.statut, marque = st==="fait" ? `<span class="marque ok">✓</span>` : st==="bloqué" ? `<span class="marque bloque">!</span>` : o.champs?.pour==="Laurent" ? `<span class="marque toi">toi</span>` : "";
   const fond = nb ? `<div class="tuile dossier">${enfants(o.id).slice(0,9).map(e=>`<i style="background:${couleur(e.type)}"></i>`).join("")}<span class="nb">${nb}</span></div>`
     : `<div class="tuile" style="background:${c}">${esc(lettre(o))}${o.type==="tache"&&o.phrase?`<span class="joue">▶</span>`:""}</div>`;
-  return `<button class="ic" data-objet="${esc(o.id)}">${priv}${fond}<span class="lab">${esc(o.titre)}</span></button>`;
+  return `<button class="ic" data-objet="${esc(o.id)}">${priv}${marque}${fond}<span class="lab">${esc(o.titre)}</span></button>`;
 }
 const grille = objs => objs.length ? `<div class="grille">${objs.map(tuile).join("")}</div>` : `<p class="doux">Vide. Touche ＋ pour créer quelque chose ici.</p>`;
 
 function ctx(vid){
   return { base, faire, ecran, dire, demander, choisir, confirmer, ouvrir, tuile, grille, esc, couleur, lettre, date:dateCourte,
     verbes: id => verbesPour(id?avecId(id):null).map(([i,v])=>({id:i, nom:v.nom, definition:v.definition})),
-    claude: (texte, sujetId) => claudeFaire(texte, sujetId),
+    claude: (texte, opt) => claudeFaire(texte, typeof opt==="string" ? {sujet:opt} : (opt||{})),
+    claudeActif: () => K.claude.actif,
+    secret, oublierSecret, secrets: nomsSecrets, telecharger, choisirFichier,
     moi: vid, courant: () => K.sujet, __versions: id => versions(id) };
+}
+
+// ---------- coffre : les secrets restent sur l'iPhone, Claude n'en connaît que le nom ----------
+async function secret(nom, opt={}){
+  nom = String(nom); const d = await K.db.collection("coffre").doc(nom).get();
+  if (d.exists) return d.data().valeur;
+  const v = await demander(opt.question || `Un verbe a besoin du secret « ${nom} ». Il reste dans le coffre de ton iPhone : Claude ne le voit jamais.`, "", {motdepasse:true, ok:"Ranger au coffre"});
+  if (v==null) return null;
+  await K.db.collection("coffre").doc(nom).set({ valeur:v, cree:now() }); await journal("secret rangé", nom);
+  return v;
+}
+async function oublierSecret(nom){ await K.db.collection("coffre").doc(String(nom)).delete(); await journal("secret oublié", String(nom)); }
+async function nomsSecrets(){ return (await K.db.collection("coffre").get()).docs.map(d=>d.id); }
+
+// ---------- fichiers : sortir et entrer ----------
+async function telecharger(nom, texte, type="application/json"){
+  const blob = new Blob([texte], { type: type+";charset=utf-8" });
+  try { const f = new File([blob], nom, { type: type+";charset=utf-8" }); if (navigator.canShare?.({ files:[f] })) { await navigator.share({ files:[f], title:nom }); return true; } } catch(e){ if (e?.name==="AbortError") return false; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); return true;
+}
+function choisirFichier(accept=""){
+  return new Promise(res=>{ const i=document.createElement("input"); i.type="file"; i.accept=accept; i.style.display="none"; document.body.appendChild(i);
+    i.onchange=()=>{ res(i.files[0]||null); i.remove(); }; i.click(); });
+}
+
+// ---------- la vision de Claude ----------
+// Claude activé = il voit l'écran. Mais de chez Laurent, il ne voit que ce qu'il connaît déjà ;
+// le reste lui est masqué, jusqu'à ce que Laurent le lui montre — pour cet écran seulement.
+function masquesEcran(){
+  const ids = [...new Set([...document.querySelectorAll("#vue [data-objet]")].map(e=>e.dataset.objet))];
+  return { ids: ids.filter(id=>!vu(id)), sujet: K.sujet && !vu(K.sujet) ? K.sujet : null };
+}
+function majVision(){
+  const on = K.claude.actif;
+  document.body.classList.toggle("claude-on", on);
+  $("#oeil").classList.toggle("on", on); $("#oeil").setAttribute("aria-pressed", String(on));
+  for (const e of document.querySelectorAll("#vue [data-objet]")) e.classList.toggle("cache-claude", on && !vu(e.dataset.objet));
+  const m = on ? masquesEcran() : {ids:[], sujet:null};
+  $("#vue").classList.toggle("cache-claude-tout", !!m.sujet);
+  const n = m.ids.length + (m.sujet?1:0);
+  $("#vision").hidden = !on;
+  if (on) $("#vision").innerHTML = n
+    ? `<span>✦ Claude voit l'écran, sauf ${m.sujet?"<b>cette page</b>":""}${m.sujet&&m.ids.length?" et ":""}${m.ids.length?`<b>${m.ids.length} élément${m.ids.length>1?"s":""}</b>`:""} (privé)</span><button data-vision="montrer">Lui montrer</button><button data-vision="couper">Couper</button>`
+    : `<span>✦ Claude voit cet écran${K.claude.montre.size?" · montré pour cette fois":""}</span><button data-vision="couper">Couper</button>`;
+}
+function activerClaude(on){ K.claude.actif = on; if (!on) K.claude.montre.clear(); majVision(); dire(on ? "Claude voit l'écran. Ton privé reste masqué pour lui." : "Claude ne voit plus rien."); }
+$("#oeil").onclick = ()=>activerClaude(!K.claude.actif);
+$("#vision").onclick = e=>{ const b=e.target.closest("[data-vision]"); if (!b) return;
+  if (b.dataset.vision==="couper") return activerClaude(false);
+  const m=masquesEcran(); for (const id of m.ids) K.claude.montre.add(id); if (m.sujet) K.claude.montre.add(m.sujet);
+  majVision(); dire("Montré à Claude pour cet écran. Rien n'est rangé chez lui."); };
+// Ce que Claude reçoit de l'écran : le texte affiché, le privé remplacé par « masqué ».
+function ecranPourClaude(){
+  if (!K.claude.actif) return "(Claude est coupé : tu ne vois pas l'écran.)";
+  const m = masquesEcran();
+  if (m.sujet) {
+    const visibles = [...new Set([...document.querySelectorAll("#vue [data-objet]")].map(e=>e.dataset.objet))].filter(vu).map(id=>`${K.O[id]?.titre} [${id}]`);
+    return `Écran : une page privée, masquée pour toi (Laurent ne te l'a pas montrée).${visibles.length?" Objets que tu connais sur cet écran : "+visibles.join(", "):""}`;
+  }
+  const c = $("#vue").cloneNode(true);
+  for (const e of c.querySelectorAll("[data-objet]")) { const id=e.dataset.objet; e.replaceWith(document.createTextNode(vu(id) ? ` ⟨${K.O[id]?.titre||"?"} [${id}, ${K.O[id]?.type||"?"}]⟩ ` : " ⟨objet privé masqué⟩ ")); }
+  for (const e of c.querySelectorAll("input,textarea")) e.replaceWith(document.createTextNode(e.type==="password" ? "[champ secret]" : `[champ : ${e.value}]`));
+  for (const e of c.querySelectorAll("video,audio,img")) e.replaceWith(document.createTextNode(`[${e.tagName.toLowerCase()}${e.currentSrc||e.src?" : "+(e.currentSrc||e.src):""}]`));
+  const sujet = K.sujet && vu(K.sujet) ? ` (objet ${K.sujet}, type ${K.O[K.sujet]?.type})` : "";
+  return `Écran « ${$("#titre").textContent} »${sujet} :\n` + c.textContent.replace(/[ \t]+/g," ").replace(/\n\s*\n+/g,"\n").trim().slice(0,4000);
+}
+// Un verbe écrit par Claude qui touche au réseau, aux secrets ou aux données brutes attend l'accord de Laurent.
+function validerVerbe(vid){
+  const v = K.V[vid];
+  return new Promise(res=>{
+    fermerFeuille.annuler = ()=>res(false);
+    feuille(`<div class="q">Claude a écrit le verbe « ${esc(v.nom)} »</div><p class="doux">Il utilise le réseau, un secret ou les données brutes de l'app. Lis-le avant de l'autoriser : une fois autorisé, il s'exécute avec tous les droits de Life.</p>
+      <p>${esc(v.definition||"")}</p><pre class="code">${esc(v.code)}</pre>
+      <div class="rang"><button class="btn prim" id="val-ok">Autoriser</button><button class="btn" id="val-non">Refuser</button></div>`);
+    $("#feuille-corps").onclick = async e=>{
+      if (e.target.id==="val-ok"){ $("#feuille-corps").onclick=null; fermerFeuille.annuler=null; fermerFeuille(); const n={...K.V[vid]}; delete n.aValider; n.valide=now(); K.V[vid]=n; await K.db.collection("verbes").doc(vid).set(n); await journal("verbe autorisé", vid); res(true); }
+      if (e.target.id==="val-non"){ $("#feuille-corps").onclick=null; fermerFeuille.annuler=null; fermerFeuille(); res(false); }
+    };
+  });
 }
 
 // ---------- erreurs, versions, code ----------
@@ -388,7 +500,7 @@ function versions(vid){
   const v=sourceVerbes()[vid]; if (!v) return;
   const actuelle = v.epingle || v.version || 1;
   const l=[{version:v.version||1, code:v.code, quand:v.modifie, auteur:v.auteur}, ...[...(v.historique||[])].reverse()];
-  feuille(`<div class="q">Verbe « ${esc(v.nom)} »</div><p class="doux">${esc(v.definition||"")}<br>Pour : ${esc((v.pour||["*"]).join(", "))}</p>
+  feuille(`<div class="q">Verbe « ${esc(v.nom)} »</div><p class="doux">${esc(v.definition||"")}<br>Pour : ${esc((v.pour||["*"]).join(", "))}${v.aValider?"<br><b>Écrit par Claude, en attente de ton autorisation.</b>":""}</p>
     <div class="liste">${l.map(x=>`<button class="ligne ${x.version===actuelle?"sel":""}" data-v="${x.version}"><span class="t">v${x.version}${x.version===(v.version||1)?" · la dernière":""}${x.version===actuelle?" · utilisée":""}</span><small>${esc(dateCourte(x.quand))}${x.auteur?" · "+esc(x.auteur):""}</small></button>`).join("")}</div>
     ${K.secours?`<p class="doux">Mode secours : versions d'origine, non modifiables.</p>`:`<label class="q" for="code">Code de la version utilisée</label><textarea id="code" rows="14" spellcheck="false" autocapitalize="off">${esc(codeActif(v))}</textarea>
     <div class="rang"><button class="btn prim" id="sauver">Enregistrer comme nouvelle version</button><button class="btn" id="fermer-v">Fermer</button></div>`}`);
@@ -419,59 +531,131 @@ $("#vue").addEventListener("click", e=>{
 });
 $("#vue").addEventListener("submit", e=>{ const f=e.target.closest("form[data-act]"); if (f && K.actions[f.dataset.act]) { e.preventDefault(); K.actions[f.dataset.act](f, e); } });
 $("#retour").onclick = async ()=>{ const p=K.pile.pop(); K.enRetour=true; try { p ? await faire("afficher", p) : await faire("accueil"); } finally { K.enRetour=false; $("#retour").hidden=!K.pile.length; } };
+// Ce que fait Claude, en direct, avec un bouton pour l'arrêter
+function fil(t){ const f=$("#fil"); f.hidden=false; const l=document.createElement("div"); l.textContent=t; $("#fil-l").appendChild(l); while ($("#fil-l").children.length>4) $("#fil-l").firstChild.remove(); }
+$("#fil-stop").onclick = ()=>{ K.claude.travaille?.abort(); };
 // Barre du bas : elle aussi n'appelle que des verbes
 document.querySelector(".barre").addEventListener("click", e=>{ const b=e.target.closest("[data-barre]"); if (!b) return; const n=b.dataset.barre; faire(n, n==="accueil"||n==="chercher" ? null : (K.sujet||"moi")); });
 // Logo : toucher = accueil ; appui long = mode secours
 appuiLong($(".haut"), "#logo", ()=>basculerSecours(!K.secours));
 $("#logo").onclick = e=>{ if (e.currentTarget.dataset.long){ delete e.currentTarget.dataset.long; return; } K.pile.length=0; K.sujet=null; faire("accueil"); };
 
-// ---------- Claude : il écrit des verbes et des objets ----------
-async function claudeFaire(texte, sujetId){
+// ---------- Claude : il voit l'écran (sauf le privé), écrit des verbes, les essaie, range son plan ----------
+const PROMPT_DEFAUT = `Je suis Claude, et je travaille dans Life avec Laurent.
+Life range une vie entière en objets et en verbes. Les verbes sont le code de l'app : quand j'écris un verbe, l'app change tout de suite, et l'ancienne version reste disponible.
+Quand Laurent me demande quelque chose, je le fais : j'écris les verbes et je crée les objets nécessaires, je les essaie, je corrige. Je ne me contente pas de noter.
+Je réutilise avant de créer : peu d'objets bien définis valent mieux que beaucoup de bruit. Tout ce que je crée a un nom et une définition en français ; mes verbes se lisent comme une phrase : un verbe et un complément.
+Je ne vois de chez Laurent que ce qu'il a partagé ou qu'il me montre à l'instant. Ce qu'il me montre, je m'en sers pour la demande en cours, sans le garder. Ses secrets restent dans son coffre : je n'en connais que le nom.
+Ce que je ne peux pas faire moi-même (régler un appareil, donner une information que je n'ai pas), je le confie à Laurent sous forme de tâche, avec la marche à suivre pas à pas.`;
+
+const TECHNIQUE = `## Comment Life fonctionne (technique)
+Un verbe = une fonction async rangée dans la base, exécutée avec (sujet, c, ctx). sujet = {id,titre,type,parent,desc,champs,relations,partage,phrase} ou null ; c = compléments.
+Un même nom de verbe peut avoir une version par type de sujet (champ pour : liste de types ; "*" = tous ; "rien" = verbe sans sujet). L'app choisit la plus précise. Toucher un objet lance le verbe « toucher » ; l'appui long propose tous les verbes applicables.
+ctx.base : lire(id), enfants(id), parent(id), chemin(id), tous(), chercher(texte), creer({titre,type,parent,desc,champs,phrase}) → id, modifier(id,{…}), supprimer(id).
+ctx.ecran(html, {sujet, titre, actions}) affiche une page. Dans le html : data-objet="id" (toucher / appui long), data-faire="verbe" data-sujet="id" (lance un verbe), data-act="nom" (appelle actions[nom](élément)) ; un <form data-act="nom"> appelle actions[nom](form) à l'envoi.
+ctx.faire(verbe, sujetId, c) ; ctx.dire(texte) ; ctx.demander(question, défaut, {multi, motdepasse}) → texte|null ; ctx.choisir(titre, [{valeur, libelle, detail}]) → valeur|null ; ctx.confirmer(texte) → bool ; ctx.ouvrir(url).
+ctx.secret(nom, {question}) → valeur (demandée à Laurent la première fois, rangée dans son coffre) ; ctx.oublierSecret(nom) ; ctx.secrets() → noms.
+ctx.telecharger(nomFichier, texte, type) ; ctx.choisirFichier(accept) → File|null.
+ctx.grille(objets), ctx.tuile(objet), ctx.esc(texte), ctx.couleur(type), ctx.lettre(objet), ctx.date(iso), ctx.verbes(sujetId).
+Styles : carte, rang, btn, btn prim, doux, liste, ligne, grille, champs (dl). Écran de téléphone : HTML court. Vidéo ou son : <video controls playsinline src="…">.
+Une tâche exécutable porte phrase:{verbe, sujet, complements} : la toucher exécute la phrase.
+L'app est une page web servie en HTTPS depuis https://laurent1meyer.github.io, sur l'iPhone de Laurent. Elle ne peut appeler que des adresses HTTPS qui autorisent cette origine (CORS). Pas de serveur à elle.
+La base vit sur l'iPhone (IndexedDB) : pas de gros fichiers dedans.
+
+## Comment travailler
+1. Regarde ce qui existe déjà (verbes ci-dessous, chercher_objets) et réutilise.
+2. Si on t'a confié une tâche, range ton plan dessous : une fonction (type « fonction ») par capacité à rendre possible, champs.statut = « à faire », « fait » ou « bloqué ». Mets les statuts à jour en avançant.
+3. Écris les verbes, puis essaie-les avec essayer_verbe et corrige jusqu'à ce qu'ils marchent. Un verbe qui utilise le réseau ou un secret attend l'autorisation de Laurent : elle lui est demandée pendant ton essai.
+4. Ce que tu ne peux pas faire : une tâche pour Laurent (type tache, champs.pour = "Laurent", champs.statut = "à faire", desc = la marche à suivre numérotée). S'il te manque une info, demande_a_laurent. S'il te faut un de ses objets privés, demander_a_voir.
+5. Quand la tâche confiée est réalisable, donne-lui sa phrase (modifier_objet … phrase) pour que Laurent n'ait qu'à la toucher.
+6. Ne mets jamais un mot de passe, un jeton ou une clé dans un objet ou dans le code d'un verbe : ctx.secret.
+Réponds à la fin en français, en quelques phrases : ce qui marche, ce qui reste à Laurent.`;
+
+async function claudeFaire(texte, opt={}){
   if (!LifeClaude.aCle()) {
     const k = await demander("Colle ta clé API Anthropic (sk-ant-…). Le trousseau peut la retenir et la remplir avec Face ID.", "", {motdepasse:true});
     if (!k) return null; if (!/^sk-ant-/.test(k)) { dire("Ce n'est pas une clé Anthropic"); return null; }
     LifeClaude.definirCle(k, lsGet("life-garder-cle")==="1");
   }
-  const sujet = sujetId && K.O[sujetId] && (K.O[sujetId].partage || sujetId==="moi") ? avecId(sujetId) : null;
-  const vb = Object.entries(K.V).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.epingle?` (v${v.epingle} épinglée)`:""} : ${v.definition||""}`).join("\n");
-  const types = [...new Set(Object.values(K.O).map(o=>o.type))].join(", ");
-  const systeme = `Tu es Claude, dans Life, l'app de Laurent. Réponds en français, directement et brièvement. Il veut que tu FASSES, pas que tu notes.
-Principe de Life : la base contient des objets ET le code de l'app. Le code, ce sont les verbes : chaque verbe est une fonction async rangée dans la base, exécutée telle quelle, active dès qu'on l'écrit. Une phrase = sujet (un objet) + verbe + compléments. Un même nom de verbe peut avoir une version par type de sujet (champ pour : liste de types, "*" pour tous, "rien" pour un verbe sans sujet) ; l'app prend la plus précise.
-Corps d'un verbe : le code JavaScript qui s'exécute avec (sujet, c, ctx). sujet = {id,titre,type,parent,desc,champs,relations,partage,phrase} ou null ; c = compléments.
-ctx : base.{lire(id), enfants(id), parent(id), chemin(id), tous(), chercher(texte), creer({titre,type,parent,desc,champs,phrase}), modifier(id,{…}), supprimer(id)} ;
-ecran(html, {sujet, titre, actions}) affiche une page (éléments data-objet="id" = toucher/appui long, data-faire="verbe" data-sujet="id" = lancer un verbe, data-act="nom" = actions[nom](élément)) ;
-faire(nomVerbe, sujetId, c) ; dire(texte) ; demander(question, défaut, {multi}) ; choisir(titre, [{valeur, libelle, detail, couleur}]) ; confirmer(texte) ; ouvrir(url) ; tuile(objet) ; grille(objets) ; esc(texte) ; couleur(type) ; lettre(objet) ; date(iso) ; verbes(sujetId).
-Styles disponibles : classes carte, rang, btn, btn prim, doux, liste, ligne, grille. HTML court, lisible sur téléphone.
-Une tâche exécutable porte phrase:{verbe, sujet, complements}.
-Pour ajouter ou changer un comportement de l'app, écris le verbe (ecrire_verbe). Pour changer un verbe existant, lis-le d'abord (lire_verbe) et garde son id. Laurent peut revenir à une ancienne version par appui long.
-Tu ne vois que les objets que Laurent a partagés.
+  if (!K.claude.actif) { if (!(await confirmer("Activer Claude ? Il verra l'écran, sauf ce qui est privé.", "Activer Claude"))) return null; activerClaude(true); }
+  const ecranVu = ecranPourClaude();
+  const vb = Object.entries(K.V).filter(([,v])=>v.actif!==false).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.aValider?" (en attente d'autorisation)":""} : ${v.definition||""}`).join("\n");
+  const connus = Object.keys(K.O).filter(id=>vu(id) && !K.O[id].supprime && K.O[id].parent!=="corbeille");
+  const arbre = connus.slice(0,200).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
+  const nPrive = Object.keys(K.O).filter(id=>!vu(id) && !K.O[id].supprime).length;
+  const tache = opt.tache && vu(opt.tache) ? K.O[opt.tache] : null;
+  const systeme = `${K.O.prompt_claude?.desc || PROMPT_DEFAUT}
 
-Verbes actuels :
+${TECHNIQUE}
+
+## Verbes actuels
 ${vb}
 
-Types d'objets existants : ${types}
-${sujet ? `Objet ouvert : ${sujet.titre} [${sujet.id}, ${sujet.type}]` : "Aucun objet partagé n'est ouvert."}`;
+## Objets que tu connais (${connus.length}) — Laurent en a ${nPrive} autres, privés, que tu ne vois pas
+${arbre || "(aucun)"}
+
+## Secrets au coffre (noms seulement)
+${(await nomsSecrets()).join(", ") || "(aucun)"}
+
+## L'écran de Laurent en ce moment
+${ecranVu}
+${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.desc?" — "+tache.desc:""}` : ""}`;
+
+  const traces=[]; const trace=t=>{ traces.push(t); fil("✦ "+t); };
+  const visible = id => { id=String(id); if (!K.O[id] || K.O[id].supprime) throw new Error("objet inconnu : "+id); if (!vu(id)) throw new Error("objet privé : Laurent ne te l'a pas montré (outil demander_a_voir)"); return id; };
+  const objetPourClaude = id => { const o=K.O[id]; const enf=enfants(id); return { id, titre:o.titre, type:o.type, parent:o.parent, desc:o.desc, champs:o.champs, relations:o.relations, phrase:o.phrase, partage:!!o.partage,
+    enfants: enf.filter(e=>vu(e.id)).map(e=>({id:e.id, titre:e.titre, type:e.type})), enfantsPrives: enf.filter(e=>!vu(e.id)).length }; };
   const outils = [
-    { name:"lire_verbe", description:"Lit un verbe : id, nom, pour, définition, code de la version utilisée.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
-      execute:({id})=>{ const v=K.V[String(id)]; if (!v) throw new Error("verbe inconnu"); return { id, nom:v.nom, pour:v.pour, definition:v.definition, version:v.epingle||v.version, code:codeActif(v) }; } },
-    { name:"ecrire_verbe", description:"Crée ou modifie un verbe (actif immédiatement, ancienne version gardée). id : reprends celui du verbe à modifier, ou donne un nouvel id court (ex. v_aller_site). code : corps de la fonction async (sujet, c, ctx).",
+    { name:"lire_verbe", description:"Lit un verbe : nom, pour, définition, code de la version utilisée.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+      execute:({id})=>{ const v=K.V[String(id)]; if (!v) throw new Error("verbe inconnu"); return { id, nom:v.nom, pour:v.pour, definition:v.definition, version:v.epingle||v.version, aValider:!!v.aValider, code:codeActif(v) }; } },
+    { name:"ecrire_verbe", description:"Crée ou modifie un verbe, actif immédiatement (l'ancienne version est gardée). id : celui du verbe à modifier, ou un nouvel id court (ex. v_regarder_video). code : corps de la fonction async (sujet, c, ctx).",
       inputSchema:{type:"object",properties:{id:{type:"string"},nom:{type:"string"},pour:{type:"array",items:{type:"string"}},definition:{type:"string"},code:{type:"string"}},required:["id","nom","definition","code"]},
-      execute:async o=>{ const id=String(o.id).replace(/[^\w-]/g,"_").slice(0,60); await sauverVerbe(id, { nom:String(o.nom), pour:Array.isArray(o.pour)&&o.pour.length?o.pour.map(String):(K.V[id]?.pour||["*"]), definition:String(o.definition||""), code:String(o.code) }, "Claude"); trace(`a écrit le verbe « ${o.nom} » (v${K.V[id].version})`); return {id, version:K.V[id].version}; } },
-    { name:"chercher_objets", description:"Cherche parmi les objets partagés. Renvoie {id,titre,type,parent}.", inputSchema:{type:"object",properties:{texte:{type:"string"}}},
-      execute:({texte})=>base.chercher(texte).filter(o=>o.partage||o.id==="moi").slice(0,40).map(o=>({id:o.id,titre:o.titre,type:o.type,parent:o.parent})) },
-    { name:"creer_objet", description:"Crée un objet (ou une tâche avec phrase {verbe,sujet,complements}). parent : id d'un objet partagé ou 'moi'. Créé partagé avec toi.",
-      inputSchema:{type:"object",properties:{titre:{type:"string"},type:{type:"string"},parent:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"}},required:["titre","type"]},
-      execute:async o=>{ const p = o.parent && (K.O[o.parent]?.partage || o.parent==="moi") ? o.parent : "moi"; const id=await base.creer({...o, parent:p, partage:true}); trace(`a créé « ${o.titre} »`); return {id}; } }
+      execute:async o=>{ const id=String(o.id).replace(/[^\w-]/g,"_").slice(0,60); await sauverVerbe(id, { nom:String(o.nom), pour:Array.isArray(o.pour)&&o.pour.length?o.pour.map(String):(K.V[id]?.pour||["*"]), definition:String(o.definition||""), code:String(o.code) }, "Claude");
+        trace(`écrit le verbe « ${o.nom} » (v${K.V[id].version})${K.V[id].aValider?" · à autoriser":""}`); return {id, version:K.V[id].version, aValider:!!K.V[id].aValider}; } },
+    { name:"essayer_verbe", description:"Exécute un verbe pour de vrai, sous les yeux de Laurent, et renvoie les erreurs, les messages et ce que l'écran montre ensuite. Si le verbe demande quelque chose (question, secret, autorisation), Laurent répond en direct.",
+      inputSchema:{type:"object",properties:{nom:{type:"string"},sujet:{type:"string",description:"id d'un objet que tu vois, ou vide"},complements:{type:"object"}},required:["nom"]},
+      execute:async o=>{ const sid = o.sujet ? visible(o.sujet) : null; trace(`essaie « ${o.nom} »`);
+        K.capture = { erreurs:[], dits:[] }; const cap=K.capture;
+        try { await faire(String(o.nom), sid, o.complements||{}); await new Promise(r=>setTimeout(r,600)); }
+        finally { K.capture = null; }
+        const m = K.sujet && !vu(K.sujet) ? null : ecranPourClaude();
+        if (cap.erreurs.length) trace(`erreur : ${cap.erreurs[0].slice(0,80)}`);
+        return { erreurs:cap.erreurs, messages:cap.dits, ecran: m || "(écran privé)" }; } },
+    { name:"chercher_objets", description:"Cherche parmi les objets que tu vois. Renvoie {id,titre,type,parent}.", inputSchema:{type:"object",properties:{texte:{type:"string"}}},
+      execute:({texte})=>base.chercher(texte).filter(o=>vu(o.id)).slice(0,40).map(o=>({id:o.id,titre:o.titre,type:o.type,parent:o.parent})) },
+    { name:"lire_objet", description:"Lit un objet que tu vois, avec ses enfants visibles.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+      execute:({id})=>objetPourClaude(visible(id)) },
+    { name:"creer_objet", description:"Crée un objet (ou une tâche, avec phrase {verbe,sujet,complements}). parent : un objet partagé ou 'moi'. L'objet est partagé avec toi.",
+      inputSchema:{type:"object",properties:{titre:{type:"string"},type:{type:"string"},parent:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},emoji:{type:"string"}},required:["titre","type"]},
+      execute:async o=>{ const p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : "moi"; const id=await base.creer({...o, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`); return {id, parent:p}; } },
+    { name:"modifier_objet", description:"Modifie un objet partagé : titre, type, desc, champs (fusionnés), phrase, parent.",
+      inputSchema:{type:"object",properties:{id:{type:"string"},titre:{type:"string"},type:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},parent:{type:"string"}},required:["id"]},
+      execute:async o=>{ const id=String(o.id); if (!connu(id)) throw new Error("tu ne peux modifier que les objets partagés avec toi"); const m={};
+        for (const k of ["titre","type","desc","phrase"]) if (o[k]!==undefined) m[k]=o[k];
+        if (o.champs) m.champs={...(K.O[id].champs||{}), ...o.champs};
+        if (o.parent) { if (!connu(String(o.parent))) throw new Error("parent non partagé"); m.parent=String(o.parent); }
+        await base.modifier(id, m); trace(`modifie « ${K.O[id].titre} »${o.champs?.statut?" → "+o.champs.statut:""}`); return {ok:true}; } },
+    { name:"demander_a_laurent", description:"Pose une question à Laurent, en direct. choix : propositions de réponse (facultatif).", inputSchema:{type:"object",properties:{question:{type:"string"},choix:{type:"array",items:{type:"string"}}},required:["question"]},
+      execute:async ({question, choix})=>{ trace("te pose une question"); const r = Array.isArray(choix)&&choix.length ? await choisir("Claude : "+question, [...choix.map(c=>({valeur:String(c), libelle:String(c)})), {valeur:"__autre", libelle:"Autre réponse…"}]) : null;
+        if (r && r!=="__autre") return r; const t = await demander("Claude : "+question, "", {multi:true}); return t ?? "(Laurent n'a pas répondu)"; } },
+    { name:"demander_a_voir", description:"Demande à Laurent de te montrer un de ses objets privés, pour la demande en cours seulement (tu ne le gardes pas). raison : pourquoi tu en as besoin.", inputSchema:{type:"object",properties:{raison:{type:"string"}},required:["raison"]},
+      execute:async ({raison})=>{ trace("demande à voir un objet privé"); const q = await demander(`Claude demande à voir un de tes objets : ${raison}\nTape un mot de son nom (vide = refuser).`);
+        if (!q) return "Laurent refuse ou n'a pas cet objet.";
+        const r = base.chercher(q).filter(x=>x.parent!=="corbeille"); const id = await choisir("Lequel lui montrer, pour cette fois ?", r.map(x=>({valeur:x.id, libelle:x.titre, detail:x.type+(x.partage?" · déjà partagé":" · privé"), couleur:couleur(x.type)})));
+        if (!id) return "Laurent n'a rien montré.";
+        K.claude.montre.add(id); for (const e of enfants(id)) K.claude.montre.add(e.id); majVision();
+        return { montre:"pour cette demande seulement", objet: objetPourClaude(id) }; } },
+    { name:"secrets_connus", description:"Noms des secrets rangés dans le coffre de Laurent (jamais les valeurs).", inputSchema:{type:"object",properties:{}}, execute:async()=>nomsSecrets() }
   ];
-  const traces=[]; const trace=t=>traces.push(t);
-  ecran(`<div class="carte"><p class="doux">Claude travaille…</p></div>`, {titre:"Claude"});
+  const ctrl = new AbortController(); K.claude.travaille = ctrl;
+  $("#fil-l").innerHTML=""; fil("✦ Claude lit l'écran…");
   try {
-    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},{role:"user",content:texte}], { tools:outils });
+    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},{role:"user",content:texte}], { tools:outils, signal:ctrl.signal, maxTours:40 });
     return { texte:r.text, traces };
   } catch(err){
     if (err?.code==="bad_key") LifeClaude.oublierCle();
-    return { texte: ({bad_key:"Clé API refusée.", rate_limited:"Limite de l'API atteinte, réessaie plus tard.", overloaded:"API surchargée, réessaie.", network:"Pas de réseau."}[err?.code] || ("Claude n'a pas pu répondre : "+(err?.message||err))), traces, erreur:true };
-  }
+    return { texte: ({bad_key:"Clé API refusée.", rate_limited:"Limite de l'API atteinte, réessaie plus tard.", overloaded:"API surchargée, réessaie.", network:"Pas de réseau.", cancelled:"Arrêté."}[err?.code] || ("Claude n'a pas pu répondre : "+(err?.message||err))), traces, erreur:true };
+  } finally { K.claude.travaille=null; setTimeout(()=>{ if (!K.claude.travaille) $("#fil").hidden=true; }, 3000); }
 }
 
 // ---------- migration de la base v5 et démarrage ----------
@@ -488,15 +672,27 @@ async function migrer(){
   return n;
 }
 async function semer(){
-  for (const s of SEMENCES) if (!K.V[s.id]) { K.V[s.id]=s.doc; await K.db.collection("verbes").doc(s.id).set(s.doc); }
-  if (!K.O.corbeille) { const c={titre:"Corbeille", type:"dossier", parent:"moi", desc:"Rien n'y est effacé : range ailleurs pour récupérer.", champs:{}, relations:[], partage:false, cree:now(), emoji:"🗑"}; K.O.corbeille=c; await K.db.collection("objets").doc("corbeille").set(c); }
-  if (!K.O.moi) { const m={titre:"Moi", type:"moi", parent:null, desc:"", champs:{}, relations:[], partage:true, cree:now()}; K.O.moi=m; await K.db.collection("objets").doc("moi").set(m); }
+  // Verbes de départ : ajoutés s'ils manquent, mis à jour s'ils n'ont jamais été modifiés (auteur « origine »).
+  for (const s of SEMENCES) {
+    const v = K.V[s.id];
+    if (!v || (v.auteur==="origine" && (v.semence||0) < (s.doc.semence||0))) { K.V[s.id]=s.doc; await K.db.collection("verbes").doc(s.id).set(s.doc); }
+  }
+  const o = async (id, doc) => { if (K.O[id]) return; const d={ desc:"", champs:{}, relations:[], partage:false, cree:now(), ...doc }; K.O[id]=d; await K.db.collection("objets").doc(id).set(d); };
+  await o("moi", { titre:"Moi", type:"moi", parent:null, partage:true });
+  await o("corbeille", { titre:"Corbeille", type:"dossier", parent:"moi", desc:"Rien n'y est effacé : range ailleurs pour récupérer.", emoji:"🗑" });
+  await o("reglages", { titre:"Réglages", type:"dossier", parent:"moi", desc:"Sauvegarde, Claude, coffre.", emoji:"⚙" });
+  await o("prompt_claude", { titre:"Prompt de Claude", type:"prompt", parent:"reglages", emoji:"✦", desc:PROMPT_DEFAUT });
+  await o("t_sauver", { titre:"Sauvegarder ma base", type:"tache", parent:"reglages", emoji:"⬇", phrase:{verbe:"exporter", sujet:null, complements:{}} });
+  await o("t_restaurer", { titre:"Restaurer une sauvegarde", type:"tache", parent:"reglages", emoji:"⬆", phrase:{verbe:"importer", sujet:null, complements:{}} });
+  await o("t_regler", { titre:"Régler Claude", type:"tache", parent:"reglages", emoji:"✦", phrase:{verbe:"régler Claude", sujet:null, complements:{}} });
+  await o("t_coffre", { titre:"Mon coffre", type:"tache", parent:"reglages", emoji:"🔑", phrase:{verbe:"coffre", sujet:null, complements:{}} });
   if (!K.O.internet && !lsGet("life-v6-internet")) {
-    const i={titre:"Internet", type:"site web", parent:"moi", desc:"Ma page d'accueil sur le web.", champs:{url:"https://www.google.fr"}, relations:[], partage:true, cree:now(), emoji:"🌐"};
-    const t={titre:"Aller sur Internet", type:"tache", parent:"internet", desc:"", champs:{}, relations:[], partage:true, cree:now(), phrase:{verbe:"aller", sujet:"internet", complements:{}}};
-    K.O.internet=i; K.O.t_internet=t; await K.db.collection("objets").doc("internet").set(i); await K.db.collection("objets").doc("t_internet").set(t); lsSet("life-v6-internet","1");
+    await o("internet", { titre:"Internet", type:"site web", parent:"moi", desc:"Ma page d'accueil sur le web.", champs:{url:"https://www.google.fr"}, partage:true, emoji:"🌐" });
+    await o("t_internet", { titre:"Aller sur Internet", type:"tache", parent:"internet", partage:true, phrase:{verbe:"aller", sujet:"internet", complements:{}} });
+    lsSet("life-v6-internet","1");
   }
 }
+
 (async ()=>{
   try { await LifeDB.charger(); } catch(e){ $("#vue").innerHTML=`<div class="carte erreur">Base locale indisponible : ${esc(e?.message||e)}</div>`; return; }
   K.db = LifeDB.db;
@@ -517,16 +713,21 @@ async function semer(){
 // =====================================================================
 function V(id, nom, pour, definition, fn, extra={}){ return { id, doc:{ nom, pour, definition, code:corps(fn), version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, ...extra } }; }
 var SEMENCES = [
-V("v_accueil","accueil",["rien"],"L'écran d'accueil : ce qui est rangé directement sous Moi.", async function(sujet, c, ctx){
-  const moi = ctx.base.lire("moi");
-  const objs = ctx.base.enfants("moi").filter(o => o.id !== "corbeille");
-  ctx.ecran(ctx.grille(objs) + `<p class="doux pied"><button class="lien" data-faire="verbes" data-sujet="">Mes verbes</button> · <button class="lien" data-faire="afficher" data-sujet="corbeille">Corbeille</button></p>`, { sujet:null, titre:"Life" });
+V("v_accueil","accueil",["rien"],"L'écran d'accueil : ce qui est rangé sous Moi, et ce qui t'attend.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const objs = ctx.base.enfants("moi").filter(o => o.id !== "corbeille").sort((a, b) => (a.id === "reglages") - (b.id === "reglages"));
+  const pourToi = ctx.base.tous().filter(o => o.type === "tache" && o.champs && o.champs.pour === "Laurent" && o.champs.statut !== "fait" && o.parent !== "corbeille");
+  let h = "";
+  if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3><div class="liste">${pourToi.map(t => `<button class="ligne" data-objet="${esc(t.id)}"><span class="t">${esc(t.titre)}</span><small>${esc((ctx.base.parent(t.id) || {}).titre || "")}</small></button>`).join("")}</div>`;
+  h += ctx.grille(objs);
+  h += `<p class="doux pied"><button class="lien" data-faire="verbes" data-sujet="">Mes verbes</button> · <button class="lien" data-faire="afficher" data-sujet="corbeille">Corbeille</button></p>`;
+  ctx.ecran(h, { sujet: null, titre: "Life" });
 }),
 V("v_toucher","toucher",["*"],"Ce qui se passe quand on touche un objet : une tâche avec une phrase s'exécute, le reste s'affiche.", async function(sujet, c, ctx){
   if (sujet.type === "tache" && sujet.phrase && sujet.phrase.verbe) return ctx.faire("exécuter", sujet.id);
   return ctx.faire("afficher", sujet.id);
 }, { cache:true }),
-V("v_afficher","afficher",["*"],"Affichage par défaut : description, contenu en tuiles, relations, tâches.", async function(sujet, c, ctx){
+V("v_afficher","afficher",["*"],"Affichage par défaut : description, champs, contenu en tuiles, relations.", async function(sujet, c, ctx){
   const esc = ctx.esc;
   const champs = Object.entries(sujet.champs || {}).filter(([k]) => k !== "latlon");
   const rel = (sujet.relations || []).map(r => ({ r, o: ctx.base.lire(r.vers) })).filter(x => x.o);
@@ -536,6 +737,25 @@ V("v_afficher","afficher",["*"],"Affichage par défaut : description, contenu en
   h += ctx.grille(ctx.base.enfants(sujet.id));
   if (rel.length) h += `<p class="doux">Aussi relié à : ${rel.map(x => `<button class="puce" data-objet="${esc(x.o.id)}">${esc(x.o.titre)} <small>${esc(x.r.genre)}</small></button>`).join(" ")}</p>`;
   h += `<p class="doux pied">Appui long sur un objet : ses verbes.</p>`;
+  ctx.ecran(h, { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_afficher_tache","afficher",["tache"],"Affichage d'une tâche : sa phrase, son plan, et ce qui t'attend.", async function(sujet, c, ctx){
+  const esc = ctx.esc, ch = sujet.champs || {}, p = sujet.phrase;
+  const cible = p && p.sujet ? ctx.base.lire(p.sujet) : null;
+  const enf = ctx.base.enfants(sujet.id);
+  const pourToi = enf.filter(o => o.champs && o.champs.pour === "Laurent");
+  const fonctions = enf.filter(o => o.type === "fonction");
+  const reste = enf.filter(o => !pourToi.includes(o) && !fonctions.includes(o));
+  let h = `<div class="carte">`;
+  if (sujet.desc) h += `<p class="desc">${esc(sujet.desc)}</p>`;
+  h += p && p.verbe ? `<p>▶ <b>${esc(p.verbe)}</b>${cible ? ` « ${esc(cible.titre)} »` : ""}</p>` : `<p class="doux">Pas encore de phrase : confie-la à Claude, ou choisis le verbe toi-même.</p>`;
+  if (ch.statut) h += `<p class="doux">Statut : ${esc(ch.statut)}${ch.pour ? " · pour " + esc(ch.pour) : ""}</p>`;
+  h += `<div class="rang">${p && p.verbe ? `<button class="btn prim" data-faire="exécuter">Exécuter</button>` : ""}`;
+  h += ch.pour === "Laurent" ? `<button class="btn ${p && p.verbe ? "" : "prim"}" data-faire="marquer fait">${ch.statut === "fait" ? "Rouvrir" : "C'est fait"}</button>` : `<button class="btn ${p && p.verbe ? "" : "prim"}" data-faire="confier à Claude">Confier à Claude</button>`;
+  h += `</div></div>`;
+  if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3>` + ctx.grille(pourToi);
+  if (fonctions.length) h += `<h3 class="etage">Le plan de Claude <small>${fonctions.filter(f => (f.champs || {}).statut === "fait").length}/${fonctions.length}</small></h3>` + ctx.grille(fonctions);
+  if (reste.length) h += `<h3 class="etage">Le reste</h3>` + ctx.grille(reste);
   ctx.ecran(h, { sujet: sujet.id, titre: sujet.titre });
 }),
 V("v_afficher_site","afficher",["site web"],"Affichage d'un site web : son adresse et un bouton pour y aller.", async function(sujet, c, ctx){
@@ -585,14 +805,14 @@ V("v_executer","exécuter",["tache"],"Exécuter une tâche : lancer sa phrase (v
 V("v_creer","créer",["*"],"Créer un objet rangé dans celui-ci (un seul parent).", async function(sujet, c, ctx){
   const titre = await ctx.demander(`Nouvel objet dans « ${sujet.titre} »`);
   if (!titre) return;
-  const types = ["idee", "tache", "projet", "personne", "lieu", "bien", "site web", "note", "besoin", "fonction", "decision", "dossier"];
+  const types = ["tache", "idee", "projet", "personne", "lieu", "bien", "site web", "note", "besoin", "fonction", "decision", "dossier"];
   const type = await ctx.choisir("De quel type ?", types.map(t => ({ valeur: t, libelle: t, couleur: ctx.couleur(t) })));
   if (!type) return;
   const champs = {};
   if (type === "site web") { const u = await ctx.demander("Adresse (https://…)", "https://"); if (u) champs.url = u; }
   const id = await ctx.base.creer({ titre, type, parent: sujet.id, champs });
   ctx.dire("Créé, privé");
-  return ctx.faire("afficher", sujet.id);
+  return ctx.faire("afficher", type === "tache" ? id : sujet.id);
 }),
 V("v_modifier","modifier",["*"],"Modifier le nom, le type, la description et les champs d'un objet.", async function(sujet, c, ctx){
   const esc = ctx.esc;
@@ -600,7 +820,7 @@ V("v_modifier","modifier",["*"],"Modifier le nom, le type, la description et les
   ctx.ecran(`<form class="carte formulaire" data-act="ok">
     <label>Nom<input name="titre" value="${esc(sujet.titre)}"></label>
     <label>Type<input name="type" value="${esc(sujet.type || "")}"></label>
-    <label>Description<textarea name="desc" rows="3">${esc(sujet.desc || "")}</textarea></label>
+    <label>Description<textarea name="desc" rows="${sujet.type === "prompt" ? 14 : 3}">${esc(sujet.desc || "")}</textarea></label>
     <label>Champs (un par ligne : nom = valeur)<textarea name="champs" rows="4">${esc(lignes)}</textarea></label>
     <div class="rang"><button class="btn prim" type="submit">Enregistrer</button><button class="btn" type="button" data-act="non">Annuler</button></div></form>`,
     { titre: "Modifier", actions: {
@@ -630,14 +850,14 @@ V("v_relier","relier",["*"],"Ajouter une relation (sans changer le rangement).",
   ctx.dire("Relié"); ctx.faire("afficher", sujet.id);
 }),
 V("v_supprimer","supprimer",["*"],"Mettre à la corbeille (rien n'est effacé).", async function(sujet, c, ctx){
-  if (sujet.id === "moi") return ctx.dire("Moi ne se supprime pas.");
+  if (["moi", "corbeille", "reglages"].includes(sujet.id)) return ctx.dire("Celui-là ne se supprime pas.");
   if (!(await ctx.confirmer(`Mettre « ${sujet.titre} » à la corbeille ?`, "Corbeille"))) return;
   await ctx.base.modifier(sujet.id, { parent: "corbeille", ancienParent: sujet.parent });
   ctx.dire("À la corbeille"); ctx.faire("afficher", sujet.parent || "moi");
 }),
-V("v_partager","partager avec Claude",["*"],"Rendre un objet visible par Claude, ou de nouveau privé.", async function(sujet, c, ctx){
+V("v_partager","partager avec Claude",["*"],"Laisser Claude connaître cet objet (il le verra toujours), ou le rendre de nouveau privé.", async function(sujet, c, ctx){
   await ctx.base.modifier(sujet.id, { partage: !sujet.partage });
-  ctx.dire(sujet.partage ? "Redevenu privé" : "Partagé avec Claude");
+  ctx.dire(sujet.partage ? "Redevenu privé : Claude ne le voit plus" : "Partagé : Claude le connaît");
   ctx.faire("afficher", sujet.parent || "moi");
 }),
 V("v_chercher","chercher",["rien"],"Chercher un objet par son nom.", async function(sujet, c, ctx){
@@ -646,22 +866,80 @@ V("v_chercher","chercher",["rien"],"Chercher un objet par son nom.", async funct
   const r = ctx.base.chercher(q);
   ctx.ecran(r.length ? ctx.grille(r) : `<p class="doux">Rien trouvé pour « ${ctx.esc(q)} ».</p>`, { titre: `« ${q} »` });
 }),
-V("v_claude","demander à Claude",["rien","*"],"Demander à Claude de faire quelque chose : il peut écrire des verbes (changer l'app) et créer des objets.", async function(sujet, c, ctx){
-  const t = await ctx.demander(sujet ? `Que doit faire Claude, à propos de « ${sujet.titre} » ?` : "Que doit faire Claude ?", "", { multi: true });
+V("v_claude","demander à Claude",["rien","*"],"Demander quelque chose à Claude : il voit l'écran (sauf ton privé), écrit des verbes, crée des objets.", async function(sujet, c, ctx){
+  const t = c.texte || await ctx.demander(sujet ? `Que doit faire Claude, à propos de « ${sujet.titre} » ?` : "Que doit faire Claude ?", "", { multi: true });
   if (!t) return;
-  const r = await ctx.claude(t, sujet ? sujet.id : null);
+  const r = await ctx.claude(t, sujet ? { sujet: sujet.id } : {});
   if (!r) return;
-  ctx.ecran(`<div class="carte ${r.erreur ? "erreur" : ""}"><p class="reponse">${ctx.esc(r.texte)}</p>${r.traces.length ? `<ul class="traces">${r.traces.map(x => `<li>Claude ${ctx.esc(x)}</li>`).join("")}</ul>` : ""}
-    <div class="rang"><button class="btn prim" data-faire="demander à Claude">Autre demande</button><button class="btn" data-faire="accueil" data-sujet="">Accueil</button></div></div>`, { titre: "Claude" });
+  ctx.ecran(`<div class="carte ${r.erreur ? "erreur" : ""}"><p class="reponse">${ctx.esc(r.texte)}</p>${r.traces.length ? `<details><summary class="doux">Ce que Claude a fait (${r.traces.length})</summary><ul class="traces">${r.traces.map(x => `<li>${ctx.esc(x)}</li>`).join("")}</ul></details>` : ""}
+    <div class="rang"><button class="btn prim" data-faire="demander à Claude">Autre demande</button>${sujet ? `<button class="btn" data-faire="afficher" data-sujet="${ctx.esc(sujet.id)}">Revenir</button>` : `<button class="btn" data-faire="accueil" data-sujet="">Accueil</button>`}</div></div>`, { titre: "Claude" });
+}),
+V("v_confier","confier à Claude",["tache"],"Confier une tâche à Claude : il la découpe, construit ce qu'il faut, et te laisse ce qu'il ne peut pas faire.", async function(sujet, c, ctx){
+  if (!sujet.partage) {
+    if (!(await ctx.confirmer(`Claude va connaître la tâche « ${sujet.titre} » et ranger son plan dessous.`, "Confier"))) return;
+    await ctx.base.modifier(sujet.id, { partage: true });
+  }
+  await ctx.faire("afficher", sujet.id);
+  const r = await ctx.claude(`Je te confie la tâche « ${sujet.titre} » [${sujet.id}].${sujet.desc ? " " + sujet.desc : ""}`, { tache: sujet.id });
+  if (!r) return;
+  await ctx.faire("afficher", sujet.id);
+  ctx.ecran(`<div class="carte ${r.erreur ? "erreur" : ""}"><p class="reponse">${ctx.esc(r.texte)}</p>${r.traces.length ? `<details><summary class="doux">Ce que Claude a fait (${r.traces.length})</summary><ul class="traces">${r.traces.map(x => `<li>${ctx.esc(x)}</li>`).join("")}</ul></details>` : ""}
+    <div class="rang"><button class="btn prim" data-faire="afficher" data-sujet="${ctx.esc(sujet.id)}">Voir la tâche</button></div></div>`, { titre: "Claude" });
+}),
+V("v_fait","marquer fait",["tache"],"Marquer une tâche faite (ou la rouvrir).", async function(sujet, c, ctx){
+  const fait = (sujet.champs || {}).statut === "fait";
+  await ctx.base.modifier(sujet.id, { champs: { ...(sujet.champs || {}), statut: fait ? "à faire" : "fait" } });
+  ctx.dire(fait ? "Rouverte" : "Fait ✓");
+  ctx.faire("afficher", sujet.parent || "moi");
 }),
 V("v_verbes","verbes",["rien"],"La liste de tous les verbes de l'app. Toucher : versions et code.", async function(sujet, c, ctx){
+  const tous = ctx.verbes(null).concat(ctx.verbes("moi")).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
   ctx.ecran(`<p class="doux">Chaque verbe est une fonction rangée dans ta base. Touche-le pour voir ses versions et son code.</p><div class="liste">` +
-    ctx.verbes(null).concat(ctx.verbes("moi")).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i).map(v => `<button class="ligne" data-act="v" data-id="${ctx.esc(v.id)}"><span class="t">${ctx.esc(v.nom)}</span><small>${ctx.esc(v.definition || "")}</small></button>`).join("") + `</div>`,
+    tous.map(v => `<button class="ligne" data-act="v" data-id="${ctx.esc(v.id)}"><span class="t">${ctx.esc(v.nom)}</span><small>${ctx.esc(v.definition || "")}</small></button>`).join("") + `</div>`,
     { titre: "Mes verbes", actions: { v: el => ctx.faire("version", null, { id: el.dataset.id }) } });
-}, { cache:false }),
+}),
+V("v_exporter","exporter",["rien"],"Sauvegarder toute la base dans un fichier (sans le coffre).", async function(sujet, c, ctx){
+  const out = await LifeDB.exporter({ fichiers: true });
+  delete out.collections.coffre;
+  const n = Object.keys(out.collections.objets || {}).length;
+  const ok = await ctx.telecharger(`life-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(out));
+  ctx.dire(ok ? `Sauvegarde prête : ${n} objets` : "Sauvegarde annulée");
+}),
+V("v_importer","importer",["rien"],"Restaurer une sauvegarde (remplace la base, garde le coffre).", async function(sujet, c, ctx){
+  const f = await ctx.choisirFichier(".json,application/json");
+  if (!f) return;
+  let obj; try { obj = JSON.parse(await f.text()); } catch (e) { return ctx.dire("Ce fichier n'est pas une sauvegarde Life"); }
+  if (!obj || !obj.collections) return ctx.dire("Ce fichier n'est pas une sauvegarde Life");
+  const n = Object.keys(obj.collections.objets || obj.collections.items || {}).length;
+  if (!(await ctx.confirmer(`Remplacer toute ta base par cette sauvegarde (${n} objets${obj.date ? ", du " + ctx.date(obj.date) : ""}) ? Ton coffre est gardé.`, "Remplacer"))) return;
+  const coffre = (await LifeDB.db.collection("coffre").get()).docs.map(d => [d.id, d.data()]);
+  await LifeDB.importer(obj);
+  for (const [id, v] of coffre) await LifeDB.db.collection("coffre").doc(id).set(v);
+  location.reload();
+}),
+V("v_regler_claude","régler Claude",["rien"],"Modèle, clé API, recherche web.", async function(sujet, c, ctx){
+  const r = LifeClaude.reglages(), garder = localStorage.getItem("life-garder-cle") === "1";
+  const modele = r.modele || "claude-sonnet-5-5";
+  ctx.ecran(`<div class="carte"><h3 class="etage">Modèle</h3><div class="liste">${LifeClaude.MODELES.map(([id, nom]) => `<button class="ligne ${id === modele ? "sel" : ""}" data-act="modele" data-id="${id}"><span class="t">${ctx.esc(nom)}</span></button>`).join("")}</div>
+    <h3 class="etage">Clé API</h3><p class="doux">${LifeClaude.aCle() ? "Une clé est chargée." : "Pas de clé : elle sera demandée."} ${garder ? "Elle est retenue sur cet iPhone." : "Elle est oubliée à la fermeture (le trousseau peut la remplir)."}</p>
+    <div class="rang"><button class="btn" data-act="garder">${garder ? "Ne plus la retenir" : "La retenir sur cet iPhone"}</button>${LifeClaude.aCle() ? `<button class="btn" data-act="oublier">Oublier la clé</button>` : ""}</div>
+    <h3 class="etage">Recherche web</h3><div class="rang"><button class="btn" data-act="web">${r.web === true ? "Désactiver" : "Activer"} la recherche web</button></div></div>`,
+    { titre: "Régler Claude", actions: {
+      modele: el => { LifeClaude.regler({ modele: el.dataset.id }); ctx.faire("régler Claude"); },
+      garder: () => { localStorage.setItem("life-garder-cle", garder ? "0" : "1"); if (garder) { try { localStorage.removeItem("life-cle"); } catch (e) {} } ctx.dire(garder ? "Clé plus retenue" : "Elle sera retenue à la prochaine saisie"); ctx.faire("régler Claude"); },
+      oublier: () => { LifeClaude.oublierCle(); ctx.dire("Clé oubliée"); ctx.faire("régler Claude"); },
+      web: () => { LifeClaude.regler({ web: r.web !== true }); ctx.faire("régler Claude"); } } });
+}),
+V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et en oublier.", async function(sujet, c, ctx){
+  const noms = await ctx.secrets();
+  ctx.ecran(`<p class="doux">Tes secrets restent sur cet iPhone. Claude n'en connaît que le nom. Ils ne sont pas dans les sauvegardes.</p>
+    <div class="liste">${noms.map(n => `<button class="ligne" data-act="oublier" data-nom="${ctx.esc(n)}"><span class="t">🔑 ${ctx.esc(n)}</span><small>Toucher pour l'oublier</small></button>`).join("") || `<p class="doux">Le coffre est vide.</p>`}</div>`,
+    { titre: "Mon coffre", actions: { oublier: async el => { if (await ctx.confirmer(`Oublier le secret « ${el.dataset.nom} » ?`, "Oublier")) { await ctx.oublierSecret(el.dataset.nom); ctx.faire("coffre"); } } } });
+}),
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
+for (const s of SEMENCES) s.doc.semence = 2;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
