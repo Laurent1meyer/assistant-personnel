@@ -309,7 +309,7 @@ const LifeDB = (() => {
   const cle = (c, id) => c + "\u0000" + id;
   const clone = o => JSON.parse(JSON.stringify(o));
   function ouvrirIDB() {
-    return new Promise((res, rej) => { const r = indexedDB.open("life", 1); r.onupgradeneeded = () => r.result.createObjectStore("docs"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    return new Promise((res, rej) => { const r = indexedDB.open("life", 2); r.onupgradeneeded = () => { const b = r.result; if (!b.objectStoreNames.contains("docs")) b.createObjectStore("docs"); if (!b.objectStoreNames.contains("fichiers")) b.createObjectStore("fichiers"); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
   }
   async function charger() {
     idb = await ouvrirIDB();
@@ -351,7 +351,19 @@ const LifeDB = (() => {
     }; },
     doc(p) { const [c, id] = String(p).split("/"); return ref(c, id); }
   };
-  async function exporter() { return { format: "life-export", version: 1, date: new Date().toISOString(), collections: clone(D) }; }
+  // Fichiers rapatriés : stockés à part, en binaire
+  const tx1 = (mode, fn) => new Promise((res, rej) => { const tx = idb.transaction("fichiers", mode); const r = fn(tx.objectStore("fichiers")); tx.oncomplete = () => res(r?.result); tx.onerror = () => rej(tx.error); });
+  const mettreFichier = (id, blob) => tx1("readwrite", st => st.put(blob, id));
+  const lireFichier = id => tx1("readonly", st => st.get(id));
+  const supprimerFichier = id => tx1("readwrite", st => st.delete(id));
+  const idsFichiers = () => tx1("readonly", st => st.getAllKeys());
+  const enBase64 = blob => new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(",")[1] || ""); f.onerror = () => rej(f.error); f.readAsDataURL(blob); });
+  async function exporter(opt = {}) {
+    const out = { format: "life-export", version: 1, date: new Date().toISOString(), collections: clone(D) };
+    if (opt.collections) out.collections = Object.fromEntries(Object.entries(out.collections).filter(([c]) => opt.collections.includes(c)));
+    if (opt.fichiers) { out.fichiers = {}; for (const id of await idsFichiers()) { const b = await lireFichier(id); if (b) out.fichiers[id] = { type: b.type || "application/octet-stream", base64: await enBase64(b) }; } }
+    return out;
+  }
   async function importer(obj) {
     const cols = obj?.collections; if (!cols || typeof cols !== "object") throw new Error("fichier non reconnu");
     await new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); tx.objectStore("docs").clear(); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
@@ -359,12 +371,15 @@ const LifeDB = (() => {
     await new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); const st = tx.objectStore("docs");
       for (const [c, docs] of Object.entries(cols)) for (const [id, v] of Object.entries(docs || {})) { (D[c] ||= {})[id] = v; st.put(v, cle(c, id)); }
       tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    if (obj.fichiers && typeof obj.fichiers === "object") for (const [id, f] of Object.entries(obj.fichiers)) {
+      try { const bin = atob(f.base64 || ""); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); await mettreFichier(id, new Blob([u8], { type: f.type || "application/octet-stream" })); } catch (_) {}
+    }
     const toutes = new Set([...Object.keys(subsC), ...Object.keys(D)]);
     for (const c of toutes) { for (const f of subsC[c] || []) queueMicrotask(() => f(snapCol(c))); }
     for (const k of Object.keys(subsD)) { const [c, id] = k.split("/"); for (const f of subsD[k]) queueMicrotask(() => f(snapDoc(c, id))); }
   }
   const vide = () => !Object.values(D).some(c => Object.keys(c || {}).length);
-  return { charger, db, exporter, importer, vide };
+  return { charger, db, exporter, importer, vide, mettreFichier, lireFichier, supprimerFichier, idsFichiers };
 })();
 
 const LifeClaude = (() => {
@@ -454,7 +469,7 @@ const TYPES = {
   idee:["Idée","--t-idee"], personne:["Personne","--t-personne"], lieu:["Lieu","--t-lieu"], bien:["Bien","--t-bien"],
   decision:["Décision","--t-decision"], fonction:["Fonction","--t-fonction"], dossier:["Dossier","--t-dossier"],
   application:["Application","--t-application"], conversation:["Conversation","--t-conversation"],
-  document:["Document","--t-document"], note:["Note","--t-note"], besoin:["Besoin Life","--t-besoin"], souvenir:["Souvenir","--t-idee"]
+  document:["Document","--t-document"], fichier:["Fichier","--t-document"], note:["Note","--t-note"], besoin:["Besoin Life","--t-besoin"], souvenir:["Souvenir","--t-idee"]
 };
 const GENRES = ["dans","sert","concerne","acteur","complément","lieu","moyen","satisfait","vérifie","dépend de","source","proche"];
 const RENDUS = ["dossiers","espace","temps","etages","carte"];
@@ -549,6 +564,8 @@ function vis(id){
 }
 function proprio(id){ if (S.monde==="claude") return "claude"; return D.possede.has(id) ? "moi" : "pasamoi"; }
 // Ce que Claude peut voir de mon Life : ce que je lui ai partagé, quand c'est à l'écran ou donné
+const texteFichiers = {}; // id -> extrait, pour les fichiers texte montrés à Claude
+async function chargerTexte(id){ const it=S.L[id]; if (it?.type!=="fichier" || !estTexte(it.champs?.mime) || texteFichiers[id]) return; try { const b=await LifeDB.lireFichier(id); if (b) texteFichiers[id]=(await b.text()).slice(0,20000); } catch(_){} }
 const visibleDeClaude = id => !!S.L[id] && (id==="moi" || partage(S.L[id]));
 
 // ---------- navigation ----------
@@ -598,9 +615,11 @@ function tuile(id){
   const lock = S.monde==="laurent" && S.claude!=="ferme" && !partage(it) && id!=="moi" ? `<span class="prive" title="Privé : Claude ne le voit pas">🔒</span>` : "";
   const inner = sous.length
     ? `<div class="tuile dossier ${cls}" style="--c:${c}">${sous.slice(0,9).map(s=>`<i style="background:${couleur(s.type)}"></i>`).join("")}${nb}</div>`
-    : `<div class="tuile ${cls}" style="background:${c};--c:${c}">${esc(lettre(it))}</div>`;
+    : `<div class="tuile ${cls}" style="background:${c};--c:${c}">${esc(it.emoji || (it.type==="fichier" ? iconeFichier(it) : lettre(it)))}</div>`;
   return `<button class="ic" data-objet="${id}">${lock}${inner}<div class="lab">${esc(it.titre)}</div></button>`;
 }
+function iconeFichier(it){ const m=String(it.champs?.mime||""); return m.startsWith("image/")?"🖼":m==="application/pdf"?"📄":m.startsWith("video/")?"🎞":m.startsWith("audio/")?"🎵":m.startsWith("text/")||/json|csv|markdown/.test(m)?"📝":"📦"; }
+const estTexte = m => /^text\/|json|csv|markdown|xml|javascript/.test(String(m||""));
 function trierIds(ids, cle){
   if (cle==="nom") return ids.sort((a,b)=>String(S.items[a].titre).localeCompare(S.items[b].titre,"fr"));
   if (cle==="naissance") return ids.sort((a,b)=>(S.items[b].cree||"").localeCompare(S.items[a].cree||""));
@@ -723,7 +742,7 @@ function ouvrirFiche(id, opt={}){
   const it=S.items[id]; if (!it || vis(id)!=="ok") return;
   S.fiche=id; const p=proprio(id), cl=S.monde==="claude";
   const av = p==="pasamoi" ? `box-shadow:inset 0 0 0 2.5px ${couleur(it.type)};color:${couleur(it.type)}` : `background:${couleur(it.type)}`;
-  let h=`<div class="f-tete"><div class="av ${["personne","moi"].includes(it.type)?"rond":""}" style="${av}">${esc(lettre(it))}</div>
+  let h=`<div class="f-tete"><div class="av ${["personne","moi"].includes(it.type)?"rond":""}" style="${av}">${esc(it.emoji || (it.type==="fichier" ? iconeFichier(it) : lettre(it)))}</div>
     <div style="min-width:0;flex:1"><h3>${esc(it.titre)}</h3><div class="chips"><span class="chip">${esc(libType(it.type))}</span><span class="chip ${cl?"claude":""}">${cl?"Life de Claude":p==="pasamoi"?"dans ma base, pas à moi":"à moi"}</span>${it.statut&&!["actif","proposé"].includes(it.statut)?`<span class="chip">${esc(it.statut)}</span>`:""}</div></div>
     <button class="x" data-fermer aria-label="Fermer">✕</button></div>`;
   if (it.desc) h+=`<p class="desc" style="color:var(--ink)">${cl?"<b>Définition. </b>":""}${esc(it.desc)}</p>`;
@@ -736,18 +755,50 @@ function ouvrirFiche(id, opt={}){
   const sort=(it.liens||[]).filter(l=>vis(l.vers)); if (sort.length) h+=`<div class="bloc"><h4>Rangé dans</h4>${sort.map(l=>ligne(l.vers,l.genre)).join("")}</div>`;
   const ent=[...new Map((D.entrants[id]||[]).filter(e=>vis(e.de)).map(e=>[e.de,e])).values()]; if (ent.length) h+=`<div class="bloc"><h4>Contient · ${ent.length}</h4>${ent.map(e=>ligne(e.de,e.genre!=="dans"?e.genre:"")).join("")}</div>`;
   h+=`<details class="dico" ${opt.dico?"open":""}><summary>Dictionnaire</summary><dl><dt>id</dt><dd>${esc(id)}</dd><dt>type</dt><dd>${esc(it.type)}</dd><dt>liens</dt><dd>${(it.liens||[]).map(l=>esc(l.genre+" → "+l.vers)).join("<br>")||"—"}</dd>${it.code?`<dt>code</dt><dd>${esc(it.code)}</dd>`:""}${it.modifie?`<dt>modifié</dt><dd>${esc(it.modifie)}</dd>`:""}</dl></details>`;
+  if (it.type==="fichier" && !cl) h+=`<div id="apercu" class="bloc"><div class="desc">Chargement du fichier…</div></div>`;
   h+=`<div class="actions">`;
   if (enfants(id).length) h+=`<button class="btn prim" data-aller="${id}">Ouvrir le dossier</button>`;
+  if (!cl && it.type==="fichier") h+=`<button class="btn prim" data-partager-f="${id}">Ouvrir ou partager</button>`;
+  if (!cl && it.type!=="fichier") h+=`<label class="btn" style="display:inline-grid;place-items:center;cursor:pointer">Rapatrier des fichiers ici<input type="file" multiple hidden data-rapatrier="${id}"></label>`;
   if (cl) { if (id!=="coeur") h+=`<button class="btn" data-prendre="${id}">Prendre dans mon Life</button><button class="btn no" data-effacer="${id}">Effacer pour de bon</button>`; }
   else { h+=`<button class="btn" data-creer="${id}">Objet vide ici</button>`; if (S.claude!=="ferme" && id!=="moi") h+=`<button class="btn claude" data-donner="${id}">${S.cache.has(id)?"Déjà montré à Claude":"Montrer à Claude"}</button>`; }
   h+=`</div><div id="zone-creer"></div><div id="zone-confirm"></div>`;
   $("#fiche-corps").innerHTML=h; $("#fiche").classList.add("on"); $("#voile").classList.add("on");
+  if (it.type==="fichier" && !cl) afficherApercu(id);
   if (!opt.silencieux) $("#fiche-corps").scrollTop=0;
   Espace.selection(id);
+}
+let urlApercu=null;
+async function afficherApercu(id){
+  const z=$("#apercu"); if (!z) return; const it=S.L[id]; let b=null; try { b=await LifeDB.lireFichier(id); } catch(_){}
+  if (S.fiche!==id || !$("#apercu")) return;
+  if (!b) { z.innerHTML=`<div class="vide">Le fichier n'est pas sur ce téléphone (la sauvegarde importée ne le contenait pas).</div>`; return; }
+  if (urlApercu) URL.revokeObjectURL(urlApercu); urlApercu=URL.createObjectURL(b); const m=b.type||it.champs?.mime||"";
+  if (m.startsWith("image/")) z.innerHTML=`<img src="${urlApercu}" alt="${esc(it.titre)}" style="width:100%;border-radius:14px;display:block">`;
+  else if (m==="application/pdf") z.innerHTML=`<iframe src="${urlApercu}" title="${esc(it.titre)}" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:14px"></iframe>`;
+  else if (m.startsWith("video/")) z.innerHTML=`<video src="${urlApercu}" controls playsinline style="width:100%;border-radius:14px"></video>`;
+  else if (m.startsWith("audio/")) z.innerHTML=`<audio src="${urlApercu}" controls style="width:100%"></audio>`;
+  else if (estTexte(m)) { const t=await b.text(); z.innerHTML=`<pre style="white-space:pre-wrap;max-height:50vh;overflow:auto;background:var(--bg);border-radius:12px;padding:12px;font-size:13px">${esc(t.slice(0,20000))}${t.length>20000?"\n…":""}</pre>`; }
+  else z.innerHTML=`<p class="desc">Aperçu indisponible pour ce type de fichier. « Ouvrir ou partager » l'envoie vers l'app qui sait le lire.</p>`;
+}
+async function rapatrier(parent, fichiers){
+  const l=[...fichiers]; if (!l.length) return; let n=0, trop=0;
+  for (const f of l){ if (f.size>100*1024*1024){ trop++; continue; }
+    const ref=await S.db.collection("items").add({ titre:f.name, type:"fichier", desc:"", couche:"moi", partage:false, statut:"actif", cree:now(), source:"Rapatrié depuis Fichiers (iPhone, iCloud ou NAS)", liens:[{vers:parent,genre:"dans",force:.5}],
+      champs:{ mime:f.type||"application/octet-stream", taille:(f.size/1024<1024?Math.round(f.size/1024)+" Ko":(f.size/1048576).toFixed(1)+" Mo"), "date du fichier":new Date(f.lastModified||Date.now()).toISOString().slice(0,10) } });
+    await LifeDB.mettreFichier(ref.id, f); n++; }
+  await journal("rapatrier",[parent]); toast(`${n} fichier${n>1?"s":""} rapatrié${n>1?"s":""}, privé${n>1?"s":""}`+(trop?` · ${trop} trop lourd${trop>1?"s":""} (plus de 100 Mo)`:""));
+}
+async function partagerFichier(id){
+  const it=S.L[id]; const b=await LifeDB.lireFichier(id); if (!b) return toast("Fichier absent de ce téléphone");
+  const f=new File([b], it.champs?.nom||it.titre, {type:b.type||it.champs?.mime||"application/octet-stream"});
+  try { if (navigator.canShare?.({files:[f]})) { await navigator.share({files:[f], title:it.titre}); return; } } catch(e){ if (e?.name==="AbortError") return; }
+  const u=URL.createObjectURL(f); const a=document.createElement("a"); a.href=u; a.download=f.name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000);
 }
 function fermerFiche(silence){ S.fiche=null; $("#fiche").classList.remove("on"); $("#voile").classList.remove("on"); if (!silence) Espace.selection(null); }
 $("#voile").onclick=()=>fermerFiche();
 $("#fiche-corps").addEventListener("change", async e=>{
+  if (e.target.dataset?.rapatrier){ const par=e.target.dataset.rapatrier; await rapatrier(par, e.target.files||[]); e.target.value=""; return ouvrirFiche(par,{silencieux:true}); }
   if (e.target.id==="sw-partage"){ const id=S.fiche, val=e.target.checked; try { await majItem(id,{partage:val},"items"); if (!val) S.cache.delete(id); await journal(val?"partager":"rendre privé",[id]); toast(val?"Partagé avec Claude":"Redevenu privé"); } catch(_){ e.target.checked=!val; toast("Non enregistré"); } return; }
   if (e.target.id==="in-quota"){ const v=Math.max(20,Math.min(5000,+e.target.value||QUOTA_DEFAUT)); S.reglages.quotaKo=v; try { await S.db.collection("reglages").doc("claude").set({...S.reglages}); toast(`Place de Claude : ${v} Ko`); } catch(_){} return; }
   if (e.target.id==="sw-memoriser"){ const val=e.target.checked; S.reglages.memoriser=val; try { await S.db.collection("reglages").doc("claude").set({...S.reglages}); toast(val?"Claude peut garder ce que tu lui montres":"Claude ne garde rien de ce que tu lui montres"); } catch(_){} return; }
@@ -761,10 +812,11 @@ $("#fiche-corps").addEventListener("click", async e=>{
   if (t.closest("[data-fermer]")) return fermerFiche();
   const m=t.closest("[data-masque]"); if (m) return demanderPartage(m.dataset.masque);
   const a=t.closest("[data-aller]"); if (a){ fermerFiche(); if (vueCourante()[1].rendu!=="dossiers") S.lentille[S.monde]="voir-dossiers"; return ouvrir(a.dataset.aller); }
+  const pf=t.closest("[data-partager-f]"); if (pf) return partagerFichier(pf.dataset.partagerF);
   const pr=t.closest("[data-prendre]"); if (pr) return prendre(pr.dataset.prendre);
   const ef=t.closest("[data-effacer]"); if (ef) return confirmer(`Effacer « ${S.C[ef.dataset.effacer]?.titre} » du Life de Claude pour de bon ? Rien ne reste, pas même dans Décès.`, "Effacer", async()=>{ await S.db.collection("claude_items").doc(ef.dataset.effacer).delete(); await journal("effacer",[ef.dataset.effacer],"Laurent","claude_journal"); fermerFiche(); toast("Effacé"); });
   const c=t.closest("[data-creer]"); if (c) return formCreer(c.dataset.creer);
-  const dn=t.closest("[data-donner]"); if (dn){ const id=dn.dataset.donner; if (S.cache.has(id)) return; if (!partage(S.L[id])) return confirmer(`« ${S.L[id].titre} » est privé. Le montrer à Claude le lui donne pour cette conversation, sans le rendre partagé.`, "Montrer", ()=>{ S.cache.add(id); majCacheUI(); ouvrirFiche(id,{silencieux:true}); toast("Claude le voit dans cette conversation"); }); S.cache.add(id); majCacheUI(); ouvrirFiche(id,{silencieux:true}); return toast("Claude le voit dans cette conversation"); }
+  const dn=t.closest("[data-donner]"); if (dn){ const id=dn.dataset.donner; await chargerTexte(id); if (S.cache.has(id)) return; if (!partage(S.L[id])) return confirmer(`« ${S.L[id].titre} » est privé. Le montrer à Claude le lui donne pour cette conversation, sans le rendre partagé.`, "Montrer", ()=>{ S.cache.add(id); majCacheUI(); ouvrirFiche(id,{silencieux:true}); toast("Claude le voit dans cette conversation"); }); S.cache.add(id); majCacheUI(); ouvrirFiche(id,{silencieux:true}); return toast("Claude le voit dans cette conversation"); }
   const o=t.closest("[data-ouvrir]"); if (o && !t.closest("a")) return ouvrirFiche(o.dataset.ouvrir);
   if (t.closest("[data-voir-prompt]")) return ouvrirReglages();
 });
@@ -825,6 +877,7 @@ function ouvrirReglages(silencieux){
       <label class="champ" style="grid-template-columns:auto 1fr"><input type="checkbox" data-cv="${esc(id)}" ${v.actif!==false?"checked":""}><span>Actif</span></label>
       <details style="margin-top:6px"><summary style="cursor:pointer;color:var(--accent);font-weight:700">Voir le code</summary><pre style="overflow-x:auto;font-size:12px;background:var(--surface2);padding:10px;border-radius:10px">${esc(v.code||"")}</pre></details>
       <div class="actions"><button class="btn no" data-suppr-cv="${esc(id)}">Supprimer</button></div></div>`;
+    h+=`<div class="section-r">Son dossier sur le NAS</div><p class="desc" style="margin:0">Exporte le Life de Claude seul (sans tes données), à ranger dans un dossier « Life/Claude » sur le NAS via Synology Drive.</p><div class="actions"><button class="btn" data-exporter-claude>Exporter le Life de Claude</button></div>`;
     h+=`<div class="section-r">Effacer</div><p class="desc" style="margin:0">Effacer une période supprime pour de bon ce que Claude a créé, ses verbes et la conversation sur cette durée.</p>
       <div class="actions"><button class="btn" data-periode="1">1 heure</button><button class="btn" data-periode="2">2 heures</button><button class="btn" data-periode="24">24 heures</button><button class="btn no" data-tout>Tout effacer</button></div><div id="zone-confirm"></div>`;
   } else {
@@ -843,6 +896,7 @@ function ouvrirReglages(silencieux){
       <div class="actions">${LifeClaude.aCle()?`<button class="btn no" data-oublier-cle>Oublier la clé sur cet appareil</button>`:`<button class="btn claude" data-saisir-cle>Saisir la clé</button>`}</div>
       <div class="section-r">Sauvegarde</div>
       <p class="desc" style="margin:0">Tout vit sur ce téléphone. Exporte régulièrement vers Synology Drive ou Fichiers.${lsGet("life-export")?" Dernière sauvegarde : "+esc(new Date(lsGet("life-export")).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}))+".":" Aucune sauvegarde encore."}</p>
+      <label class="interr" style="margin-top:8px"><input type="checkbox" id="sw-fichiers" checked><span>Inclure les fichiers rapatriés<small>La sauvegarde grossit d'autant ; sans eux, seules leurs fiches sont sauvées.</small></span></label>
       <div class="actions"><button class="btn prim" data-exporter>Exporter ma base</button><label class="btn" style="display:inline-grid;place-items:center;cursor:pointer">Importer…<input type="file" accept="application/json,.json" id="f-import" hidden></label></div><div id="zone-confirm"></div>`;
   }
   $("#fiche-corps").innerHTML=h; S.fiche="__reglages"; $("#fiche").classList.add("on"); $("#voile").classList.add("on");
@@ -854,15 +908,16 @@ $("#fiche-corps").addEventListener("change", async e=>{
   if (e.target.id==="f-import"){ const f=e.target.files?.[0]; if (!f) return; let obj; try { obj=JSON.parse(await f.text()); } catch(_){ return toast("Fichier illisible"); }
     confirmer("Remplacer toute la base de ce téléphone par cette sauvegarde ?", "Remplacer", async()=>{ await LifeDB.importer(obj); toast("Sauvegarde importée"); fermerFiche(); }); }
 });
-async function exporterBase(){
-  const data=await LifeDB.exporter(); const nom=`life-${new Date().toISOString().slice(0,10)}.json`;
+async function exporterBase(opt={}){
+  const data=await LifeDB.exporter(opt); const nom=`${opt.nom||"life"}-${new Date().toISOString().slice(0,10)}.json`;
   const blob=new Blob([JSON.stringify(data)],{type:"application/json;charset=utf-8"}); const fichier=new File([blob],nom,{type:"application/json"});
   try { if (navigator.canShare?.({files:[fichier]})) { await navigator.share({files:[fichier], title:nom}); lsSet("life-export",now()); toast("Sauvegarde partagée"); return; } } catch(e){ if (e?.name==="AbortError") return; }
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nom; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); lsSet("life-export",now()); toast("Sauvegarde téléchargée");
 }
 $("#fiche-corps").addEventListener("click", async e=>{
   const t=e.target; if (!S.db) return;
-  if (t.closest("[data-exporter]")) return exporterBase();
+  if (t.closest("[data-exporter]")) return exporterBase({fichiers:!!$("#sw-fichiers")?.checked});
+  if (t.closest("[data-exporter-claude]")) return exporterBase({nom:"life-claude", collections:["claude_items","claude_verbes","claude_prompt","claude_fil","claude_journal","reglages"]});
   if (t.closest("[data-oublier-cle]")){ LifeClaude.oublierCle(); toast("Clé oubliée sur cet appareil"); return ouvrirReglages(true); }
   if (t.closest("[data-saisir-cle]")){ fermerFiche(); ouvrirClaude(); return afficherCle(); }
   if (t.closest("[data-prompt-ok]")){ const pr=S.prompt; try { await S.db.collection("claude_prompt").doc("connexion").set({ texte:pr.proposition.texte, version:(pr.version||1)+1, historique:[...(pr.historique||[]),{texte:pr.texte,version:pr.version||1,quand:now()}].slice(-20), proposition:null }); await journal("valider le prompt",["connexion"],"Laurent","claude_journal"); toast("Prompt validé"); } catch(_){ toast("Refusé"); } return; }
@@ -1014,7 +1069,7 @@ Ton Life (${vivants.length} objets vivants, ${Object.values(S.C).filter(x=>x.mor
 function cacheTexte(){
   const ids=new Set(S.cache);
   if (S.voit && S.monde==="laurent") { const [,v]=vueCourante(); const base = v.rendu==="espace" ? Espace.decrire() : v.rendu==="dossiers" ? enfants(F().at(-1)) : sousArbre(F().at(-1),3); for (const i of base) if (vis(i)==="ok" && visibleDeClaude(i)) ids.add(i); if (S.fiche && S.L[S.fiche] && visibleDeClaude(S.fiche)) ids.add(S.fiche); }
-  const l=[...ids].filter(i=>S.L[i]).slice(0,80).map(i=>{ const it=S.L[i]; return `- ${it.titre} [l:${i}, ${it.type}]${it.desc?" : "+it.desc.slice(0,200):""}`; });
+  const l=[...ids].filter(i=>S.L[i]).slice(0,80).map(i=>{ const it=S.L[i]; return `- ${it.titre} [l:${i}, ${it.type}]${it.desc?" : "+it.desc.slice(0,200):""}${texteFichiers[i]?` (contenu du fichier lisible avec lire)`:""}`; });
   let ecran = S.monde==="claude" ? "Laurent regarde ton Life en ce moment." : (S.voit ? `Laurent te montre son écran : vue « ${vueCourante()[1].nom} », dossier « ${F().at(-1)==="moi"?"Life":S.L[F().at(-1)]?.titre} ».` : "Laurent ne te montre pas son écran.");
   return { ids:[...ids], texte:`${ecran}\nCe que Laurent te montre de son Life (ton cache, pour cette conversation seulement) :\n${l.join("\n")||"(rien)"}` };
 }
@@ -1036,7 +1091,7 @@ Date : ${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",mon
 ${pr}
 
 [Sommaire]
-${sommaire()}
+${sommaire()}${(()=>{ const n=Object.entries(S.C).filter(([i,x])=>!x.mort && (x.liens||[]).some(l=>l.vers==="c_a_traiter")).length; return n?`\n\n[À traiter]\nTon dossier « À traiter » (id c_a_traiter) contient ${n} élément(s) : c'est ton cache, ce que Laurent te confie. Lis-les (lire), identifie demandes, besoins et décisions, range-les dans ton Life de la façon la plus claire, puis retire chaque élément traité (supprimer, raison « traité »). Travaille par lots raisonnables et dis à Laurent où tu en es.`:""; })()}
 
 [Cache]
 ${c.texte}`;
@@ -1056,7 +1111,7 @@ const TOOLS = () => [
     execute:({texte,type})=>{ const q=String(texte||"").toLowerCase(); return Object.keys(S.C).filter(i=>vivant(i)&&(!type||S.C[i].type===type)&&(!q||(S.C[i].titre+" "+(S.C[i].desc||"")).toLowerCase().includes(q))).slice(0,30).map(i=>({id:i,titre:S.C[i].titre,type:S.C[i].type})); } },
   { name:"lire", description:"Lit un objet de ton Life (id), ou un objet de ton cache (id commençant par l:).", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
     execute:({id})=>{ id=String(id);
-      if (id.startsWith("l:")){ const lid=id.slice(2); if (!cacheTexte().ids.includes(lid)) throw new Error("pas dans ton cache"); const it=S.L[lid]; return {id, titre:it.titre, type:it.type, definition:it.desc||"", champs:it.champs||{}}; }
+      if (id.startsWith("l:")){ const lid=id.slice(2); if (!cacheTexte().ids.includes(lid)) throw new Error("pas dans ton cache"); const it=S.L[lid]; return {id, titre:it.titre, type:it.type, definition:it.desc||"", champs:it.champs||{}, ...(texteFichiers[lid]?{contenu:texteFichiers[lid]}:{})}; }
       if (!vivant(id)) throw new Error("objet inconnu"); const it=S.C[id], d=deriverPour(S.C,"coeur");
       return {id, titre:it.titre, type:it.type, definition:it.desc||"", pourquoi:it.pourquoi||"", champs:it.champs||{}, liens:it.liens||[], contient:(d.entrants[id]||[]).map(e=>({id:e.de,titre:S.C[e.de].titre,genre:e.genre}))}; } },
   { name:"creer", description:"Crée des objets dans ton Life. Chacun : titre, definition (français, obligatoire), type, vers (id d'un de tes objets), genre, pourquoi (facultatif).",
@@ -1156,6 +1211,7 @@ function demarrer(){
   db.doc("reglages/claude").onSnapshot(s=>{ if (s.exists) S.reglages={memoriser:true,...s.data()}; planifier(); });
   db.doc("claude_fil/principal").onSnapshot(s=>{ if (enCours) return; const t=s.exists?s.data().tours:null; if (Array.isArray(t)){ S.tours=t.slice(); rendreChat(); } });
   majModele();
+  setTimeout(async()=>{ if (S.L.moi && !S.L.iphone) { try { await db.collection("items").doc("iphone").set({ titre:"Mon iPhone", type:"bien", emoji:"📱", desc:"Ce que je rapatrie dans Life depuis l'iPhone, iCloud ou le NAS (via l'app Synology Drive). Ouvre sa fiche puis « Rapatrier des fichiers ici ».", couche:"moi", partage:false, statut:"actif", cree:now(), source:"Life", liens:[{vers:"moi",genre:"dans",force:.7}], champs:{} }); } catch(_){} } }, 800);
   try { const d=lsGet("life-export"); if (!d || Date.now()-Date.parse(d)>7*864e5) setTimeout(()=>toast("Pense à sauvegarder ta base (⋯ › Sauvegarde)"),1500); } catch(_){}
 }
 function premierLancement(){
