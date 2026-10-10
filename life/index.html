@@ -1091,7 +1091,7 @@ Date : ${new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",mon
 ${pr}
 
 [Sommaire]
-${sommaire()}
+${sommaire()}${(()=>{ const n=Object.entries(S.C).filter(([i,x])=>!x.mort && (x.liens||[]).some(l=>l.vers==="c_a_traiter")).length; return n?`\n\n[À traiter]\nTon dossier « À traiter » (id c_a_traiter) contient ${n} élément(s) : c'est ton cache, ce que Laurent te confie. Lis-les (lire), identifie demandes, besoins et décisions, range-les dans ton Life de la façon la plus claire, puis retire chaque élément traité (supprimer, raison « traité »). Travaille par lots raisonnables et dis à Laurent où tu en es.`:""; })()}
 
 [Cache]
 ${c.texte}`;
