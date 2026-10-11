@@ -240,7 +240,15 @@ const LifeDB = (() => {
 
 const LifeClaude = (() => {
   const MODELES = [["claude-opus-5-5", "Opus 5.5 · le plus capable"], ["claude-sonnet-5-5", "Sonnet 5.5 · équilibré"], ["claude-haiku-5-5", "Haiku 5.5 · rapide"]];
-  let cle = null, webOK = true, jetons = 0;
+  let cle = null, webOK = true, cacheOK = true, jetons = 0;
+  // Consommation : chaque appel compte ses jetons (envoyés, lus en cache, écrits en cache, reçus)
+  let enCours = null;
+  const conso = () => { try { return JSON.parse(localStorage.getItem("life-conso") || "{}"); } catch (_) { return {}; } };
+  function compter(u, model){
+    const x = { entree:u.input_tokens||0, lu:u.cache_read_input_tokens||0, ecrit:u.cache_creation_input_tokens||0, sortie:u.output_tokens||0, appels:1 };
+    if (enCours) for (const k in x) enCours[k] = (enCours[k]||0) + x[k];
+    try { const c = conso(), j = new Date().toISOString().slice(0,10); for (const cle2 of ["total", j]) { c[cle2] = c[cle2] || {}; for (const k in x) c[cle2][k] = (c[cle2][k]||0) + x[k]; } c.dernierModele = model; localStorage.setItem("life-conso", JSON.stringify(c)); } catch (_) {}
+  }
   try { cle = localStorage.getItem("life-cle"); } catch (_) {}
   const reglages = () => { try { return JSON.parse(localStorage.getItem("life-claude") || "{}"); } catch (_) { return {}; } };
   const regler = r => { try { localStorage.setItem("life-claude", JSON.stringify({ ...reglages(), ...r })); } catch (_) {} };
@@ -259,6 +267,7 @@ const LifeClaude = (() => {
       throw { code: r.status === 401 ? "bad_key" : r.status === 429 ? "rate_limited" : (r.status === 529 || r.status === 503) ? "overloaded" : r.status === 400 ? "invalid_request" : "api_error", message: m };
     }
     jetons += (j.usage?.input_tokens || 0) + (j.usage?.output_tokens || 0);
+    if (j.usage) compter(j.usage, corps.model);
     return j;
   }
   // Même signature que le sample de l'artefact : (tours, {tools, onText, signal}) -> {text, truncated}
@@ -269,19 +278,21 @@ const LifeClaude = (() => {
     if (msgs[0]?.role === "user" && msgs[1]?.role === "assistant" && msgs[1].content === "Compris.") { system = msgs[0].content; msgs = msgs.slice(2); }
     const outils = (opts.tools || []).map(t => ({ name: t.name, description: t.description, input_schema: t.inputSchema || { type: "object", properties: {} } }));
     if (r.web === true && webOK) outils.push({ type: "web_search_20250305", name: "web_search", max_uses: 5 });
-    let texte = "";
+    let texte = ""; const usage = enCours = { entree:0, lu:0, ecrit:0, sortie:0, appels:0 };
     for (let tour = 0; tour < (opts.maxTours || 12); tour++) {
       let j;
-      try { j = await appel({ model, max_tokens: 8192, system, messages: msgs, ...(outils.length ? { tools: outils } : {}) }, opts.signal); }
+      // mise en cache automatique : le début commun des allers-retours (système, outils, échanges) est relu à prix réduit
+      try { j = await appel({ model, max_tokens: 4096, system, messages: msgs, ...(outils.length ? { tools: outils } : {}), ...(cacheOK ? { cache_control: { type: "ephemeral" } } : {}) }, opts.signal); }
       catch (e) {
+        if (e.code === "invalid_request" && cacheOK && /cache/i.test(e.message || "")) { cacheOK = false; tour--; continue; }
         const iw = outils.findIndex(t => t.type);
         if (e.code === "invalid_request" && iw >= 0 && /web_search|tool/i.test(e.message || "")) { webOK = false; outils.splice(iw, 1); tour--; continue; }
-        throw { ...e, text: texte || undefined };
+        throw { ...e, text: texte || undefined, usage };
       }
       const t = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
       if (t) { texte += (texte ? "\n\n" : "") + t; opts.onText?.({ text: texte, delta: t }); }
       if (j.stop_reason === "pause_turn") { msgs.push({ role: "assistant", content: j.content }); continue; }
-      if (j.stop_reason !== "tool_use") return { text: texte || "(pas de réponse)", truncated: j.stop_reason === "max_tokens", modelTierApplied: "complex", modelApplied: j.model };
+      if (j.stop_reason !== "tool_use") return { text: texte || "(pas de réponse)", truncated: j.stop_reason === "max_tokens", modelTierApplied: "complex", modelApplied: j.model, usage };
       msgs.push({ role: "assistant", content: j.content });
       const resultats = [];
       for (const b of j.content.filter(b => b.type === "tool_use")) {
@@ -293,10 +304,10 @@ const LifeClaude = (() => {
       }
       msgs.push({ role: "user", content: resultats });
     }
-    return { text: texte || "(trop d'allers-retours)", truncated: true, modelTierApplied: "complex" };
+    return { text: (texte ? texte + "\n\n" : "") + "(Arrêté : trop d'allers-retours pour une seule demande.)", truncated: true, modelTierApplied: "complex", usage };
   }
   sample.limits = async () => ({ maxPromptBytes: 900000, tools: {} });
-  return { sample, MODELES, definirCle, oublierCle, aCle: () => !!cle, reglages, regler, jetons: () => jetons, nomModele: () => (MODELES.find(m => m[0] === (reglages().modele || "claude-sonnet-5-5")) || [, "Sonnet 5.5"])[1].split(" · ")[0] };
+  return { sample, MODELES, definirCle, oublierCle, aCle: () => !!cle, reglages, regler, jetons: () => jetons, conso, nomModele: () => (MODELES.find(m => m[0] === (reglages().modele || "claude-sonnet-5-5")) || [, "Sonnet 5.5"])[1].split(" · ")[0] };
 })();
 
 </script>
@@ -477,7 +488,9 @@ function ctx(vid, suivant){
     claude: (texte, opt) => claudeFaire(texte, typeof opt==="string" ? {sujet:opt} : (opt||{})),
     claudeActif: () => K.claude.actif, ecranClaude: () => ecranPourClaude(),
     secret, oublierSecret, secrets: nomsSecrets, telecharger, choisirFichier,
-    monde: () => K.monde, nouvelImport, lireZip, arreterClaude: () => K.claude.travaille?.abort(),
+    monde: () => K.monde, nouvelImport, lireZip,
+    conso: u => { if (!u) return ""; const k = n => n >= 1000 ? (n/1000).toFixed(n >= 10000 ? 0 : 1).replace(".", ",") + " k" : String(n); const env = (u.entree||0)+(u.lu||0)+(u.ecrit||0);
+      return `${k(env)} jetons envoyés${u.lu ? ` (dont ${k(u.lu)} relus en cache)` : ""} · ${k(u.sortie||0)} reçus · ${u.appels||0} appel${(u.appels||0)>1?"s":""}`; }, arreterClaude: () => K.claude.travaille?.abort(),
     variantes, choix: (nom, type) => K.C[`${K.monde}|${nom}|${type||"rien"}`]?.verbe || null, choisirVariante,
     adopter: vid => adopterVerbe(vid),
     moi: vid, courant: () => K.sujet, __versions: id => versions(id) };
@@ -587,7 +600,7 @@ function ecranPourClaude(){
   for (const e of c.querySelectorAll("input,textarea")) e.replaceWith(document.createTextNode(e.type==="password" ? "[champ secret]" : `[champ : ${e.value}]`));
   for (const e of c.querySelectorAll("video,audio,img")) e.replaceWith(document.createTextNode(`[${e.tagName.toLowerCase()}${e.currentSrc||e.src?" : "+(e.currentSrc||e.src):""}]`));
   const sujet = K.sujet && vu(K.sujet) ? ` (objet ${K.sujet}, type ${K.O[K.sujet]?.type})` : "";
-  return `Écran « ${$("#titre").textContent} »${sujet} :\n` + c.textContent.replace(/[ \t]+/g," ").replace(/\n\s*\n+/g,"\n").trim().slice(0,4000);
+  return `Écran « ${$("#titre").textContent} »${sujet} :\n` + c.textContent.replace(/[ \t]+/g," ").replace(/\n\s*\n+/g,"\n").trim().slice(0,1500);
 }
 // Un verbe écrit par Claude qui touche au réseau, aux secrets ou aux données brutes attend l'accord de Laurent.
 function validerVerbe(vid){
@@ -718,6 +731,10 @@ La base vit sur l'iPhone (IndexedDB) : pas de gros fichiers dedans.
 Tu as ton propre Life dans la même base : la racine « life_claude » et tout ce qui est rangé dessous. C'est ta mémoire : notes, réflexions, ce que tu retiens des conversations, tes essais. Tu y crées ce que tu veux (creer_objet parent life_claude). Tes verbes à toi s'écrivent avec chez:"claude" : ils n'agissent que dans ton Life, et Laurent peut les adopter dans le sien. Laurent possède tout le stockage : il peut tout lire dans ton Life, prendre un objet, effacer. Reste sobre : peu d'objets bien définis.
 Dans le Life de Laurent, n'écris que ce qu'il te demande (ou ce qui découle d'une tâche ou d'une conversation qu'il t'a confiée).
 
+## Économie (important : chaque appel coûte à Laurent)
+- Ne charge que ce qui sert la demande : lister un dossier, chercher, lire un objet précis. Jamais toute la base.
+- Réponses courtes. Peu d'allers-retours d'outils.
+
 ## Comment travailler
 1. Regarde ce qui existe déjà (verbes ci-dessous, chercher_objets) et réutilise.
 2. Si on t'a confié une tâche, range ton plan dessous : une fonction (type « fonction ») par capacité à rendre possible, champs.statut = « à faire », « fait » ou « bloqué ». Mets les statuts à jour en avançant.
@@ -735,38 +752,27 @@ async function claudeFaire(texte, opt={}){
   }
   if (!K.claude.actif) activerClaude(true);   // lui écrire, c'est l'activer
   const ecranVu = opt.ecran || (opt.autonome ? "(Peuplement autonome : Laurent ne regarde pas forcément l'écran.)" : null) || (K.O[K.sujet]?.type==="conversation" ? "(Laurent est dans la fenêtre de conversation avec toi.)" : ecranPourClaude());
-  const vb = Object.entries(K.V).filter(([,v])=>v.actif!==false).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.aValider?" (en attente d'autorisation)":""} : ${v.definition||""}`).join("\n");
-  const connus = Object.keys(K.O).filter(id=>!K.O[id].supprime && K.O[id].parent!=="corbeille");
-  const arbre = connus.slice(0,600).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
-  const nPrive = Object.keys(K.O).filter(id=>!vu(id) && !K.O[id].supprime).length;
-  const tache = opt.tache && vu(opt.tache) ? K.O[opt.tache] : null;
+  const tache = opt.tache && K.O[opt.tache] ? K.O[opt.tache] : null;
+  const ici = K.sujet && K.O[K.sujet] ? `${K.O[K.sujet].titre} [${K.sujet}, ${K.O[K.sujet].type}]${chezClaude(K.sujet)?" — dans TON Life":""}` : "l'accueil";
+  const nObjets = Object.keys(K.O).length, nVerbes = Object.keys(K.V).length;
+  // Économie : la base n'est PAS envoyée. Claude la consulte avec ses outils, seulement si besoin.
   const systeme = `${K.O.prompt_claude?.desc || PROMPT_DEFAUT}
 
 ${TECHNIQUE}
 
-## Verbes actuels
-${vb}
+## Où en est la base
+${nObjets} objets et ${nVerbes} verbes. Ils ne sont PAS dans ce message : consulte seulement ce qu'il te faut (lister, chercher_objets, lire_objet, lister_verbes, lire_verbe). Racines : « moi » (Laurent), « life_claude » (ton Life, sous moi), « conversations », « reglages ».
+Secrets au coffre (noms) : ${(await nomsSecrets()).join(", ") || "aucun"}.
+Laurent regarde : ${ici}.${opt.conv ? `\nConversation en cours : [${opt.conv}] (${(K.O[opt.conv]?.messages||[]).length} messages). Seuls les derniers échanges, raccourcis, te sont envoyés ; relis le reste avec lire_conversation si besoin.` : ""}
 
-## Où regarde Laurent
-${K.sujet && chezClaude(K.sujet) ? "Laurent regarde TON Life (le dossier life_claude, rangé sous Moi)." : "Laurent est dans son Life."}
-
-## Toute la base (${connus.length} objets ; « ⊂ » = rangé dans)
-${arbre || "(aucun)"}
-
-## Types d'objets existants (nombre d'objets, privés compris)
-${Object.entries(Object.values(K.O).reduce((a,o)=>{ a[o.type]=(a[o.type]||0)+1; return a; },{})).map(([t,n])=>`${t} (${n})`).join(", ")}
-
-## Secrets au coffre (noms seulement)
-${(await nomsSecrets()).join(", ") || "(aucun)"}
-
-## L'écran de Laurent en ce moment
-${ecranVu}
-${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.desc?" — "+tache.desc:""}` : ""}`;
+## Ce que montre son écran
+${String(ecranVu).slice(0,1500)}
+${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.desc?" — "+tache.desc.slice(0,500):""}` : ""}`;
 
   const traces=[]; const trace=(t,ref)=>{ traces.push({t, ...(ref||{})}); fil("✦ "+t); };
   const visible = id => { id=String(id); if (!K.O[id] || K.O[id].supprime) throw new Error("objet inconnu : "+id); if (!vu(id)) throw new Error("objet privé : Laurent ne te l'a pas montré (outil demander_a_voir)"); return id; };
   const objetPourClaude = id => { const o=K.O[id]; const enf=enfants(id); return { id, titre:o.titre, type:o.type, parent:o.parent, desc:o.desc, champs:o.champs, relations:o.relations, phrase:o.phrase, partage:!!o.partage,
-    enfants: enf.filter(e=>vu(e.id)).map(e=>({id:e.id, titre:e.titre, type:e.type})), enfantsPrives: enf.filter(e=>!vu(e.id)).length }; };
+    enfants: enf.slice(0,30).map(e=>({id:e.id, titre:e.titre, type:e.type})), nbEnfants: enf.length }; };
   const outils = [
     { name:"lire_verbe", description:"Lit un verbe : nom, pour, définition, code de la version utilisée.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
       execute:({id})=>{ const v=K.V[String(id)]; if (!v) throw new Error("verbe inconnu"); return { id, nom:v.nom, pour:v.pour, definition:v.definition, version:v.epingle||v.version, aValider:!!v.aValider, code:codeActif(v) }; } },
@@ -790,8 +796,12 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
         const m = K.sujet && !vu(K.sujet) ? null : ecranPourClaude();
         if (cap.erreurs.length) trace(`erreur : ${cap.erreurs[0].slice(0,80)}`);
         return { erreurs:cap.erreurs, messages:cap.dits, ecran: m || "(écran privé)" }; } },
-    { name:"chercher_objets", description:"Cherche parmi les objets que tu vois. Renvoie {id,titre,type,parent}.", inputSchema:{type:"object",properties:{texte:{type:"string"}}},
-      execute:({texte})=>base.chercher(texte).filter(o=>vu(o.id)).slice(0,40).map(o=>({id:o.id,titre:o.titre,type:o.type,parent:o.parent})) },
+    { name:"chercher_objets", description:"Cherche des objets par mots du titre, de la description ou du type. Renvoie au plus 25 {id,titre,type,parent}.", inputSchema:{type:"object",properties:{texte:{type:"string"}}},
+      execute:({texte})=>base.chercher(texte).slice(0,25).map(o=>({id:o.id,titre:o.titre,type:o.type,parent:o.parent})) },
+    { name:"lister", description:"Le contenu d'un dossier ou d'un objet (ses enfants) : {id,titre,type,n = nombre d'enfants}. id : « moi », « life_claude », ou n'importe quel objet.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+      execute:({id})=>{ id=String(id); if (!K.O[id]) throw new Error("objet inconnu"); const l=enfants(id); return { id, titre:K.O[id].titre, total:l.length, enfants:l.slice(0,60).map(e=>({id:e.id,titre:e.titre,type:e.type,n:enfants(e.id).length||undefined})) }; } },
+    { name:"lister_verbes", description:"Les verbes de l'app (nom, id, types), filtrés par un mot si besoin.", inputSchema:{type:"object",properties:{texte:{type:"string"}}},
+      execute:({texte})=>{ const q=String(texte||"").toLowerCase(); return Object.entries(K.V).filter(([i,v])=>!q||(v.nom+" "+i+" "+(v.definition||"")).toLowerCase().includes(q)).slice(0,60).map(([i,v])=>({id:i,nom:v.nom,pour:v.pour,chez:v.chez,actif:v.actif!==false})); } },
     { name:"lire_objet", description:"Lit un objet que tu vois, avec ses enfants visibles.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
       execute:({id})=>objetPourClaude(visible(id)) },
     { name:"creer_objet", description:"Crée un objet (ou une tâche, avec phrase {verbe,sujet,complements}). parent : 'moi' (racine du Life de Laurent), 'life_claude' (racine de TON Life), ou un objet que tu connais. Dans le Life de Laurent, l'objet est partagé avec toi.",
@@ -816,23 +826,23 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
         K.claude.montre.add(id); for (const e of enfants(id)) K.claude.montre.add(e.id); majVision();
         return { montre:"pour cette demande seulement", objet: objetPourClaude(id) }; } },
     { name:"lire_conversation", description:"Relit une conversation (dossier « Conversations avec Claude »), par pages : depuis = index du premier message, nombre = combien (20 par défaut). Renvoie aussi le total. Les messages très longs sont coupés à 6000 caractères.", inputSchema:{type:"object",properties:{id:{type:"string"},depuis:{type:"number"},nombre:{type:"number"}},required:["id"]},
-      execute:({id, depuis, nombre})=>{ id=visible(id); const o=K.O[id]; if (o.type!=="conversation") throw new Error("ce n'est pas une conversation"); const l=o.messages||[]; const d=Math.max(0, +depuis||0), n=Math.min(40, Math.max(1, +nombre||20));
-        return { titre:o.titre, total:l.length, depuis:d, statut:o.champs?.statut, source:o.champs?.source, messages:l.slice(d, d+n).map((m,i)=>({n:d+i, role:m.role, quand:m.quand, texte:String(m.texte||"").length>6000?String(m.texte).slice(0,6000)+" […coupé]":m.texte, changements:(m.actions||[]).map(a=>a.t)})) }; } },
+      execute:({id, depuis, nombre})=>{ id=visible(id); const o=K.O[id]; if (o.type!=="conversation") throw new Error("ce n'est pas une conversation"); const l=o.messages||[]; const d=Math.max(0, +depuis||0), n=Math.min(20, Math.max(1, +nombre||10));
+        return { titre:o.titre, total:l.length, depuis:d, statut:o.champs?.statut, source:o.champs?.source, messages:l.slice(d, d+n).map((m,i)=>({n:d+i, role:m.role, quand:m.quand, texte:String(m.texte||"").length>3000?String(m.texte).slice(0,3000)+" […coupé]":m.texte, changements:(m.actions||[]).map(a=>a.t)})) }; } },
     { name:"lire_adresse", description:"Lit une adresse web (GET, sans jeton ni secret) depuis l'iPhone de Laurent, donc avec son réseau (Tailscale compris). Renvoie le code, le type et le début du contenu. Utile pour lire la description d'un service (GET /) avant d'écrire un verbe.", inputSchema:{type:"object",properties:{url:{type:"string"}},required:["url"]},
       execute:async ({url})=>{ const u=String(url); if (!/^https?:\/\//.test(u)) throw new Error("adresse http(s) attendue"); trace(`lit ${u.slice(0,60)}`);
-        try { const r=await fetch(u, {method:"GET"}); const t=await r.text(); return { code:r.status, type:r.headers.get("content-type"), contenu:t.slice(0,8000) }; }
+        try { const r=await fetch(u, {method:"GET"}); const t=await r.text(); return { code:r.status, type:r.headers.get("content-type"), contenu:t.slice(0,4000) }; }
         catch(e){ return { erreur:"inaccessible depuis l'app : "+(e?.message||e)+". Causes possibles : adresse non HTTPS, service éteint, Tailscale coupé sur l'iPhone, ou le service n'autorise pas l'origine https://laurent1meyer.github.io (CORS)." }; } } },
     { name:"explorer_import", description:"Explore la structure d'un fichier importé (objet de type import). chemin : vide pour la racine, ou des clés séparées par des points (ex. « conversations.3.chat_messages »). Renvoie le type, la taille, les clés et un aperçu.", inputSchema:{type:"object",properties:{id:{type:"string"},chemin:{type:"string"}},required:["id"]},
       execute:async ({id, chemin})=>{ const v=aChemin(await contenuImport(String(id)), chemin); const type=Array.isArray(v)?"liste":v===null?"null":typeof v;
         return { chemin:chemin||"", type, taille: Array.isArray(v)||typeof v==="string" ? v.length : (v&&typeof v==="object" ? Object.keys(v).length : undefined),
           cles: v&&typeof v==="object"&&!Array.isArray(v) ? Object.keys(v).slice(0,80) : undefined,
-          cles_du_premier: Array.isArray(v)&&v[0]&&typeof v[0]==="object" ? Object.keys(v[0]).slice(0,60) : undefined, apercu: court(Array.isArray(v)?v.slice(0,2):v, 2500) }; } },
-    { name:"lire_import", description:"Lit une partie d'un fichier importé : les éléments d'une liste (depuis, nombre), ou un morceau de texte. Les éléments longs sont coupés à 6000 caractères ; 40 000 au total.", inputSchema:{type:"object",properties:{id:{type:"string"},chemin:{type:"string"},depuis:{type:"number"},nombre:{type:"number"}},required:["id"]},
+          cles_du_premier: Array.isArray(v)&&v[0]&&typeof v[0]==="object" ? Object.keys(v[0]).slice(0,60) : undefined, apercu: court(Array.isArray(v)?v.slice(0,1):v, 1500) }; } },
+    { name:"lire_import", description:"Lit une partie d'un fichier importé : les éléments d'une liste (depuis, nombre), ou un morceau de texte. Les éléments longs sont coupés à 4000 caractères ; 12 000 au total : lis par petits lots.", inputSchema:{type:"object",properties:{id:{type:"string"},chemin:{type:"string"},depuis:{type:"number"},nombre:{type:"number"}},required:["id"]},
       execute:async ({id, chemin, depuis, nombre})=>{ const v=aChemin(await contenuImport(String(id)), chemin); const d=Math.max(0,+depuis||0);
-        if (typeof v==="string") { const n=Math.min(40000, +nombre||20000); return { total:v.length, depuis:d, texte:v.slice(d, d+n) }; }
-        if (!Array.isArray(v)) return { valeur: court(v, 40000) };
-        const n=Math.min(50, Math.max(1, +nombre||10)); let budget=40000; const el=[];
-        for (const x of v.slice(d, d+n)) { const t=court(x, 6000); if (budget-t.length<0 && el.length) break; budget-=t.length; el.push(t); }
+        if (typeof v==="string") { const n=Math.min(12000, +nombre||8000); return { total:v.length, depuis:d, texte:v.slice(d, d+n) }; }
+        if (!Array.isArray(v)) return { valeur: court(v, 12000) };
+        const n=Math.min(20, Math.max(1, +nombre||5)); let budget=12000; const el=[];
+        for (const x of v.slice(d, d+n)) { const t=court(x, 4000); if (budget-t.length<0 && el.length) break; budget-=t.length; el.push(t); }
         return { total:v.length, depuis:d, lus:el.length, elements:el }; } },
     { name:"secrets_connus", description:"Noms des secrets rangés dans le coffre de Laurent (jamais les valeurs).", inputSchema:{type:"object",properties:{}}, execute:async()=>nomsSecrets() }
   ];
@@ -842,18 +852,18 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
     // La conversation en cours : les échanges passés sont renvoyés à chaque message (l'API ne se souvient de rien)
     const hist=[];
     // plafonné : messages coupés à 6000 caractères, environ 60 000 caractères au total (les plus récents)
-    let budget = 60000; const pris = [];
-    for (const m of (opt.historique||[]).slice(-40).reverse()) { const t=String(m.texte||""); const l=Math.min(t.length,6000); if (budget-l<0 && pris.length) break; budget-=l; pris.unshift(m); }
-    for (const m of pris) { const role=m.role==="assistant"?"assistant":"user"; let ct=String(m.texte||""); if (ct.length>6000) ct=ct.slice(0,6000)+" […coupé]";
+    let budget = 6000; const pris = [];
+    for (const m of (opt.historique||[]).slice(-6).reverse()) { const t=String(m.texte||""); const l=Math.min(t.length,1500); if (budget-l<0 && pris.length) break; budget-=l; pris.unshift(m); }
+    for (const m of pris) { const role=m.role==="assistant"?"assistant":"user"; let ct=String(m.texte||""); if (ct.length>1500) ct=ct.slice(0,1500)+" […coupé : lire_conversation pour la suite]";
       if (role==="assistant" && m.actions?.length) ct += "\n\n(Ce que j'ai fait dans Life : " + m.actions.map(a=>a.t||a).join(" ; ") + ")";
       if (!ct.trim()) continue; if (hist.length && hist.at(-1).role===role) hist.at(-1).content += "\n\n"+ct; else hist.push({role, content:ct}); }
     while (hist.length && hist[0].role!=="user") hist.shift();
     if (hist.length && hist.at(-1).role==="user") hist.at(-1).content += "\n\n"+texte; else hist.push({role:"user", content:texte});
-    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},...hist], { tools:outils, signal:ctrl.signal, maxTours:40, onText:opt.onText });
-    return { texte:r.text, traces };
+    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},...hist], { tools:outils, signal:ctrl.signal, maxTours:opt.autonome?10:15, onText:opt.onText });
+    return { texte:r.text, traces, usage:r.usage };
   } catch(err){
     if (err?.code==="bad_key") LifeClaude.oublierCle();
-    return { texte: ({bad_key:"Clé API refusée.", rate_limited:"Limite de l'API atteinte, réessaie plus tard.", overloaded:"API surchargée, réessaie.", network:"Pas de réseau.", cancelled:"Arrêté."}[err?.code] || ("Claude n'a pas pu répondre : "+(err?.message||err))), traces, erreur:true };
+    return { texte: ({bad_key:"Clé API refusée.", rate_limited:"Limite de l'API atteinte, réessaie plus tard.", overloaded:"API surchargée, réessaie.", network:"Pas de réseau.", cancelled:"Arrêté."}[err?.code] || ("Claude n'a pas pu répondre : "+(err?.message||err))), traces, erreur:true, usage:err?.usage };
   } finally { K.claude.travaille=null; K.par="Laurent"; setTimeout(()=>{ if (!K.claude.travaille) $("#fil").hidden=true; }, 3000); }
 }
 
@@ -1004,7 +1014,7 @@ V("v_peupler","peupler",["import"],"Claude peuple son Life à partir d'un fichie
     <ul class="traces">${journal.slice(-12).map(x => `<li>${esc(x)}</li>`).join("")}</ul>
     <div class="rang">${fini || arret ? `<button class="btn prim" data-faire="afficher" data-sujet="cl_peuplement">Voir ce qu'il a rangé</button>` : `<button class="btn" data-act="stop">Arrêter après ce lot</button>`}</div></div>`,
     { sujet: undefined, titre: "Peuplement", actions: { stop: () => { arret = true; ctx.arreterClaude(); rendre("Arrêt demandé…"); } } });
-  const MAX = 25;
+  const MAX = 6;   // par lancement : on relance pour continuer (la consommation reste sous contrôle)
   for (let lot = 1; lot <= MAX && !arret; lot++) {
     rendre(`Lot ${lot}…`);
     const o = ctx.base.lire(sujet.id);
@@ -1020,7 +1030,7 @@ Règles :
 - À la fin du lot, écris où tu en es dans champs.progression de [${sujet.id}] (modifier_objet), en une ou deux phrases précises (ce qui est fait, ce qui reste, l'index où reprendre).
 - Termine ta réponse par le mot CONTINUE s'il reste à faire, ou TERMINÉ si tout ce que demande la consigne est traité.`, { autonome: true });
     if (!r) { arret = true; break; }
-    journal.push(`Lot ${lot} : ${String(r.texte).replace(/\s+/g, " ").slice(0, 160)}`);
+    journal.push(`Lot ${lot} : ${String(r.texte).replace(/\s+/g, " ").slice(0, 160)}${r.usage ? " — " + ctx.conso(r.usage) : ""}`);
     if (r.erreur) { journal.push("Arrêt : " + r.texte); arret = true; break; }
     if (/TERMIN/i.test(r.texte) && !/CONTINUE\s*$/i.test(r.texte.trim())) { fini = true; break; }
   }
@@ -1034,7 +1044,7 @@ Règles :
     if (r) journal.push("Interface : " + String(r.texte).replace(/\s+/g, " ").slice(0, 200));
     await ctx.base.modifier(sujet.id, { champs: { ...(ctx.base.lire(sujet.id).champs || {}), statut: "peuplé" } });
   } else await ctx.base.modifier(sujet.id, { champs: { ...(ctx.base.lire(sujet.id).champs || {}), statut: arret ? "arrêté" : "en pause" } });
-  rendre(fini ? "Terminé." : arret ? "Arrêté : tu peux reprendre plus tard depuis le fichier." : `Pause après ${MAX} lots : relance pour continuer.`);
+  rendre(fini ? "Terminé." : arret ? "Arrêté : tu peux reprendre plus tard depuis le fichier." : `Pause après ${MAX} lots, pour garder la main sur la consommation : relance depuis le fichier pour continuer.`);
 }),
 V("v_prendre_selection","prendre une sélection",["*"],"Cocher des objets du Life de Claude et les prendre dans ta base, en gardant leur rangement.", async function(sujet, c, ctx){
   const esc = ctx.esc;
@@ -1384,7 +1394,7 @@ V("v_discuter","discuter",["rien"],"La fenêtre de conversation avec Claude : la
       if (!l.length && !enCours && !(o && o.desc)) h += `<p class="doux centre">Écris à Claude comme dans l'app Claude. Il voit l'écran d'où tu viens (sauf ton privé), et peut changer Life pour toi. La conversation est rangée dans « Conversations avec Claude ».</p>`;
       for (const m of l) {
         if (m.role === "user") h += `<div class="bulle moi">${mise(m.texte)}</div>`;
-        else h += `<div class="bulle claude ${m.erreur ? "erreur" : ""}">${mise(m.texte)}${(m.actions || []).length ? `<button class="puce-act" data-act="onglet" data-o="changements">✦ ${m.actions.length} changement${m.actions.length > 1 ? "s" : ""} dans Life</button>` : ""}</div>`;
+        else h += `<div class="bulle claude ${m.erreur ? "erreur" : ""}">${mise(m.texte)}${(m.actions || []).length ? `<button class="puce-act" data-act="onglet" data-o="changements">✦ ${m.actions.length} changement${m.actions.length > 1 ? "s" : ""} dans Life</button>` : ""}${m.usage ? `<small class="conso">${esc(ctx.conso(m.usage))}</small>` : ""}</div>`;
       }
       if (enCours) h += `<div class="bulle claude" id="partiel">${partiel ? mise(partiel) : `<span class="points">Claude réfléchit</span>`}</div>`;
       h += `</div><form class="saisie" data-act="envoyer"><textarea name="t" rows="1" placeholder="Écris à Claude…" ${enCours ? "disabled" : ""}></textarea><button class="btn prim" type="submit" ${enCours ? "disabled" : ""} aria-label="Envoyer">↑</button></form>`;
@@ -1411,10 +1421,10 @@ V("v_discuter","discuter",["rien"],"La fenêtre de conversation avec Claude : la
     await ctx.base.modifier(conv, { messages: [...avant, { role: "user", texte: t, quand: new Date().toISOString() }] }, { sansAvant: true });
     enCours = true; partiel = ""; onglet = "discussion"; rendre();
     const o = lireConv();
-    const r = await ctx.claude(t, { historique: avant, ecran: ecranDepart, tache: (o.champs || {}).tache, sujet: (o.champs || {}).sujet,
+    const r = await ctx.claude(t, { historique: avant, conv, ecran: ecranDepart, tache: (o.champs || {}).tache, sujet: (o.champs || {}).sujet,
       onText: x => { partiel = x.text; const e = document.getElementById("partiel"); if (e) e.innerHTML = mise(partiel); } });
     enCours = false;
-    const m = r ? { role: "assistant", texte: r.texte, quand: new Date().toISOString(), actions: r.traces || [], ...(r.erreur ? { erreur: true } : {}) } : { role: "assistant", texte: "(Claude n'a pas été lancé.)", quand: new Date().toISOString(), erreur: true };
+    const m = r ? { role: "assistant", texte: r.texte, quand: new Date().toISOString(), actions: r.traces || [], ...(r.usage ? { usage: r.usage } : {}), ...(r.erreur ? { erreur: true } : {}) } : { role: "assistant", texte: "(Claude n'a pas été lancé.)", quand: new Date().toISOString(), erreur: true };
     await ctx.base.modifier(conv, { messages: [...msgs(), m] }, { sansAvant: true });
     rendre();
   }
@@ -1455,6 +1465,7 @@ V("v_regler_claude","régler Claude",["rien"],"Modèle, clé API, recherche web.
   ctx.ecran(`<div class="carte"><h3 class="etage">Modèle</h3><div class="liste">${LifeClaude.MODELES.map(([id, nom]) => `<button class="ligne ${id === modele ? "sel" : ""}" data-act="modele" data-id="${id}"><span class="t">${ctx.esc(nom)}</span></button>`).join("")}</div>
     <h3 class="etage">Clé API</h3><p class="doux">${LifeClaude.aCle() ? "Une clé est chargée." : "Pas de clé : elle sera demandée."} ${garder ? "Elle est retenue sur cet iPhone." : "Elle est oubliée à la fermeture (le trousseau peut la remplir)."}</p>
     <div class="rang"><button class="btn" data-act="garder">${garder ? "Ne plus la retenir" : "La retenir sur cet iPhone"}</button>${LifeClaude.aCle() ? `<button class="btn" data-act="oublier">Oublier la clé</button>` : ""}</div>
+    <h3 class="etage">Consommation</h3><p class="doux">Aujourd'hui : ${ctx.esc(ctx.conso(LifeClaude.conso()[new Date().toISOString().slice(0, 10)]) || "rien")}<br>Depuis le début : ${ctx.esc(ctx.conso(LifeClaude.conso().total) || "rien")}<br>Opus coûte nettement plus que Sonnet ; Haiku est le moins cher.</p>
     <h3 class="etage">Recherche web</h3><div class="rang"><button class="btn" data-act="web">${r.web === true ? "Désactiver" : "Activer"} la recherche web</button></div></div>`,
     { titre: "Régler Claude", actions: {
       modele: el => { LifeClaude.regler({ modele: el.dataset.id }); ctx.faire("régler Claude"); },
@@ -1471,7 +1482,7 @@ V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et 
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
-for (const s of SEMENCES) s.doc.semence = 12;
+for (const s of SEMENCES) s.doc.semence = 13;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
