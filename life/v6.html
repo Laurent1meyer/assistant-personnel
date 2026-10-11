@@ -42,6 +42,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .barre button{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--doux);min-width:64px;gap:2px}
 .barre b{font-size:22px;font-weight:400;color:var(--encre)}
 .barre .cl b{color:var(--claude)}
+.barre .b-life{width:24px;height:24px;border-radius:6px;background:var(--icone) center/cover;display:block;margin-bottom:1px}
 .doux{color:var(--doux);font-size:14px}
 .pied{margin-top:28px;text-align:center}
 .lien{color:var(--accent)}
@@ -143,7 +144,7 @@ body.secours .haut{background:color-mix(in srgb,var(--rouge) 12%,transparent)}
 <div id="vision" hidden></div>
 <main id="vue"><p class="doux">Ouverture…</p></main>
 <nav class="barre">
-  <button data-barre="accueil"><b>⌂</b>Accueil</button>
+  <button data-barre="accueil"><b class="b-life"></b>Life</button>
   <button data-barre="créer"><b>＋</b>Créer</button>
   <button data-barre="chercher"><b>⌕</b>Chercher</button>
   <button data-barre="demander à Claude" class="cl"><b>✦</b>Claude</button>
@@ -317,11 +318,13 @@ function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(_) {} }
 
 const K = { O:{}, V:{}, db:null, secours:false, sujet:null, pile:[], actions:{}, pret:false,
   claude:{ actif:false, montre:new Set(), travaille:null }, capture:null,
-  monde:"laurent", par:"Laurent", C:{} };
+  focus:null, par:"Laurent", C:{}, imports:new Map() };
+// Le monde courant n'est plus une bascule : il se déduit de l'objet regardé (dans le dossier de Claude → monde de Claude).
+Object.defineProperty(K, "monde", { get(){ const f = K.focus ?? K.sujet; return f && chezClaude(f) ? "claude" : "laurent"; } });
 // Deux Life dans la même base : celui de Laurent (racine « moi ») et celui de Claude (racine « life_claude »).
 const RACINE = { laurent:"moi", claude:"life_claude" };
 function racineDe(id){ let x=id, n=0; while (x && K.O[x] && K.O[x].parent && n++<40) x=K.O[x].parent; return x; }
-const chezClaude = id => racineDe(id)==="life_claude";
+const chezClaude = id => { let x=id, n=0; while (x && K.O[x] && n++<40) { if (x==="life_claude") return true; x=K.O[x].parent; } return false; };
 // Ce que Claude connaît : ce que Laurent a partagé (ou que Claude a créé, qui naît partagé).
 // Décision de Laurent (11/10) : Claude voit TOUTE la base. Seuls les secrets du coffre restent privés.
 const connu = id => id==="moi" || !!K.O[id];
@@ -392,6 +395,10 @@ const compiles = new Map();
 function compiler(code){ if (!compiles.has(code)) compiles.set(code, new AsyncFunction("sujet","c","ctx", '"use strict";\n'+code)); return compiles.get(code); }
 let profondeur = 0;
 async function faire(nom, sujetId, c={}, exclus=[]){
+  const focusAvant = K.focus; K.focus = sujetId || null;
+  try { return await faire2(nom, sujetId, c, exclus); } finally { K.focus = focusAvant; }
+}
+async function faire2(nom, sujetId, c={}, exclus=[]){
   const sujet = sujetId ? avecId(sujetId) : null;
   const tv = trouver(nom, sujet, exclus);
   if (!tv) { dire(`Aucun verbe « ${nom} » pour ${sujet ? "un objet de type « "+(sujet.type||"?")+" »" : "ce cas"}.`); return; }
@@ -417,6 +424,7 @@ async function sauverVerbe(id, m, auteur="Laurent"){
 // ---------- écran et dialogues (outils donnés aux verbes) ----------
 function ecran(html, opt={}){
   if (opt.sujet !== undefined && opt.sujet !== K.sujet) { if (!K.enRetour) { K.pile.push(K.sujet); if (K.pile.length>50) K.pile.shift(); } K.sujet = opt.sujet; }
+  if (opt.racine) { K.pile.length = 0; K.sujet = null; }
   K.actions = opt.actions || {};
   $("#titre").textContent = opt.titre ?? (K.sujet ? K.O[K.sujet]?.titre : (K.monde==="claude"?"Life de Claude":"Life")) ?? "Life";
   document.body.classList.toggle("monde-claude", K.monde==="claude");
@@ -467,7 +475,7 @@ function ctx(vid, suivant){
     claude: (texte, opt) => claudeFaire(texte, typeof opt==="string" ? {sujet:opt} : (opt||{})),
     claudeActif: () => K.claude.actif, ecranClaude: () => ecranPourClaude(),
     secret, oublierSecret, secrets: nomsSecrets, telecharger, choisirFichier,
-    monde: () => K.monde, changerMonde: m => { K.monde = m==="claude"?"claude":"laurent"; K.pile.length=0; K.sujet=null; return faire("accueil"); },
+    monde: () => K.monde, nouvelImport, lireZip, arreterClaude: () => K.claude.travaille?.abort(),
     variantes, choix: (nom, type) => K.C[`${K.monde}|${nom}|${type||"rien"}`]?.verbe || null, choisirVariante,
     adopter: vid => adopterVerbe(vid),
     moi: vid, courant: () => K.sujet, __versions: id => versions(id) };
@@ -491,9 +499,51 @@ async function telecharger(nom, texte, type="application/json"){
   try { const f = new File([blob], nom, { type: type+";charset=utf-8" }); if (navigator.canShare?.({ files:[f] })) { await navigator.share({ files:[f], title:nom }); return true; } } catch(e){ if (e?.name==="AbortError") return false; }
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); return true;
 }
-function choisirFichier(accept=""){
-  return new Promise(res=>{ const i=document.createElement("input"); i.type="file"; i.accept=accept; i.style.display="none"; document.body.appendChild(i);
-    i.onchange=()=>{ res(i.files[0]||null); i.remove(); }; i.click(); });
+function choisirFichier(accept="", opt={}){
+  return new Promise(res=>{ const i=document.createElement("input"); i.type="file"; i.accept=accept; if (opt.plusieurs) i.multiple=true; i.style.display="none"; document.body.appendChild(i);
+    i.onchange=()=>{ res(opt.plusieurs ? [...i.files] : (i.files[0]||null)); i.remove(); }; i.click(); });
+}
+// Lire un zip sans bibliothèque : répertoire central + DecompressionStream (iOS 16.4+)
+async function lireZip(fichier){
+  const buf = new Uint8Array(await fichier.arrayBuffer()), dv = new DataView(buf.buffer);
+  let fin = -1; for (let i = buf.length - 22; i >= Math.max(0, buf.length - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { fin = i; break; }
+  if (fin < 0) throw new Error("pas un zip");
+  const n = dv.getUint16(fin + 10, true); let p = dv.getUint32(fin + 16, true); const sortie = [];
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error("zip abîmé");
+    const methode = dv.getUint16(p + 10, true), taille = dv.getUint32(p + 20, true), ln = dv.getUint16(p + 28, true), le = dv.getUint16(p + 30, true), lc = dv.getUint16(p + 32, true), loc = dv.getUint32(p + 42, true);
+    const nom = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + ln)); p += 46 + ln + le + lc;
+    if (nom.endsWith("/")) { sortie.push({ nom, dossier:true }); continue; }
+    const debut = loc + 30 + dv.getUint16(loc + 26, true) + dv.getUint16(loc + 28, true), donnees = buf.subarray(debut, debut + taille);
+    let blob;
+    if (methode === 0) blob = new Blob([donnees]);
+    else if (methode === 8) { if (typeof DecompressionStream === "undefined") throw new Error("décompression non disponible sur cet appareil : décompresse le zip dans Fichiers"); blob = await new Response(new Blob([donnees]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).blob(); }
+    else throw new Error("méthode de compression non gérée ("+methode+")");
+    sortie.push({ nom, blob });
+  }
+  return sortie;
+}
+
+// ---------- imports : un fichier gardé tel quel, que Claude explore ----------
+async function contenuImport(id){
+  if (K.imports.has(id)) return K.imports.get(id);
+  const b = await LifeDB.lireFichier(id); if (!b) throw new Error("fichier de l'import introuvable");
+  const t = await b.text(); let v; try { v = JSON.parse(t); } catch(_) { v = t; }
+  K.imports.set(id, v); return v;
+}
+function aChemin(v, chemin){
+  for (const k of String(chemin||"").split(".").filter(x=>x!=="")) { if (v==null) throw new Error("chemin introuvable : "+chemin); v = Array.isArray(v) ? v[+k] : v[k]; }
+  return v;
+}
+const court = (x, n) => { const t = typeof x === "string" ? x : JSON.stringify(x); return t && t.length > n ? t.slice(0, n) + "…[coupé, " + t.length + " caractères]" : t; };
+async function nouvelImport(fichier){
+  if (!K.O.cl_imports) { const d={ titre:"Imports", type:"dossier", parent:"life_claude", desc:"Les fichiers que Laurent m'a confiés, gardés tels quels, et ce que j'en ai tiré.", champs:{}, relations:[], partage:true, cree:now(), emoji:"📥" }; K.O.cl_imports=d; await K.db.collection("objets").doc("cl_imports").set(d); }
+  const id = "imp_" + Date.now().toString(36);
+  await LifeDB.mettreFichier(id, fichier);
+  let format = "texte"; try { const v = JSON.parse(await fichier.text()); K.imports.set(id, v); format = Array.isArray(v) ? `JSON, liste de ${v.length} éléments` : (v && typeof v==="object") ? `JSON, objet (${Object.keys(v).slice(0,8).join(", ")})` : "JSON"; } catch(_) {}
+  const o = { titre:fichier.name || "Import", type:"import", parent:"cl_imports", desc:"", champs:{ nom:fichier.name, taille:fichier.size, format, statut:"à peupler", progression:"" }, relations:[], partage:true, cree:now(), emoji:"📄" };
+  K.O[id]=o; await K.db.collection("objets").doc(id).set(o); await journal("import", id);
+  return id;
 }
 
 // ---------- la vision de Claude ----------
@@ -511,7 +561,7 @@ function majVision(){
   const m = on ? masquesEcran() : {ids:[], sujet:null};
   $("#vue").classList.toggle("cache-claude-tout", !!m.sujet);
   const n = m.ids.length + (m.sujet?1:0);
-  $("#vision").hidden = !on;
+  $("#vision").hidden = true;   // tout est visible pour Claude : l'œil en haut suffit
   if (on) $("#vision").innerHTML = n
     ? `<span>✦ Claude voit l'écran, sauf ${m.sujet?"<b>cette page</b>":""}${m.sujet&&m.ids.length?" et ":""}${m.ids.length?`<b>${m.ids.length} élément${m.ids.length>1?"s":""}</b>`:""} (privé)</span><button data-vision="montrer">Lui montrer</button><button data-vision="couper">Couper</button>`
     : `<span>✦ Claude voit cet écran${K.claude.montre.size?" · montré pour cette fois":""}</span><button data-vision="couper">Couper</button>`;
@@ -682,7 +732,7 @@ async function claudeFaire(texte, opt={}){
     LifeClaude.definirCle(k, lsGet("life-garder-cle")==="1");
   }
   if (!K.claude.actif) activerClaude(true);   // lui écrire, c'est l'activer
-  const ecranVu = opt.ecran || (K.O[K.sujet]?.type==="conversation" ? "(Laurent est dans la fenêtre de conversation avec toi.)" : ecranPourClaude());
+  const ecranVu = opt.ecran || (opt.autonome ? "(Peuplement autonome : Laurent ne regarde pas forcément l'écran.)" : null) || (K.O[K.sujet]?.type==="conversation" ? "(Laurent est dans la fenêtre de conversation avec toi.)" : ecranPourClaude());
   const vb = Object.entries(K.V).filter(([,v])=>v.actif!==false).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.aValider?" (en attente d'autorisation)":""} : ${v.definition||""}`).join("\n");
   const connus = Object.keys(K.O).filter(id=>!K.O[id].supprime && K.O[id].parent!=="corbeille");
   const arbre = connus.slice(0,600).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
@@ -696,7 +746,7 @@ ${TECHNIQUE}
 ${vb}
 
 ## Où regarde Laurent
-${K.monde==="claude" ? "Laurent regarde TON Life (racine life_claude)." : "Laurent est dans son Life (racine moi)."}
+${K.sujet && chezClaude(K.sujet) ? "Laurent regarde TON Life (le dossier life_claude, rangé sous Moi)." : "Laurent est dans son Life."}
 
 ## Toute la base (${connus.length} objets ; « ⊂ » = rangé dans)
 ${arbre || "(aucun)"}
@@ -740,7 +790,7 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
       execute:({id})=>objetPourClaude(visible(id)) },
     { name:"creer_objet", description:"Crée un objet (ou une tâche, avec phrase {verbe,sujet,complements}). parent : 'moi' (racine du Life de Laurent), 'life_claude' (racine de TON Life), ou un objet que tu connais. Dans le Life de Laurent, l'objet est partagé avec toi.",
       inputSchema:{type:"object",properties:{titre:{type:"string"},type:{type:"string"},parent:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},emoji:{type:"string"},relations:{type:"array",items:{type:"object",properties:{vers:{type:"string"},genre:{type:"string"}}}}},required:["titre","type"]},
-      execute:async o=>{ const p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : "moi"; const rel=(Array.isArray(o.relations)?o.relations:[]).filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")})); const id=await base.creer({...o, relations:rel, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`, {objet:id}); return {id, parent:p}; } },
+      execute:async o=>{ let p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : (opt.autonome ? "cl_peuplement" : "moi"); if (opt.autonome && !chezClaude(p)) p = K.O.cl_peuplement ? "cl_peuplement" : "life_claude"; const rel=(Array.isArray(o.relations)?o.relations:[]).filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")})); const id=await base.creer({...o, relations:rel, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`, {objet:id}); return {id, parent:p}; } },
     { name:"modifier_objet", description:"Modifie un objet partagé ou de ton Life : titre, type, desc, champs (fusionnés), phrase, parent ; ajouter_relations : relations à ajouter [{vers, genre}].",
       inputSchema:{type:"object",properties:{id:{type:"string"},titre:{type:"string"},type:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},parent:{type:"string"},ajouter_relations:{type:"array",items:{type:"object",properties:{vers:{type:"string"},genre:{type:"string"}}}}},required:["id"]},
       execute:async o=>{ const id=String(o.id); if (!connu(id)) throw new Error("tu ne peux modifier que les objets partagés avec toi"); const m={};
@@ -766,6 +816,18 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
       execute:async ({url})=>{ const u=String(url); if (!/^https?:\/\//.test(u)) throw new Error("adresse http(s) attendue"); trace(`lit ${u.slice(0,60)}`);
         try { const r=await fetch(u, {method:"GET"}); const t=await r.text(); return { code:r.status, type:r.headers.get("content-type"), contenu:t.slice(0,8000) }; }
         catch(e){ return { erreur:"inaccessible depuis l'app : "+(e?.message||e)+". Causes possibles : adresse non HTTPS, service éteint, Tailscale coupé sur l'iPhone, ou le service n'autorise pas l'origine https://laurent1meyer.github.io (CORS)." }; } } },
+    { name:"explorer_import", description:"Explore la structure d'un fichier importé (objet de type import). chemin : vide pour la racine, ou des clés séparées par des points (ex. « conversations.3.chat_messages »). Renvoie le type, la taille, les clés et un aperçu.", inputSchema:{type:"object",properties:{id:{type:"string"},chemin:{type:"string"}},required:["id"]},
+      execute:async ({id, chemin})=>{ const v=aChemin(await contenuImport(String(id)), chemin); const type=Array.isArray(v)?"liste":v===null?"null":typeof v;
+        return { chemin:chemin||"", type, taille: Array.isArray(v)||typeof v==="string" ? v.length : (v&&typeof v==="object" ? Object.keys(v).length : undefined),
+          cles: v&&typeof v==="object"&&!Array.isArray(v) ? Object.keys(v).slice(0,80) : undefined,
+          cles_du_premier: Array.isArray(v)&&v[0]&&typeof v[0]==="object" ? Object.keys(v[0]).slice(0,60) : undefined, apercu: court(Array.isArray(v)?v.slice(0,2):v, 2500) }; } },
+    { name:"lire_import", description:"Lit une partie d'un fichier importé : les éléments d'une liste (depuis, nombre), ou un morceau de texte. Les éléments longs sont coupés à 6000 caractères ; 40 000 au total.", inputSchema:{type:"object",properties:{id:{type:"string"},chemin:{type:"string"},depuis:{type:"number"},nombre:{type:"number"}},required:["id"]},
+      execute:async ({id, chemin, depuis, nombre})=>{ const v=aChemin(await contenuImport(String(id)), chemin); const d=Math.max(0,+depuis||0);
+        if (typeof v==="string") { const n=Math.min(40000, +nombre||20000); return { total:v.length, depuis:d, texte:v.slice(d, d+n) }; }
+        if (!Array.isArray(v)) return { valeur: court(v, 40000) };
+        const n=Math.min(50, Math.max(1, +nombre||10)); let budget=40000; const el=[];
+        for (const x of v.slice(d, d+n)) { const t=court(x, 6000); if (budget-t.length<0 && el.length) break; budget-=t.length; el.push(t); }
+        return { total:v.length, depuis:d, lus:el.length, elements:el }; } },
     { name:"secrets_connus", description:"Noms des secrets rangés dans le coffre de Laurent (jamais les valeurs).", inputSchema:{type:"object",properties:{}}, execute:async()=>nomsSecrets() }
   ];
   const ctrl = new AbortController(); K.claude.travaille = ctrl; K.par = "Claude";
@@ -804,7 +866,7 @@ async function migrer(){
 }
 // Le Life de Claude de la v5 (collection claude_items) devient un sous-arbre « life_claude »
 async function migrerClaude(){
-  const racine = { titre:"Claude", type:"moi", parent:null, desc:"Le Life de Claude : sa mémoire, ses notes, ses essais. Laurent peut tout y lire, prendre un objet ou adopter un verbe.", champs:{}, relations:[], partage:true, cree:now(), emoji:"✦" };
+  const racine = { titre:"Life de Claude", type:"moi", parent:"moi", desc:"Le Life de Claude : sa mémoire, ses notes, ses essais. Laurent peut tout y lire, prendre un objet ou adopter un verbe.", champs:{}, relations:[], partage:true, cree:now(), emoji:"✦" };
   K.O.life_claude = racine; await K.db.collection("objets").doc("life_claude").set(racine);
   const items = (await K.db.collection("claude_items").get()).docs; if (!items.length) return 0;
   const ids = new Set(items.map(d=>d.id)); const nid = id => id==="coeur" ? "life_claude" : "cl_"+id; let n=0;
@@ -833,6 +895,7 @@ async function semer(){
   await o("t_restaurer", { titre:"Restaurer une sauvegarde", type:"tache", parent:"reglages", emoji:"⬆", phrase:{verbe:"importer", sujet:null, complements:{}} });
   await o("t_regler", { titre:"Régler Claude", type:"tache", parent:"reglages", emoji:"✦", phrase:{verbe:"régler Claude", sujet:null, complements:{}} });
   await o("t_ajouter", { titre:"Ajouter depuis un fichier", type:"tache", parent:"reglages", emoji:"＋", phrase:{verbe:"ajouter depuis un fichier", sujet:null, complements:{}} });
+  await o("t_importer_claude", { titre:"Confier des fichiers à Claude", type:"tache", parent:"reglages", emoji:"📥", partage:true, phrase:{verbe:"importer pour Claude", sujet:null, complements:{}} });
   await o("t_coffre", { titre:"Mon coffre", type:"tache", parent:"reglages", emoji:"🔑", phrase:{verbe:"coffre", sujet:null, complements:{}} });
   if (!K.O.internet && !lsGet("life-v6-internet")) {
     await o("internet", { titre:"Internet", type:"site web", parent:"moi", desc:"Ma page d'accueil sur le web.", champs:{url:"https://www.google.fr"}, partage:true, emoji:"🌐" });
@@ -852,10 +915,11 @@ async function semer(){
   // une fois : les objets migrés sans lien « dans » sont rangés sous l'objet auquel ils se rapportent
   if (!lsGet("life-v6-parents")) { let n=0;
     for (const [id,o] of Object.entries(K.O)) { if (o.parent!=="moi" || o.modifie || !(o.relations||[]).length) continue;
-      const r=o.relations.find(r=>K.O[r.vers] && r.vers!=="moi" && r.vers!==id && racineDe(r.vers)==="moi"); if (!r) continue;
+      const r=o.relations.find(r=>K.O[r.vers] && r.vers!=="moi" && r.vers!==id && racineDe(r.vers)==="moi" && !chezClaude(r.vers)); if (!r) continue;
       o.parent=r.vers; o.relations=o.relations.filter(x=>x!==r); await K.db.collection("objets").doc(id).set(o); n++; }
     lsSet("life-v6-parents","1"); if (n) dire(`${n} objets rangés sous ce qu'ils concernent`); }
   if (!K.O.life_claude) { const n = await migrerClaude(); if (n) dire(`Life de Claude : ${n} objets repris`); }
+  if (K.O.life_claude.parent !== "moi") { K.O.life_claude = { ...K.O.life_claude, parent:"moi", titre:"Life de Claude" }; await K.db.collection("objets").doc("life_claude").set(K.O.life_claude); }
   // une autre ouverture de l'app (ou Claude) a écrit : on suit
   K.db.collection("objets").onSnapshot(s=>{ for (const d of s.docs) K.O[d.id]=d.data(); });
   K.db.collection("verbes").onSnapshot(s=>{ for (const d of s.docs) K.V[d.id]=d.data(); });
@@ -869,38 +933,127 @@ async function semer(){
 // =====================================================================
 function V(id, nom, pour, definition, fn, extra={}){ return { id, doc:{ nom, pour, definition, code:corps(fn), version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, ...extra } }; }
 var SEMENCES = [
-V("v_accueil","accueil",["rien"],"L'écran d'accueil : ton Life ou celui de Claude, en objets ou en verbes.", async function(sujet, c, ctx){
-  const esc = ctx.esc, monde = ctx.monde(), racine = ctx.base.racine();
-  const onglet = c.onglet || "objets";
-  let h = `<div class="mondes"><button data-act="monde" data-m="laurent" class="${monde === "laurent" ? "sel" : ""}">Mon Life</button><button data-act="monde" data-m="claude" class="${monde === "claude" ? "sel claude" : ""}">✦ Life de Claude</button></div>`;
-  h += `<div class="onglets"><button data-act="onglet" data-o="objets" class="${onglet === "objets" ? "sel" : ""}">Objets</button><button data-act="onglet" data-o="verbes" class="${onglet === "verbes" ? "sel" : ""}">Verbes</button></div>`;
-  if (onglet === "objets") {
-    if (monde === "laurent") {
-      const pourToi = ctx.base.tous().filter(o => o.type === "tache" && o.champs && o.champs.pour === "Laurent" && o.champs.statut !== "fait" && o.parent !== "corbeille");
-      if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3><div class="liste">${pourToi.map(t => `<button class="ligne" data-objet="${esc(t.id)}"><span class="t">${esc(t.titre)}</span><small>${esc((ctx.base.parent(t.id) || {}).titre || "")}</small></button>`).join("")}</div>`;
-    } else h += `<p class="doux">Le Life de Claude : sa mémoire, ses notes, ses essais. Tu peux tout lire. Appui long sur un objet : « prendre » pour le copier chez toi.</p>`;
-    const objs = ctx.base.enfants(racine).filter(o => o.id !== "corbeille").sort((a, b) => (a.id === "reglages") - (b.id === "reglages"));
-    h += ctx.grille(objs);
-    if (monde === "laurent") h += `<p class="doux pied"><button class="lien" data-faire="afficher" data-sujet="corbeille">Corbeille</button></p>`;
-  } else {
-    const noms = [...new Set(ctx.tousVerbes().filter(v => monde === "claude" || v.chez !== "claude").map(v => v.nom))];
-    h += `<p class="doux">Chaque verbe est une fonction rangée dans ta base. Une ligne par verbe ; ses variantes (une par type d'objet) sont ses branches. Touche pour voir les branches et les versions.</p><div class="liste">`;
-    for (const nom of noms) {
-      const vs = ctx.variantes(nom).filter(v => monde === "claude" || v.chez !== "claude");
-      const nv = vs.reduce((n, v) => n + (v.version || 1), 0);
-      const points = vs.map(v => `<i style="background:${v.chez === "claude" || v.auteur === "Claude" ? "var(--claude)" : v.auteur === "Laurent" ? "var(--accent)" : "var(--doux)"};${v.actif === false ? "opacity:.3" : ""}"></i>`).join("");
-      h += `<button class="ligne" data-act="branches" data-nom="${esc(nom)}"><span class="t">${esc(nom)} <span class="pts">${points}</span></span><small>${vs.length} variante${vs.length > 1 ? "s" : ""} · ${nv} version${nv > 1 ? "s" : ""} · pour ${esc([...new Set(vs.flatMap(v => v.pour || ["*"]))].join(", "))}</small></button>`;
-    }
-    h += `</div>`;
+V("v_accueil","accueil",["rien"],"Ta base Life : tout ce qui est rangé sous Moi, sans rien de caché. Le Life de Claude est un dossier sous Moi.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const ordre = o => o.id === "life_claude" ? 0 : o.id === "conversations" ? 1 : o.id === "reglages" ? 8 : o.id === "corbeille" ? 9 : 5;
+  const objs = ctx.base.enfants("moi").sort((a, b) => ordre(a) - ordre(b));
+  const pourToi = ctx.base.tous().filter(o => o.type === "tache" && o.champs && o.champs.pour === "Laurent" && o.champs.statut !== "fait" && o.parent !== "corbeille");
+  let h = "";
+  if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3><div class="liste">${pourToi.map(t => `<button class="ligne" data-objet="${esc(t.id)}"><span class="t">${esc(t.titre)}</span><small>${esc((ctx.base.parent(t.id) || {}).titre || "")}</small></button>`).join("")}</div>`;
+  h += ctx.grille(objs).replace(/<\/div>$/, `<button class="ic" data-faire="verbes" data-sujet=""><div class="tuile" style="background:#3B3F4A">ƒ</div><span class="lab">Verbes</span></button></div>`);
+  ctx.ecran(h, { sujet: null, titre: "Life", racine: true });
+}),
+V("v_verbes","verbes",["rien"],"Tous les verbes de l'app : une ligne par verbe, ses variantes et ses versions en branches.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const noms = [...new Set(ctx.tousVerbes().map(v => v.nom))];
+  let h = `<p class="doux">Chaque verbe est une fonction rangée dans ta base. Ses variantes (une par type d'objet, ou celles de Claude) sont ses branches. Touche un verbe pour voir ses branches et ses versions.</p><div class="liste">`;
+  for (const nom of noms) {
+    const vs = ctx.variantes(nom);
+    const nv = vs.reduce((n, v) => n + (v.version || 1), 0);
+    const points = vs.map(v => `<i style="background:${v.chez === "claude" || v.auteur === "Claude" ? "var(--claude)" : v.auteur === "Laurent" ? "var(--accent)" : "var(--doux)"};${v.actif === false ? "opacity:.3" : ""}"></i>`).join("");
+    h += `<button class="ligne" data-act="branches" data-nom="${esc(nom)}"><span class="t">${esc(nom)} <span class="pts">${points}</span></span><small>${vs.length} variante${vs.length > 1 ? "s" : ""} · ${nv} version${nv > 1 ? "s" : ""}${vs.some(v => v.chez === "claude") ? " · dont Life de Claude" : ""}</small></button>`;
   }
-  ctx.ecran(h, { sujet: null, titre: monde === "claude" ? "Life de Claude" : "Life", actions: {
-    monde: el => ctx.changerMonde(el.dataset.m),
-    onglet: el => ctx.faire("accueil", null, { onglet: el.dataset.o }),
-    branches: el => ctx.faire("branches", null, { nom: el.dataset.nom }) } });
+  ctx.ecran(h + `</div>`, { sujet: undefined, titre: "Verbes", actions: { branches: el => ctx.faire("branches", null, { nom: el.dataset.nom }) } });
 }),
-V("v_verbes","verbes",["rien"],"La liste de tous les verbes (onglet Verbes de l'accueil).", async function(sujet, c, ctx){
-  return ctx.faire("accueil", null, { onglet: "verbes" });
+V("v_importer","importer pour Claude",["rien","moi"],"Confier à Claude un ou plusieurs fichiers (JSON, texte, ou zip d'export claude.ai) : ils sont gardés tels quels dans son Life, et il les explore pour peupler sa base.", async function(sujet, c, ctx){
+  const fichiers = await ctx.choisirFichier(".json,.zip,.txt,.md,.csv,application/json,application/zip,text/plain", { plusieurs: true });
+  if (!fichiers || !fichiers.length) return;
+  ctx.dire("Lecture…");
+  const ids = [];
+  for (const f of fichiers) {
+    if (/\.zip$/i.test(f.name)) {
+      let entrees; try { entrees = await ctx.lireZip(f); } catch (e) { ctx.dire("Zip illisible : " + e.message); continue; }
+      for (const e of entrees.filter(x => !x.dossier && !/(^|\/)\.|__MACOSX/.test(x.nom))) ids.push(await ctx.nouvelImport(new File([e.blob], e.nom.split("/").pop(), { type: e.nom.endsWith(".json") ? "application/json" : "text/plain" })));
+    } else ids.push(await ctx.nouvelImport(f));
+  }
+  if (!ids.length) return ctx.dire("Rien d'importé");
+  ctx.dire(`${ids.length} fichier${ids.length > 1 ? "s" : ""} confié${ids.length > 1 ? "s" : ""} à Claude`);
+  return ctx.faire("afficher", "cl_imports");
 }),
+V("v_afficher_import","afficher",["import"],"Un fichier confié à Claude : son format, l'avancement du peuplement, et le bouton pour lancer Claude.", async function(sujet, c, ctx){
+  const esc = ctx.esc, ch = sujet.champs || {};
+  const taille = ch.taille > 1e6 ? (ch.taille / 1e6).toFixed(1) + " Mo" : Math.round((ch.taille || 0) / 1e3) + " ko";
+  ctx.ecran(`<div class="carte"><p><b>${esc(ch.nom || sujet.titre)}</b></p><p class="doux">${esc(ch.format || "")} · ${taille}</p>
+    <p>Statut : <b>${esc(ch.statut || "à peupler")}</b></p>${ch.progression ? `<p class="doux">Où en est Claude : ${esc(ch.progression)}</p>` : ""}
+    <div class="rang"><button class="btn prim" data-faire="peupler">${ch.statut === "peuplé" ? "Relancer Claude" : ch.progression ? "Reprendre le peuplement" : "Lancer le peuplement"}</button></div></div>` + ctx.grille(ctx.base.enfants(sujet.id)),
+    { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_peupler","peupler",["import"],"Claude peuple son Life à partir d'un fichier importé, par lots, en autonomie ; tu peux l'arrêter et reprendre. À la fin, il te propose une interface pour parcourir ce qu'il a rangé.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const consigne = await ctx.demander("Une consigne pour Claude ? (facultatif)", (sujet.champs || {}).consigne || "Commence par les conversations du projet Life.", { multi: true, ok: "Lancer" });
+  if (consigne === null && !(await ctx.confirmer("Lancer sans consigne ?", "Lancer"))) return;
+  await ctx.base.modifier(sujet.id, { champs: { ...(sujet.champs || {}), consigne: consigne || "", statut: "en cours" } });
+  if (!ctx.base.lire("cl_peuplement")) await ctx.base.ajouter({ cl_peuplement: { titre: "Ce que j'ai tiré des imports", type: "dossier", parent: "life_claude", partage: true, emoji: "🗂", desc: "Ce que Claude a rangé à partir des fichiers que Laurent lui a confiés." } });
+  const autres = ctx.base.enfants("cl_imports").filter(o => o.id !== sujet.id && o.type === "import").map(o => `« ${o.titre} » [${o.id}]`).join(", ");
+  let arret = false, fini = false; const journal = [];
+  const rendre = (etat) => ctx.ecran(`<div class="carte"><p><b>Claude peuple son Life</b> à partir de « ${esc(sujet.titre)} ».</p><p class="doux">${esc(etat)}</p>
+    ${(ctx.base.lire(sujet.id).champs || {}).progression ? `<p class="doux">Progression : ${esc(ctx.base.lire(sujet.id).champs.progression)}</p>` : ""}
+    <ul class="traces">${journal.slice(-12).map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+    <div class="rang">${fini || arret ? `<button class="btn prim" data-faire="afficher" data-sujet="cl_peuplement">Voir ce qu'il a rangé</button>` : `<button class="btn" data-act="stop">Arrêter après ce lot</button>`}</div></div>`,
+    { sujet: undefined, titre: "Peuplement", actions: { stop: () => { arret = true; ctx.arreterClaude(); rendre("Arrêt demandé…"); } } });
+  const MAX = 25;
+  for (let lot = 1; lot <= MAX && !arret; lot++) {
+    rendre(`Lot ${lot}…`);
+    const o = ctx.base.lire(sujet.id);
+    const r = await ctx.claude(`Peuplement autonome de TON Life, lot ${lot}.
+Source : le fichier importé « ${o.titre} » [${sujet.id}] (${(o.champs || {}).format || "?"}).${autres ? " Autres fichiers importés que tu peux consulter : " + autres + "." : ""}
+Consigne de Laurent : ${consigne || "aucune"}.
+Où tu en es : ${(o.champs || {}).progression || "rien encore : commence par explorer le fichier (explorer_import)."}
+Règles :
+- Tu ranges tout dans TON Life, sous le dossier [cl_peuplement] (crée des sous-dossiers par thème ou par projet). Rien dans le Life de Laurent : il prendra ce qu'il veut.
+- Traite un lot raisonnable (par exemple une conversation, ou une vingtaine d'éléments), puis arrête-toi.
+- Cherche avant de créer : pas de doublons, peu d'objets bien définis, complète l'existant. Types précis (projet, idee, tache, decision, besoin, personne, note…).
+- Relie chaque objet créé à la source (relation « source » vers [${sujet.id}]).
+- À la fin du lot, écris où tu en es dans champs.progression de [${sujet.id}] (modifier_objet), en une ou deux phrases précises (ce qui est fait, ce qui reste, l'index où reprendre).
+- Termine ta réponse par le mot CONTINUE s'il reste à faire, ou TERMINÉ si tout ce que demande la consigne est traité.`, { autonome: true });
+    if (!r) { arret = true; break; }
+    journal.push(`Lot ${lot} : ${String(r.texte).replace(/\s+/g, " ").slice(0, 160)}`);
+    if (r.erreur) { journal.push("Arrêt : " + r.texte); arret = true; break; }
+    if (/TERMIN/i.test(r.texte) && !/CONTINUE\s*$/i.test(r.texte.trim())) { fini = true; break; }
+  }
+  if (fini) {
+    rendre("Peuplement terminé. Claude prépare une interface pour te le montrer…");
+    const r = await ctx.claude(`Le peuplement à partir de [${sujet.id}] est terminé. Propose maintenant à Laurent une interface pour parcourir ce que tu as rangé sous [cl_peuplement] :
+- écris un verbe à toi (ecrire_verbe avec chez:"claude"), par exemple « parcourir », pour le type d'objet qui convient (garde des types précis) ;
+- essaie-le (essayer_verbe) et corrige jusqu'à ce qu'il marche ;
+- crée dans ton Life, sous [cl_peuplement], une tâche dont le titre nomme ta proposition (par exemple « Parcourir Life v1.2 ») et dont la phrase lance ce verbe ;
+- dis à Laurent en deux phrases ce que propose ton interface. Il la touchera pour l'essayer, et pourra adopter le verbe.`, { autonome: true });
+    if (r) journal.push("Interface : " + String(r.texte).replace(/\s+/g, " ").slice(0, 200));
+    await ctx.base.modifier(sujet.id, { champs: { ...(ctx.base.lire(sujet.id).champs || {}), statut: "peuplé" } });
+  } else await ctx.base.modifier(sujet.id, { champs: { ...(ctx.base.lire(sujet.id).champs || {}), statut: arret ? "arrêté" : "en pause" } });
+  rendre(fini ? "Terminé." : arret ? "Arrêté : tu peux reprendre plus tard depuis le fichier." : `Pause après ${MAX} lots : relance pour continuer.`);
+}),
+V("v_prendre_selection","prendre une sélection",["*"],"Cocher des objets du Life de Claude et les prendre dans ta base, en gardant leur rangement.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const arbre = []; const parcourir = (id, niv) => { for (const e of ctx.base.enfants(id)) { arbre.push({ o: e, niv }); parcourir(e.id, niv + 1); } };
+  arbre.push({ o: sujet, niv: 0 }); parcourir(sujet.id, 1);
+  const coche = new Set();
+  const rendre = () => {
+    ctx.ecran(`<p class="doux">Coche ce que tu veux prendre dans ta base. Ce qui est coché sous un objet coché reste rangé dessous ; le reste va où tu choisiras.</p>
+      <div class="rang gauche"><button class="mini" data-act="tout">Tout cocher</button><button class="mini" data-act="rien">Tout décocher</button></div>
+      <div class="liste">${arbre.map(({ o, niv }) => `<label class="ligne coche ${o.champs && o.champs.pris ? "deja" : ""}" style="padding-left:${12 + niv * 16}px"><span class="t"><input type="checkbox" data-id="${esc(o.id)}" ${coche.has(o.id) ? "checked" : ""}> ${esc(o.titre)}</span><small>${esc(o.type)}${o.champs && o.champs.pris ? " · déjà pris" : ""}</small></label>`).join("")}</div>
+      <div class="saisie"><button class="btn prim" data-act="prendre" style="width:100%;border-radius:12px;height:auto;padding:12px">Prendre ${coche.size} objet${coche.size > 1 ? "s" : ""}</button></div>`,
+      { titre: "Prendre dans ma base", actions: {
+        tout: () => { arbre.forEach(x => coche.add(x.o.id)); rendre(); },
+        rien: () => { coche.clear(); rendre(); },
+        prendre: async () => {
+          if (!coche.size) return ctx.dire("Coche au moins un objet");
+          const q = await ctx.demander("Ranger ce qui n'a pas de parent coché dans… (un mot du nom ; vide = sous Moi)");
+          let dest = "moi";
+          if (q) { const r = ctx.base.chercher(q).filter(o => !ctx.base.chezClaude(o.id) && o.parent !== "corbeille"); const ch = await ctx.choisir("Dans quel objet ?", r.map(o => ({ valeur: o.id, libelle: o.titre, detail: o.type, couleur: ctx.couleur(o.type) }))); if (!ch) return; dest = ch; }
+          const nouveau = {}; let n = 0;
+          for (const { o } of arbre) if (coche.has(o.id)) {
+            const id = await ctx.base.creer({ titre: o.titre, type: o.type, parent: coche.has(o.parent) && nouveau[o.parent] ? nouveau[o.parent] : dest, desc: o.desc, champs: Object.fromEntries(Object.entries(o.champs || {}).filter(([k]) => k !== "pris")), partage: true, emoji: o.emoji, phrase: o.phrase, relations: [{ vers: o.id, genre: "vient de Claude" }] });
+            nouveau[o.id] = id; n++;
+            await ctx.base.modifier(o.id, { champs: { ...(o.champs || {}), pris: id } });
+          }
+          ctx.dire(`${n} objets pris dans ta base`);
+          dest === "moi" ? ctx.faire("accueil") : ctx.faire("afficher", dest);
+        } } });
+    document.querySelectorAll("#vue input[type=checkbox]").forEach(cb => cb.addEventListener("change", () => { cb.checked ? coche.add(cb.dataset.id) : coche.delete(cb.dataset.id); const b = document.querySelector('#vue [data-act="prendre"]'); if (b) b.textContent = `Prendre ${coche.size} objet${coche.size > 1 ? "s" : ""}`; }));
+  };
+  rendre();
+}, { monde:"claude" }),
 V("v_branches","branches",["rien"],"Les branches d'un verbe, façon GitHub : une branche par variante, un point par version, les adoptions comme des fusions.", async function(sujet, c, ctx){
   const esc = ctx.esc, nom = c.nom, monde = ctx.monde();
   const vs = ctx.variantes(nom).filter(v => monde === "claude" || v.chez !== "claude");
@@ -1305,7 +1458,7 @@ V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et 
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
-for (const s of SEMENCES) s.doc.semence = 9;
+for (const s of SEMENCES) s.doc.semence = 12;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
