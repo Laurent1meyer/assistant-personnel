@@ -950,6 +950,8 @@ V("v_accueil","accueil",["rien"],"Ta base Life : tout ce qui est rangé sous Moi
   const objs = ctx.base.enfants("moi").sort((a, b) => ordre(a) - ordre(b));
   const pourToi = ctx.base.tous().filter(o => o.type === "tache" && o.champs && o.champs.pour === "Laurent" && o.champs.statut !== "fait" && o.parent !== "corbeille");
   let h = "";
+  const vide = !ctx.base.tous().some(o => !["moi","life_claude","conversations","reglages","corbeille","prompt_claude"].includes(o.id) && !["reglages"].includes(o.parent) && !String(o.id).startsWith("cl_") && o.parent !== "life_claude");
+  if (vide) h += `<div class="carte centre"><p><b>Ta base est vide.</b></p><p class="doux">Confie à Claude tes fichiers d'export claude.ai (conversations et projets, en zip ou en JSON) : il peuplera son Life, puis tu prendras ce que tu veux.</p><div class="rang"><button class="btn prim" data-faire="importer pour Claude" data-sujet="">Confier des fichiers à Claude</button></div></div>`;
   if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3><div class="liste">${pourToi.map(t => `<button class="ligne" data-objet="${esc(t.id)}"><span class="t">${esc(t.titre)}</span><small>${esc((ctx.base.parent(t.id) || {}).titre || "")}</small></button>`).join("")}</div>`;
   h += ctx.grille(objs).replace(/<\/div>$/, `<button class="ic" data-faire="verbes" data-sujet=""><div class="tuile" style="background:#3B3F4A">ƒ</div><span class="lab">Verbes</span></button></div>`);
   ctx.ecran(h, { sujet: null, titre: "Life", racine: true });

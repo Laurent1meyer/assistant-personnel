@@ -118,7 +118,8 @@ h1 span{opacity:0;transform:translateY(10px);animation:lettre .5s ease-out forwa
 <script>
 // La première ligne est la version ouverte par défaut.
 const VERSIONS = [
-  { fichier: "v6.html", court: "v6", nom: "Life v6", desc: "Verbes, conversations Claude · 11 oct." },
+  { fichier: "v7.html", court: "v7", nom: "Life v7", desc: "Base neuve, peuplée par Claude · 11 oct." },
+  { fichier: "v6.html", court: "v6", nom: "Life v6", desc: "Ta base précédente, intacte · 11 oct." },
   { fichier: "v5.html", court: "v5", nom: "Life OS", desc: "Version précédente · 10 oct." }
 ];
 const DUREE = 2600; // ms avant d'ouvrir la version par défaut
@@ -172,6 +173,7 @@ addEventListener("pageshow", e => { if (e.persisted) { parti = false; $("part").
 
 // ---------- Versions et branches : l'historique réel du dépôt (GitHub), chaque fusion = une version publiée ----------
 const DEPOT = "Laurent1meyer/assistant-personnel";
+const V7_DEPUIS = 11; // à partir de cette pull request, la version du jour est v7.html (base life7)
 const quand = iso => new Date(iso).toLocaleString("fr-FR", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
 const echappe = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function listeVersions(){
@@ -183,8 +185,8 @@ async function listeVersions(){
   const lanceur = prs.find(p => p.merged_at && /lanceur/i.test(p.title));
   const l = prs.map(p => ({ n:p.number, titre:p.title, fusion:p.merged_at, ouverte:p.state === "open", maj:p.updated_at, branche:p.head.ref,
     sha: p.merged_at ? p.merge_commit_sha : p.head.sha,
-    fichier: p.state === "open" || (lanceur && p.merged_at >= lanceur.merged_at) ? "life/v6.html" : "life/index.html",
-    ere: p.number <= 2 ? "v5" : "v6" }));
+    fichier: p.state === "open" || p.number >= V7_DEPUIS ? "life/v7.html" : (lanceur && p.merged_at >= lanceur.merged_at) ? "life/v6.html" : "life/index.html",
+    ere: p.number <= 2 ? "v5" : p.number >= V7_DEPUIS ? "v7" : "v6" }));
   try { localStorage.setItem("life-versions", JSON.stringify({ t:Date.now(), l })); } catch (_) {}
   return l;
 }
@@ -204,7 +206,7 @@ async function montrerVersions(cible = "graphe-ligne"){
   });
   let h = `<svg width="60" height="${Y(lignes.length - 1) + 34}" aria-hidden="true">${svg}</svg>`;
   lignes.forEach((x, r) => {
-    const tag = x.ouverte ? `<span class="tag br">branche</span>` : x.derniere ? `<span class="tag">en service</span>` : x.ere === "v5" ? `<span class="tag v5">v5</span>` : "";
+    const tag = x.ouverte ? `<span class="tag br">branche</span>` : x.derniere ? `<span class="tag">en service</span>` : x.ere === "v5" ? `<span class="tag v5">v5</span>` : x.ere === "v6" ? `<span class="tag v5">v6</span>` : "";
     const date = x.ouverte ? `pas encore publiée · modifiée le ${quand(x.maj)}` : `publiée le ${quand(x.fusion)}`;
     h += `<button class="rel" style="top:${Y(r) - 29}px" data-i="${r}"><b>${tag}#${x.n} · ${echappe(x.titre.replace(/^Life\s*(v\d+)?\s*:\s*/i, ""))}</b><small>${date} · ${echappe(x.sha.slice(0, 7))}</small></button>`;
   });
@@ -212,7 +214,7 @@ async function montrerVersions(cible = "graphe-ligne"){
   G.onclick = e => { const b = e.target.closest(".rel"); if (!b) return; const x = lignes[+b.dataset.i];
     if (x.derniere) return lancer(VERSIONS[0]);
     if (parti) return; parti = true; $("part").classList.add("on");
-    setTimeout(() => location.assign(`version.html?sha=${x.sha}&f=${encodeURIComponent(x.fichier)}&l=1${x.ere === "v6" ? "#secours" : ""}`), 300); };
+    setTimeout(() => location.assign(`version.html?sha=${x.sha}&f=${encodeURIComponent(x.fichier)}&l=1${x.ere !== "v5" ? "#secours" : ""}`), 300); };
 }
 montrerVersions("graphe-ligne");
 // la carte de la version du jour affiche sa date de publication
