@@ -330,9 +330,9 @@ const base = {
 const codeActif = v => { if (v.epingle && v.epingle!==v.version) { const h=(v.historique||[]).find(x=>x.version===v.epingle); if (h) return h.code; } return v.code; };
 function sourceVerbes(){ return K.secours ? Object.fromEntries(SEMENCES.map(s=>[s.id, s.doc])) : K.V; }
 function score(v, sujet){ const pour=v.pour||["*"]; if (!sujet) return pour.includes("rien") ? 1 : -1; if (pour.includes(sujet.type)) return 3; if (pour.includes("*")) return 1; return -1; }
-function trouver(nom, sujet){
+function trouver(nom, sujet, exclus=[]){
   let best=null, bs=-1;
-  for (const [id,v] of Object.entries(sourceVerbes())) { if (v.nom!==nom || v.actif===false) continue; const s=score(v,sujet); if (s>bs || (s===bs && (v.modifie||"")>(best?.[1].modifie||""))) { best=[id,v]; bs=s; } }
+  for (const [id,v] of Object.entries(sourceVerbes())) { if (v.nom!==nom || v.actif===false || exclus.includes(id)) continue; const s=score(v,sujet); if (s>bs || (s===bs && (v.modifie||"")>(best?.[1].modifie||""))) { best=[id,v]; bs=s; } }
   return bs>=0 ? best : null;
 }
 function verbesPour(sujet){
@@ -342,14 +342,14 @@ function verbesPour(sujet){
 const compiles = new Map();
 function compiler(code){ if (!compiles.has(code)) compiles.set(code, new AsyncFunction("sujet","c","ctx", '"use strict";\n'+code)); return compiles.get(code); }
 let profondeur = 0;
-async function faire(nom, sujetId, c={}){
+async function faire(nom, sujetId, c={}, exclus=[]){
   const sujet = sujetId ? avecId(sujetId) : null;
-  const tv = trouver(nom, sujet);
+  const tv = trouver(nom, sujet, exclus);
   if (!tv) { dire(`Aucun verbe « ${nom} » pour ${sujet ? "un objet de type « "+(sujet.type||"?")+" »" : "ce cas"}.`); return; }
   const [vid, v] = tv;
   if (v.aValider && !K.secours) { if (!(await validerVerbe(vid))) { dire(`« ${v.nom} » n'est pas autorisé`); if (K.capture) K.capture.erreurs.push(`Laurent n'a pas autorisé le verbe « ${v.nom} »`); return; } }
   if (++profondeur > 20) { profondeur=0; throw new Error("trop d'appels imbriqués"); }
-  try { return await compiler(codeActif(K.secours ? v : (K.V[vid]||v)))(sujet, c||{}, ctx(vid)); }
+  try { return await compiler(codeActif(K.secours ? v : (K.V[vid]||v)))(sujet, c||{}, ctx(vid, ()=>faire(nom, sujetId, c, [...exclus, vid]))); }
   catch(err){ if (K.capture) K.capture.erreurs.push(`« ${v.nom} » : ${err?.message||err}`); else afficherErreur(vid, v, err); }
   finally { profondeur--; }
 }
@@ -409,9 +409,10 @@ function tuile(o){
 }
 const grille = objs => objs.length ? `<div class="grille">${objs.map(tuile).join("")}</div>` : `<p class="doux">Vide. Touche ＋ pour créer quelque chose ici.</p>`;
 
-function ctx(vid){
-  return { base, faire, ecran, dire, demander, choisir, confirmer, ouvrir, tuile, grille, esc, couleur, lettre, date:dateCourte,
+function ctx(vid, suivant){
+  return { suivant: suivant || (()=>{}), base, faire, ecran, dire, demander, choisir, confirmer, ouvrir, tuile, grille, esc, couleur, lettre, date:dateCourte,
     verbes: id => verbesPour(id?avecId(id):null).map(([i,v])=>({id:i, nom:v.nom, definition:v.definition})),
+    tousVerbes: () => Object.entries(sourceVerbes()).filter(([,v])=>!v.cache).map(([i,v])=>({id:i, nom:v.nom, pour:v.pour||["*"], definition:v.definition, actif:v.actif!==false, auteur:v.auteur})).sort((a,b)=>a.nom.localeCompare(b.nom,"fr")),
     claude: (texte, opt) => claudeFaire(texte, typeof opt==="string" ? {sujet:opt} : (opt||{})),
     claudeActif: () => K.claude.actif, ecranClaude: () => ecranPourClaude(),
     secret, oublierSecret, secrets: nomsSecrets, telecharger, choisirFichier,
@@ -501,15 +502,16 @@ function validerVerbe(vid){
 function afficherErreur(vid, v, err){
   console.error(err);
   ecran(`<div class="carte erreur"><b>Le verbe « ${esc(v.nom)} » (v${v.epingle||v.version||1}) a planté.</b><p>${esc(err?.message||err)}</p>
-    <div class="rang">${(v.historique||[]).length?`<button class="btn prim" data-act="prec">Revenir à la version précédente</button>`:""}<button class="btn" data-act="code">Voir le code</button><button class="btn" data-act="secours">Mode secours</button></div></div>`,
+    <div class="rang">${(v.historique||[]).length?`<button class="btn prim" data-act="prec">Revenir à la version précédente</button>`:""}<button class="btn" data-act="code">Voir le code</button><button class="btn" data-act="off">Désactiver ce verbe</button><button class="btn" data-act="secours">Mode secours</button></div></div>`,
     { titre:"Erreur", actions:{ prec: async()=>{ const h=v.historique.at(-1); await K.db.collection("verbes").doc(vid).update({epingle:h.version}); K.V[vid]={...K.V[vid], epingle:h.version}; dire(`« ${v.nom} » revient à la v${h.version}`); faire("accueil"); },
-      code: ()=>versions(vid), secours: ()=>basculerSecours(true) } });
+      code: ()=>versions(vid), secours: ()=>basculerSecours(true),
+      off: async()=>{ await K.db.collection("verbes").doc(vid).update({actif:false}); K.V[vid]={...K.V[vid], actif:false}; dire(`« ${v.nom} » désactivé`); faire("accueil"); } } });
 }
 function menuVerbes(id){
   const o=avecId(id); if (!o) return;
   const l=verbesPour(o);
   feuille(`<div class="q">${esc(o.titre)} <small class="doux">· ${esc(o.type||"")}</small></div><p class="doux">Appui long sur un verbe : ses versions et son code.</p>
-    <div class="liste">${l.map(([vid,v])=>`<button class="ligne" data-verbe="${esc(vid)}"><span class="t">${esc(v.nom)}</span><small>${esc(v.definition||"")}${v.epingle?` · v${v.epingle} épinglée`:""}</small></button>`).join("")}</div>`);
+    <div class="liste">${l.map(([vid,v])=>`<button class="ligne" data-verbe="${esc(vid)}"><span class="t">${esc(v.nom)}</span><small>${esc(v.definition||"")}${v.auteur==="Claude"?" · écrit par Claude":""}${v.epingle?` · v${v.epingle} épinglée`:""}</small></button>`).join("")}</div>`);
   appuiLong($("#feuille-corps"), "[data-verbe]", b=>versions(b.dataset.verbe));
   $("#feuille-corps").onclick = e=>{ const b=e.target.closest("[data-verbe]"); if (!b || b.dataset.long) { if (b) delete b.dataset.long; return; } $("#feuille-corps").onclick=null; fermerFeuille(); faire(sourceVerbes()[b.dataset.verbe].nom, id); };
 }
@@ -517,14 +519,16 @@ function versions(vid){
   const v=sourceVerbes()[vid]; if (!v) return;
   const actuelle = v.epingle || v.version || 1;
   const l=[{version:v.version||1, code:v.code, quand:v.modifie, auteur:v.auteur}, ...[...(v.historique||[])].reverse()];
-  feuille(`<div class="q">Verbe « ${esc(v.nom)} »</div><p class="doux">${esc(v.definition||"")}<br>Pour : ${esc((v.pour||["*"]).join(", "))}${v.aValider?"<br><b>Écrit par Claude, en attente de ton autorisation.</b>":""}</p>
+  feuille(`<div class="q">Verbe « ${esc(v.nom)} »${v.actif===false?" · désactivé":""}</div><p class="doux">${esc(v.definition||"")}<br>Pour : ${esc((v.pour||["*"]).join(", "))}${v.auteur==="Claude"?" · écrit par Claude":""}${v.aValider?"<br><b>Écrit par Claude, en attente de ton autorisation.</b>":""}</p>
     <div class="liste">${l.map(x=>`<button class="ligne ${x.version===actuelle?"sel":""}" data-v="${x.version}"><span class="t">v${x.version}${x.version===(v.version||1)?" · la dernière":""}${x.version===actuelle?" · utilisée":""}</span><small>${esc(dateCourte(x.quand))}${x.auteur?" · "+esc(x.auteur):""}</small></button>`).join("")}</div>
     ${K.secours?`<p class="doux">Mode secours : versions d'origine, non modifiables.</p>`:`<label class="q" for="code">Code de la version utilisée</label><textarea id="code" rows="14" spellcheck="false" autocapitalize="off">${esc(codeActif(v))}</textarea>
-    <div class="rang"><button class="btn prim" id="sauver">Enregistrer comme nouvelle version</button><button class="btn" id="fermer-v">Fermer</button></div>`}`);
+    <div class="rang"><button class="btn prim" id="sauver">Enregistrer comme nouvelle version</button><button class="btn" id="actif-v">${v.actif===false?"Réactiver ce verbe":"Désactiver ce verbe"}</button><button class="btn" id="fermer-v">Fermer</button></div>`}`);
   $("#feuille-corps").onclick = async e=>{
     const b=e.target.closest("[data-v]");
     if (b && !K.secours){ const n=+b.dataset.v; const ep = n===(v.version||1) ? null : n; await K.db.collection("verbes").doc(vid).update({epingle:ep}); K.V[vid]={...K.V[vid], epingle:ep}; dire(ep?`« ${v.nom} » utilise la v${n}`:`« ${v.nom} » revient à la dernière version`); versions(vid); rafraichir(); return; }
     if (e.target.id==="sauver"){ try { await sauverVerbe(vid, {code:$("#code").value}); dire(`« ${v.nom} » v${K.V[vid].version} active`); fermerFeuille(); rafraichir(); } catch(err){ dire(err.message); } return; }
+    if (e.target.id==="actif-v"){ const on = v.actif===false; await K.db.collection("verbes").doc(vid).update({actif:on}); K.V[vid]={...K.V[vid], actif:on}; await journal(on?"verbe réactivé":"verbe désactivé", vid);
+      dire(on?`« ${v.nom} » réactivé`:`« ${v.nom} » désactivé : la version suivante prend le relais`); fermerFeuille(); rafraichir(); return; }
     if (e.target.id==="fermer-v") fermerFeuille();
   };
 }
@@ -576,6 +580,8 @@ ctx.telecharger(nomFichier, texte, type) ; ctx.choisirFichier(accept) → File|n
 ctx.grille(objets), ctx.tuile(objet), ctx.esc(texte), ctx.couleur(type), ctx.lettre(objet), ctx.date(iso), ctx.verbes(sujetId).
 Styles : carte, rang, btn, btn prim, doux, liste, ligne, grille, champs (dl). Écran de téléphone : HTML court. Vidéo ou son : <video controls playsinline src="…">.
 Une tâche exécutable porte phrase:{verbe, sujet, complements} : la toucher exécute la phrase.
+ctx.suivant() exécute la version suivante du même verbe (la moins précise) : un verbe pour un type peut s'en servir pour laisser passer les cas qui ne le concernent pas.
+ATTENTION au polymorphisme : un verbe écrit pour un type s'applique à TOUS les objets de ce type. N'écris jamais de verbe pour un type général déjà utilisé (dossier, tache, note, projet, personne…) : crée un type précis à toi (ex. « dossier NAS », « vidéo NAS ») et donne-le à tes objets. Les types existants et leur nombre sont listés plus bas.
 L'app est une page web servie en HTTPS depuis https://laurent1meyer.github.io, sur l'iPhone de Laurent. Elle ne peut appeler que des adresses HTTPS qui autorisent cette origine (CORS). Pas de serveur à elle.
 La base vit sur l'iPhone (IndexedDB) : pas de gros fichiers dedans.
 
@@ -610,6 +616,9 @@ ${vb}
 
 ## Objets que tu connais (${connus.length}) — Laurent en a ${nPrive} autres, privés, que tu ne vois pas
 ${arbre || "(aucun)"}
+
+## Types d'objets existants (nombre d'objets, privés compris)
+${Object.entries(Object.values(K.O).reduce((a,o)=>{ a[o.type]=(a[o.type]||0)+1; return a; },{})).map(([t,n])=>`${t} (${n})`).join(", ")}
 
 ## Secrets au coffre (noms seulement)
 ${(await nomsSecrets()).join(", ") || "(aucun)"}
@@ -967,10 +976,10 @@ V("v_fait","marquer fait",["tache"],"Marquer une tâche faite (ou la rouvrir).",
   ctx.dire(fait ? "Rouverte" : "Fait ✓");
   ctx.faire("afficher", sujet.parent || "moi");
 }),
-V("v_verbes","verbes",["rien"],"La liste de tous les verbes de l'app. Toucher : versions et code.", async function(sujet, c, ctx){
-  const tous = ctx.verbes(null).concat(ctx.verbes("moi")).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
-  ctx.ecran(`<p class="doux">Chaque verbe est une fonction rangée dans ta base. Touche-le pour voir ses versions et son code.</p><div class="liste">` +
-    tous.map(v => `<button class="ligne" data-act="v" data-id="${ctx.esc(v.id)}"><span class="t">${ctx.esc(v.nom)}</span><small>${ctx.esc(v.definition || "")}</small></button>`).join("") + `</div>`,
+V("v_verbes","verbes",["rien"],"La liste de tous les verbes de l'app, avec le type d'objet de chacun. Toucher : versions, code, désactiver.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  ctx.ecran(`<p class="doux">Chaque verbe est une fonction rangée dans ta base. Un même nom peut avoir une version par type d'objet : la plus précise gagne. Touche un verbe pour ses versions, son code, ou pour le désactiver.</p><div class="liste">` +
+    ctx.tousVerbes().map(v => `<button class="ligne" data-act="v" data-id="${esc(v.id)}"><span class="t">${esc(v.nom)} <small>· ${esc(v.pour.join(", "))}</small>${v.actif ? "" : " <small>· désactivé</small>"}</span><small>${esc(v.definition || "")}${v.auteur === "Claude" ? " · écrit par Claude" : ""}</small></button>`).join("") + `</div>`,
     { titre: "Mes verbes", actions: { v: el => ctx.faire("version", null, { id: el.dataset.id }) } });
 }),
 V("v_exporter","exporter",["rien"],"Sauvegarder toute la base dans un fichier (sans le coffre).", async function(sujet, c, ctx){
@@ -1014,7 +1023,7 @@ V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et 
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
-for (const s of SEMENCES) s.doc.semence = 3;
+for (const s of SEMENCES) s.doc.semence = 4;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
