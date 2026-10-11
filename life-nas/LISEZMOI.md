@@ -4,18 +4,21 @@ La porte d'entrée de Life vers les fichiers du NAS : lister des dossiers et lir
 
 Pourquoi ce serveur : Life est une page HTTPS (laurent1meyer.github.io). Elle ne peut appeler qu'une adresse **HTTPS** qui **l'autorise** (CORS). Le NAS seul ne fait ni l'un ni l'autre pour ses fichiers. Ce petit serveur fait l'autorisation ; Tailscale fait le HTTPS.
 
+## Et le serveur Life v1 déjà sur le NAS ?
+Il ne suffit pas, pour deux raisons : il ne voit que sa propre base (`data/life.db`), pas tes dossiers ; et il répond en HTTP sur l'adresse Tailscale, ce qu'une page HTTPS comme Life n'a pas le droit d'appeler. Les deux peuvent tourner côte à côte : Life v1 sur le port 8787, Life NAS sur le 8788.
+
 ## Installation (une fois, environ 20 minutes)
 
 1. **Le dossier.** Dans File Station, crée `docker/life-nas` et dépose-y `serveur.js` et `docker-compose.yml`.
 2. **Le jeton.** Crée-y aussi `life-nas.env` contenant une seule ligne : `JETON=` suivi d'une longue suite aléatoire (au moins 16 caractères). Garde-la : Life te la demandera une fois.
 3. **Les dossiers lus.** Dans `docker-compose.yml`, vérifie la ligne `/volume1/video:/data/Vidéos:ro` : le chemin de gauche doit être ton partage vidéo. Ajoute d'autres partages sur le même modèle.
 4. **Le conteneur.** Container Manager › Projet › Créer › chemin `docker/life-nas` › il trouve le `docker-compose.yml` › Suivant › Terminé.
-   Vérification sur le NAS : `curl http://127.0.0.1:8787/` doit répondre `{"nom":"Life NAS",…}`.
+   Vérification sur le NAS : `curl http://127.0.0.1:8788/` doit répondre `{"nom":"Life NAS",…}`.
 5. **Le HTTPS par Tailscale.**
    - Console d'administration Tailscale (login.tailscale.com) › **DNS** : MagicDNS activé, et **HTTPS Certificates** activé.
    - Sur le NAS, en SSH (Panneau de configuration › Terminal et SNMP › activer SSH) :
      ```
-     sudo /var/packages/Tailscale/target/bin/tailscale serve --bg http://127.0.0.1:8787
+     sudo /var/packages/Tailscale/target/bin/tailscale serve --bg http://127.0.0.1:8788
      ```
    - La commande affiche l'adresse : `https://<nom-du-nas>.<ton-tailnet>.ts.net/`. Ouvre-la dans Safari sur l'iPhone (Tailscale activé) : tu dois voir la description `Life NAS`.
 6. **Dans Life.** Sur ton objet « NAS Synology », mets le champ `url = https://<nom-du-nas>.<ton-tailnet>.ts.net`. Puis demande à Claude : « Je veux lire une vidéo de mon NAS ». Il lit la description du serveur, te demande le jeton une fois (rangé au coffre) et écrit les verbes.
