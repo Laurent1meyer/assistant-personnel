@@ -93,6 +93,23 @@ details summary{cursor:pointer;margin-top:10px}
 #fil{position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0));background:var(--encre);color:var(--fond);border-radius:14px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:flex-end;z-index:9;box-shadow:0 4px 16px rgba(0,0,0,.25)}
 #fil-l{flex:1;display:flex;flex-direction:column;gap:2px}#fil-l div:not(:last-child){opacity:.6}
 #fil-stop{color:var(--fond);font-weight:700;font-size:13px;opacity:.8}
+/* conversation */
+.onglets{display:flex;gap:4px;background:color-mix(in srgb,var(--doux) 14%,var(--carte));border-radius:10px;padding:3px;margin:4px 0 10px}
+.onglets button{flex:1;padding:7px;border-radius:8px;font-size:14px;font-weight:600;color:var(--doux)}
+.onglets button.sel{background:var(--carte);color:var(--encre);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.fil-conv{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.bulle{max-width:88%;padding:10px 13px;border-radius:18px;line-height:1.45;overflow-wrap:anywhere}
+.bulle.moi{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:6px}
+.bulle.claude{align-self:flex-start;background:var(--carte);border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.bulle.erreur{border:1.5px solid var(--rouge)}
+.bulle code{font:13px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--doux) 15%,transparent);padding:0 4px;border-radius:4px}
+.puce-act{display:block;margin-top:8px;font-size:12px;font-weight:600;color:var(--claude)}
+.points::after{content:"…";animation:pts 1.2s infinite steps(3)}
+@keyframes pts{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
+.saisie{position:sticky;bottom:-24px;display:flex;gap:8px;align-items:flex-end;background:var(--fond);padding:8px 0 24px;margin:0}
+.saisie textarea{margin:0;resize:none;border-radius:20px;padding:10px 14px;max-height:160px}
+.saisie .btn{border-radius:50%;width:42px;height:42px;padding:0;flex:none;font-size:20px}
+.centre{text-align:center}
 body.secours .haut{background:color-mix(in srgb,var(--rouge) 12%,transparent)}
 </style>
 </head>
@@ -305,7 +322,7 @@ const base = {
   chercher: txt => { const q=String(txt||"").toLowerCase().trim(); return base.tous().filter(o => !q || (o.titre+" "+(o.desc||"")+" "+(o.type||"")).toLowerCase().includes(q)).slice(0,60); },
   creer: async o => { const doc={ titre:String(o.titre||"Sans nom"), type:o.type||"note", parent:o.parent??"moi", desc:o.desc||"", champs:o.champs||{}, relations:o.relations||[], partage:o.partage??false, cree:now(), ...(o.phrase?{phrase:o.phrase}:{}), ...(o.emoji?{emoji:o.emoji}:{}), ...(o.auteur?{auteur:o.auteur}:{}) };
     const ref=await K.db.collection("objets").add(doc); K.O[ref.id]=doc; await journal("créer",ref.id); return ref.id; },
-  modifier: async (id, m) => { if (!K.O[id]) throw new Error("objet inconnu"); const avant=copie(K.O[id]); const n={...K.O[id], ...copie(m), modifie:now()}; K.O[id]=n; await K.db.collection("objets").doc(id).set(n); await journal("modifier",id,avant); },
+  modifier: async (id, m, opt={}) => { if (!K.O[id]) throw new Error("objet inconnu"); const avant=opt.sansAvant?undefined:copie(K.O[id]); const n={...K.O[id], ...copie(m), modifie:now()}; K.O[id]=n; await K.db.collection("objets").doc(id).set(n); await journal("modifier",id,avant); },
   supprimer: async id => { if (!K.O[id]) return; await base.modifier(id,{supprime:now()}); }
 };
 
@@ -396,7 +413,7 @@ function ctx(vid){
   return { base, faire, ecran, dire, demander, choisir, confirmer, ouvrir, tuile, grille, esc, couleur, lettre, date:dateCourte,
     verbes: id => verbesPour(id?avecId(id):null).map(([i,v])=>({id:i, nom:v.nom, definition:v.definition})),
     claude: (texte, opt) => claudeFaire(texte, typeof opt==="string" ? {sujet:opt} : (opt||{})),
-    claudeActif: () => K.claude.actif,
+    claudeActif: () => K.claude.actif, ecranClaude: () => ecranPourClaude(),
     secret, oublierSecret, secrets: nomsSecrets, telecharger, choisirFichier,
     moi: vid, courant: () => K.sujet, __versions: id => versions(id) };
 }
@@ -527,7 +544,7 @@ $("#vue").addEventListener("click", e=>{
   const o=e.target.closest("[data-objet]");
   if (o){ if (o.dataset.long){ delete o.dataset.long; return; } return faire("toucher", o.dataset.objet); }
   const f=e.target.closest("[data-faire]"); if (f) return faire(f.dataset.faire, f.dataset.sujet ?? K.sujet);
-  const a=e.target.closest("[data-act]"); if (a && K.actions[a.dataset.act]) return K.actions[a.dataset.act](a, e);
+  const a=e.target.closest("[data-act]"); if (a && a.tagName!=="FORM" && K.actions[a.dataset.act]) return K.actions[a.dataset.act](a, e);
 });
 $("#vue").addEventListener("submit", e=>{ const f=e.target.closest("form[data-act]"); if (f && K.actions[f.dataset.act]) { e.preventDefault(); K.actions[f.dataset.act](f, e); } });
 $("#retour").onclick = async ()=>{ const p=K.pile.pop(); K.enRetour=true; try { p ? await faire("afficher", p) : await faire("accueil"); } finally { K.enRetour=false; $("#retour").hidden=!K.pile.length; } };
@@ -578,7 +595,7 @@ async function claudeFaire(texte, opt={}){
     LifeClaude.definirCle(k, lsGet("life-garder-cle")==="1");
   }
   if (!K.claude.actif) { if (!(await confirmer("Activer Claude ? Il verra l'écran, sauf ce qui est privé.", "Activer Claude"))) return null; activerClaude(true); }
-  const ecranVu = ecranPourClaude();
+  const ecranVu = opt.ecran || (K.O[K.sujet]?.type==="conversation" ? "(Laurent est dans la fenêtre de conversation avec toi.)" : ecranPourClaude());
   const vb = Object.entries(K.V).filter(([,v])=>v.actif!==false).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.aValider?" (en attente d'autorisation)":""} : ${v.definition||""}`).join("\n");
   const connus = Object.keys(K.O).filter(id=>vu(id) && !K.O[id].supprime && K.O[id].parent!=="corbeille");
   const arbre = connus.slice(0,200).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
@@ -601,7 +618,7 @@ ${(await nomsSecrets()).join(", ") || "(aucun)"}
 ${ecranVu}
 ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.desc?" — "+tache.desc:""}` : ""}`;
 
-  const traces=[]; const trace=t=>{ traces.push(t); fil("✦ "+t); };
+  const traces=[]; const trace=(t,ref)=>{ traces.push({t, ...(ref||{})}); fil("✦ "+t); };
   const visible = id => { id=String(id); if (!K.O[id] || K.O[id].supprime) throw new Error("objet inconnu : "+id); if (!vu(id)) throw new Error("objet privé : Laurent ne te l'a pas montré (outil demander_a_voir)"); return id; };
   const objetPourClaude = id => { const o=K.O[id]; const enf=enfants(id); return { id, titre:o.titre, type:o.type, parent:o.parent, desc:o.desc, champs:o.champs, relations:o.relations, phrase:o.phrase, partage:!!o.partage,
     enfants: enf.filter(e=>vu(e.id)).map(e=>({id:e.id, titre:e.titre, type:e.type})), enfantsPrives: enf.filter(e=>!vu(e.id)).length }; };
@@ -611,7 +628,7 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
     { name:"ecrire_verbe", description:"Crée ou modifie un verbe, actif immédiatement (l'ancienne version est gardée). id : celui du verbe à modifier, ou un nouvel id court (ex. v_regarder_video). code : corps de la fonction async (sujet, c, ctx).",
       inputSchema:{type:"object",properties:{id:{type:"string"},nom:{type:"string"},pour:{type:"array",items:{type:"string"}},definition:{type:"string"},code:{type:"string"}},required:["id","nom","definition","code"]},
       execute:async o=>{ const id=String(o.id).replace(/[^\w-]/g,"_").slice(0,60); await sauverVerbe(id, { nom:String(o.nom), pour:Array.isArray(o.pour)&&o.pour.length?o.pour.map(String):(K.V[id]?.pour||["*"]), definition:String(o.definition||""), code:String(o.code) }, "Claude");
-        trace(`écrit le verbe « ${o.nom} » (v${K.V[id].version})${K.V[id].aValider?" · à autoriser":""}`); return {id, version:K.V[id].version, aValider:!!K.V[id].aValider}; } },
+        trace(`écrit le verbe « ${o.nom} » (v${K.V[id].version})${K.V[id].aValider?" · à autoriser":""}`, {verbe:id}); return {id, version:K.V[id].version, aValider:!!K.V[id].aValider}; } },
     { name:"essayer_verbe", description:"Exécute un verbe pour de vrai, sous les yeux de Laurent, et renvoie les erreurs, les messages et ce que l'écran montre ensuite. Si le verbe demande quelque chose (question, secret, autorisation), Laurent répond en direct.",
       inputSchema:{type:"object",properties:{nom:{type:"string"},sujet:{type:"string",description:"id d'un objet que tu vois, ou vide"},complements:{type:"object"}},required:["nom"]},
       execute:async o=>{ const sid = o.sujet ? visible(o.sujet) : null; trace(`essaie « ${o.nom} »`);
@@ -627,14 +644,14 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
       execute:({id})=>objetPourClaude(visible(id)) },
     { name:"creer_objet", description:"Crée un objet (ou une tâche, avec phrase {verbe,sujet,complements}). parent : un objet partagé ou 'moi'. L'objet est partagé avec toi.",
       inputSchema:{type:"object",properties:{titre:{type:"string"},type:{type:"string"},parent:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},emoji:{type:"string"}},required:["titre","type"]},
-      execute:async o=>{ const p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : "moi"; const id=await base.creer({...o, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`); return {id, parent:p}; } },
+      execute:async o=>{ const p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : "moi"; const id=await base.creer({...o, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`, {objet:id}); return {id, parent:p}; } },
     { name:"modifier_objet", description:"Modifie un objet partagé : titre, type, desc, champs (fusionnés), phrase, parent.",
       inputSchema:{type:"object",properties:{id:{type:"string"},titre:{type:"string"},type:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},parent:{type:"string"}},required:["id"]},
       execute:async o=>{ const id=String(o.id); if (!connu(id)) throw new Error("tu ne peux modifier que les objets partagés avec toi"); const m={};
         for (const k of ["titre","type","desc","phrase"]) if (o[k]!==undefined) m[k]=o[k];
         if (o.champs) m.champs={...(K.O[id].champs||{}), ...o.champs};
         if (o.parent) { if (!connu(String(o.parent))) throw new Error("parent non partagé"); m.parent=String(o.parent); }
-        await base.modifier(id, m); trace(`modifie « ${K.O[id].titre} »${o.champs?.statut?" → "+o.champs.statut:""}`); return {ok:true}; } },
+        await base.modifier(id, m); trace(`modifie « ${K.O[id].titre} »${o.champs?.statut?" → "+o.champs.statut:""}`, {objet:id}); return {ok:true}; } },
     { name:"demander_a_laurent", description:"Pose une question à Laurent, en direct. choix : propositions de réponse (facultatif).", inputSchema:{type:"object",properties:{question:{type:"string"},choix:{type:"array",items:{type:"string"}}},required:["question"]},
       execute:async ({question, choix})=>{ trace("te pose une question"); const r = Array.isArray(choix)&&choix.length ? await choisir("Claude : "+question, [...choix.map(c=>({valeur:String(c), libelle:String(c)})), {valeur:"__autre", libelle:"Autre réponse…"}]) : null;
         if (r && r!=="__autre") return r; const t = await demander("Claude : "+question, "", {multi:true}); return t ?? "(Laurent n'a pas répondu)"; } },
@@ -645,12 +662,21 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
         if (!id) return "Laurent n'a rien montré.";
         K.claude.montre.add(id); for (const e of enfants(id)) K.claude.montre.add(e.id); majVision();
         return { montre:"pour cette demande seulement", objet: objetPourClaude(id) }; } },
+    { name:"lire_conversation", description:"Relit une conversation passée avec Laurent (dossier « Conversations avec Claude »).", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+      execute:({id})=>{ id=visible(id); const o=K.O[id]; if (o.type!=="conversation") throw new Error("ce n'est pas une conversation"); return { titre:o.titre, messages:(o.messages||[]).slice(-60).map(m=>({role:m.role, texte:m.texte, quand:m.quand, changements:(m.actions||[]).map(a=>a.t)})) }; } },
     { name:"secrets_connus", description:"Noms des secrets rangés dans le coffre de Laurent (jamais les valeurs).", inputSchema:{type:"object",properties:{}}, execute:async()=>nomsSecrets() }
   ];
   const ctrl = new AbortController(); K.claude.travaille = ctrl;
   $("#fil-l").innerHTML=""; fil("✦ Claude lit l'écran…");
   try {
-    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},{role:"user",content:texte}], { tools:outils, signal:ctrl.signal, maxTours:40 });
+    // La conversation en cours : les échanges passés sont renvoyés à chaque message (l'API ne se souvient de rien)
+    const hist=[];
+    for (const m of (opt.historique||[]).slice(-40)) { const role=m.role==="assistant"?"assistant":"user"; let ct=String(m.texte||"");
+      if (role==="assistant" && m.actions?.length) ct += "\n\n(Ce que j'ai fait dans Life : " + m.actions.map(a=>a.t||a).join(" ; ") + ")";
+      if (!ct.trim()) continue; if (hist.length && hist.at(-1).role===role) hist.at(-1).content += "\n\n"+ct; else hist.push({role, content:ct}); }
+    while (hist.length && hist[0].role!=="user") hist.shift();
+    if (hist.length && hist.at(-1).role==="user") hist.at(-1).content += "\n\n"+texte; else hist.push({role:"user", content:texte});
+    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},...hist], { tools:outils, signal:ctrl.signal, maxTours:40, onText:opt.onText });
     return { texte:r.text, traces };
   } catch(err){
     if (err?.code==="bad_key") LifeClaude.oublierCle();
@@ -680,6 +706,7 @@ async function semer(){
   const o = async (id, doc) => { if (K.O[id]) return; const d={ desc:"", champs:{}, relations:[], partage:false, cree:now(), ...doc }; K.O[id]=d; await K.db.collection("objets").doc(id).set(d); };
   await o("moi", { titre:"Moi", type:"moi", parent:null, partage:true });
   await o("corbeille", { titre:"Corbeille", type:"dossier", parent:"moi", desc:"Rien n'y est effacé : range ailleurs pour récupérer.", emoji:"🗑" });
+  await o("conversations", { titre:"Conversations avec Claude", type:"dossier", parent:"moi", partage:true, desc:"Chaque conversation avec Claude, à rouvrir pour la continuer. Claude peut les relire.", emoji:"💬" });
   await o("reglages", { titre:"Réglages", type:"dossier", parent:"moi", desc:"Sauvegarde, Claude, coffre.", emoji:"⚙" });
   await o("prompt_claude", { titre:"Prompt de Claude", type:"prompt", parent:"reglages", emoji:"✦", desc:PROMPT_DEFAUT });
   await o("t_sauver", { titre:"Sauvegarder ma base", type:"tache", parent:"reglages", emoji:"⬇", phrase:{verbe:"exporter", sujet:null, complements:{}} });
@@ -866,25 +893,73 @@ V("v_chercher","chercher",["rien"],"Chercher un objet par son nom.", async funct
   const r = ctx.base.chercher(q);
   ctx.ecran(r.length ? ctx.grille(r) : `<p class="doux">Rien trouvé pour « ${ctx.esc(q)} ».</p>`, { titre: `« ${q} »` });
 }),
-V("v_claude","demander à Claude",["rien","*"],"Demander quelque chose à Claude : il voit l'écran (sauf ton privé), écrit des verbes, crée des objets.", async function(sujet, c, ctx){
-  const t = c.texte || await ctx.demander(sujet ? `Que doit faire Claude, à propos de « ${sujet.titre} » ?` : "Que doit faire Claude ?", "", { multi: true });
-  if (!t) return;
-  const r = await ctx.claude(t, sujet ? { sujet: sujet.id } : {});
-  if (!r) return;
-  ctx.ecran(`<div class="carte ${r.erreur ? "erreur" : ""}"><p class="reponse">${ctx.esc(r.texte)}</p>${r.traces.length ? `<details><summary class="doux">Ce que Claude a fait (${r.traces.length})</summary><ul class="traces">${r.traces.map(x => `<li>${ctx.esc(x)}</li>`).join("")}</ul></details>` : ""}
-    <div class="rang"><button class="btn prim" data-faire="demander à Claude">Autre demande</button>${sujet ? `<button class="btn" data-faire="afficher" data-sujet="${ctx.esc(sujet.id)}">Revenir</button>` : `<button class="btn" data-faire="accueil" data-sujet="">Accueil</button>`}</div></div>`, { titre: "Claude" });
+V("v_claude","demander à Claude",["rien","*"],"Ouvrir une nouvelle conversation avec Claude, depuis l'écran où tu es.", async function(sujet, c, ctx){
+  return ctx.faire("discuter", null, { sujet: sujet ? sujet.id : null, ecran: ctx.ecranClaude(), texte: c.texte });
 }),
-V("v_confier","confier à Claude",["tache"],"Confier une tâche à Claude : il la découpe, construit ce qu'il faut, et te laisse ce qu'il ne peut pas faire.", async function(sujet, c, ctx){
+V("v_afficher_conversation","afficher",["conversation"],"Rouvrir une conversation avec Claude pour la continuer.", async function(sujet, c, ctx){
+  return ctx.faire("discuter", null, { conv: sujet.id, ecran: c.ecran });
+}),
+V("v_discuter","discuter",["rien"],"La fenêtre de conversation avec Claude : la discussion d'un côté, ce qu'il change dans Life de l'autre. Tout est rangé dans « Conversations avec Claude ».", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  let conv = c.conv || null, onglet = "discussion", enCours = false, partiel = "";
+  const ecranDepart = c.ecran || null;
+  const lireConv = () => conv ? ctx.base.lire(conv) : null;
+  const msgs = () => (lireConv() || {}).messages || [];
+  const actions = () => msgs().flatMap((m, i) => (m.actions || []).map(a => ({ ...a, i })));
+  const mise = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^[-•] (.*)$/gm, "• $1").replace(/\n/g, "<br>");
+  function rendre(){
+    const o = lireConv(), l = msgs(), ac = actions();
+    let h = `<div class="onglets"><button data-act="onglet" data-o="discussion" class="${onglet === "discussion" ? "sel" : ""}">Discussion</button><button data-act="onglet" data-o="changements" class="${onglet === "changements" ? "sel" : ""}">Changements${ac.length ? ` <small>${ac.length}</small>` : ""}</button></div>`;
+    const tc = o && o.champs && o.champs.tache ? ctx.base.lire(o.champs.tache) : null;
+    if (tc) h += `<p class="doux">Tâche : <button class="lien" data-faire="afficher" data-sujet="${esc(tc.id)}">${esc(tc.titre)}</button></p>`;
+    if (onglet === "discussion") {
+      h += `<div class="fil-conv">`;
+      if (!l.length && !enCours) h += `<p class="doux centre">Écris à Claude comme dans l'app Claude. Il voit l'écran d'où tu viens (sauf ton privé), et peut changer Life pour toi. La conversation est rangée dans « Conversations avec Claude ».</p>`;
+      for (const m of l) {
+        if (m.role === "user") h += `<div class="bulle moi">${mise(m.texte)}</div>`;
+        else h += `<div class="bulle claude ${m.erreur ? "erreur" : ""}">${mise(m.texte)}${(m.actions || []).length ? `<button class="puce-act" data-act="onglet" data-o="changements">✦ ${m.actions.length} changement${m.actions.length > 1 ? "s" : ""} dans Life</button>` : ""}</div>`;
+      }
+      if (enCours) h += `<div class="bulle claude" id="partiel">${partiel ? mise(partiel) : `<span class="points">Claude réfléchit</span>`}</div>`;
+      h += `</div><form class="saisie" data-act="envoyer"><textarea name="t" rows="1" placeholder="Écris à Claude…" ${enCours ? "disabled" : ""}></textarea><button class="btn prim" type="submit" ${enCours ? "disabled" : ""} aria-label="Envoyer">↑</button></form>`;
+    } else {
+      h += ac.length ? `<div class="liste">${ac.slice().reverse().map(a => a.objet && ctx.base.lire(a.objet) ? `<button class="ligne" data-objet="${esc(a.objet)}"><span class="t">${esc(a.t)}</span><small>objet · toucher pour l'ouvrir</small></button>`
+        : a.verbe ? `<button class="ligne" data-act="verbe" data-id="${esc(a.verbe)}"><span class="t">${esc(a.t)}</span><small>verbe · toucher pour ses versions</small></button>`
+        : `<div class="ligne"><span class="t">${esc(a.t)}</span></div>`).join("")}</div>` : `<p class="doux">Claude n'a encore rien changé dans cette conversation.</p>`;
+    }
+    ctx.ecran(h, { sujet: conv || undefined, titre: o ? o.titre : "Nouvelle conversation", actions: {
+      onglet: el => { onglet = el.dataset.o; rendre(); },
+      verbe: el => ctx.faire("version", null, { id: el.dataset.id }),
+      envoyer: f => { const t = f.t.value.trim(); if (t && !enCours) envoyer(t); } } });
+    const vue = document.getElementById("vue"); if (onglet === "discussion") vue.scrollTop = vue.scrollHeight;
+    const ta = vue.querySelector(".saisie textarea");
+    if (ta) ta.addEventListener("input", () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; });
+  }
+  async function envoyer(t){
+    if (enCours) return; enCours = true;
+    if (!conv) {
+      const titre = t.length > 50 ? t.slice(0, 48).trim() + "…" : t;
+      conv = await ctx.base.creer({ titre, type: "conversation", parent: "conversations", partage: true, champs: { ...(c.sujet ? { sujet: c.sujet } : {}), ...(c.tache ? { tache: c.tache } : {}) } });
+    }
+    const avant = msgs();
+    await ctx.base.modifier(conv, { messages: [...avant, { role: "user", texte: t, quand: new Date().toISOString() }] }, { sansAvant: true });
+    enCours = true; partiel = ""; onglet = "discussion"; rendre();
+    const o = lireConv();
+    const r = await ctx.claude(t, { historique: avant, ecran: ecranDepart, tache: (o.champs || {}).tache, sujet: (o.champs || {}).sujet,
+      onText: x => { partiel = x.text; const e = document.getElementById("partiel"); if (e) e.innerHTML = mise(partiel); } });
+    enCours = false;
+    const m = r ? { role: "assistant", texte: r.texte, quand: new Date().toISOString(), actions: r.traces || [], ...(r.erreur ? { erreur: true } : {}) } : { role: "assistant", texte: "(Claude n'a pas été lancé.)", quand: new Date().toISOString(), erreur: true };
+    await ctx.base.modifier(conv, { messages: [...msgs(), m] }, { sansAvant: true });
+    rendre();
+  }
+  rendre();
+  if (c.texte) await envoyer(c.texte);
+}),
+V("v_confier","confier à Claude",["tache"],"Confier une tâche à Claude : il la découpe, construit ce qu'il faut, et te laisse ce qu'il ne peut pas faire. La conversation reste rangée avec les autres.", async function(sujet, c, ctx){
   if (!sujet.partage) {
     if (!(await ctx.confirmer(`Claude va connaître la tâche « ${sujet.titre} » et ranger son plan dessous.`, "Confier"))) return;
     await ctx.base.modifier(sujet.id, { partage: true });
   }
-  await ctx.faire("afficher", sujet.id);
-  const r = await ctx.claude(`Je te confie la tâche « ${sujet.titre} » [${sujet.id}].${sujet.desc ? " " + sujet.desc : ""}`, { tache: sujet.id });
-  if (!r) return;
-  await ctx.faire("afficher", sujet.id);
-  ctx.ecran(`<div class="carte ${r.erreur ? "erreur" : ""}"><p class="reponse">${ctx.esc(r.texte)}</p>${r.traces.length ? `<details><summary class="doux">Ce que Claude a fait (${r.traces.length})</summary><ul class="traces">${r.traces.map(x => `<li>${ctx.esc(x)}</li>`).join("")}</ul></details>` : ""}
-    <div class="rang"><button class="btn prim" data-faire="afficher" data-sujet="${ctx.esc(sujet.id)}">Voir la tâche</button></div></div>`, { titre: "Claude" });
+  return ctx.faire("discuter", null, { tache: sujet.id, ecran: ctx.ecranClaude(), texte: `Je te confie la tâche « ${sujet.titre} » [${sujet.id}].${sujet.desc ? " " + sujet.desc : ""}` });
 }),
 V("v_fait","marquer fait",["tache"],"Marquer une tâche faite (ou la rouvrir).", async function(sujet, c, ctx){
   const fait = (sujet.champs || {}).statut === "fait";
@@ -939,7 +1014,7 @@ V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et 
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
-for (const s of SEMENCES) s.doc.semence = 2;
+for (const s of SEMENCES) s.doc.semence = 3;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
