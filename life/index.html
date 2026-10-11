@@ -17,8 +17,8 @@
    Pour ajouter une version : une ligne en tête de VERSIONS (la première est la version par défaut). */
 *,*::before,*::after{box-sizing:border-box}
 :root{--fond:#0F1524;--carte:rgba(255,255,255,.06);--trait:rgba(255,255,255,.12);--encre:#EEF2FA;--doux:#97A3BA;--accent:#4C93FF;--duree:2.6s}
-html,body{margin:0;height:100%;background:var(--fond);color:var(--encre);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;-webkit-tap-highlight-color:transparent;overflow:hidden}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0);user-select:none;-webkit-user-select:none}
+html,body{margin:0;min-height:100%;background:var(--fond);color:var(--encre);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:max(8vh,env(safe-area-inset-top,0px));padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0);user-select:none;-webkit-user-select:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
 
 /* halo qui respire derrière l'icône */
@@ -69,6 +69,9 @@ h1 span{opacity:0;transform:translateY(10px);animation:lettre .5s ease-out forwa
 .part.on{opacity:1}
 
 /* versions et branches */
+.v-titre{align-self:flex-start;margin:28px 0 4px;font-size:18px;opacity:0;animation:fondu .6s 1.4s forwards}
+.v-info{align-self:flex-start;opacity:0;animation:fondu .6s 1.4s forwards}
+.graphe.en-ligne{flex:none;width:100%;overflow:visible;margin-bottom:30px;opacity:0;animation:fondu .6s 1.5s forwards}
 .vers-btn{margin-top:14px;align-self:center;color:var(--accent);font-size:14px;font-weight:600;padding:8px 12px;opacity:0;animation:fondu .6s 1.6s forwards}
 .panneau{position:fixed;inset:0;background:var(--fond);z-index:5;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 12px);transform:translateY(100%);transition:transform .3s ease;user-select:none}
 .panneau.on{transform:none}
@@ -105,14 +108,12 @@ h1 span{opacity:0;transform:translateY(10px);animation:lettre .5s ease-out forwa
   <p class="sous" id="sous">Ouverture de la dernière version…</p>
   <div class="liste" id="liste" role="list"></div>
   <p class="aide" id="aide">Touche l'écran pour choisir une autre version</p>
-  <button class="vers-btn" id="vers-btn">Versions et branches ›</button>
+  <h2 class="v-titre">Toutes les versions</h2>
+  <p class="p-doux v-info">Une par publication, avec sa date et son heure. En orange : les branches pas encore fusionnées, à essayer.</p>
+  <div class="graphe en-ligne" id="graphe-ligne"><p class="p-doux">Lecture de l'historique…</p></div>
 </main>
 <div class="part" id="part"></div>
-<section class="panneau" id="panneau" aria-label="Versions et branches">
-  <div class="p-tete"><h2>Versions</h2><button id="p-fermer">Fermer</button></div>
-  <p class="p-doux" id="p-info">Chaque point est une version publiée, avec sa date et son heure. En orange : les branches pas encore fusionnées, à essayer. Une version passée s'ouvre avec ses propres verbes d'origine, sur ta base du jour.</p>
-  <div class="graphe" id="graphe"></div>
-</section>
+
 
 <script>
 // La première ligne est la version ouverte par défaut.
@@ -187,9 +188,9 @@ async function listeVersions(){
   try { localStorage.setItem("life-versions", JSON.stringify({ t:Date.now(), l })); } catch (_) {}
   return l;
 }
-async function montrerVersions(){
-  arreter(); $("panneau").classList.add("on"); $("graphe").innerHTML = `<p class="p-doux">Lecture de l'historique sur GitHub…</p>`;
-  let l; try { l = await listeVersions(); } catch (e) { $("graphe").innerHTML = `<p class="p-doux">Impossible de lire l'historique : ${echappe(e.message)}<br>Hors ligne, seules les versions du lanceur sont disponibles.</p>`; return; }
+async function montrerVersions(cible = "graphe-ligne"){
+  const G = $(cible); G.innerHTML = `<p class="p-doux">Lecture de l'historique sur GitHub…</p>`;
+  let l; try { l = await listeVersions(); } catch (e) { G.innerHTML = `<p class="p-doux">Impossible de lire l'historique : ${echappe(e.message)}<br>Hors ligne, seules les versions ci-dessus sont disponibles.</p>`; return; }
   const ouvertes = l.filter(x => x.ouverte), publiees = l.filter(x => !x.ouverte).sort((a, b) => a.fusion < b.fusion ? 1 : -1);
   const lignes = [...ouvertes.map(x => ({ ...x, voie:1 })), ...publiees.map((x, i) => ({ ...x, voie:0, derniere: i === 0 }))];
   const H = 62, X = v => 18 + v * 26, Y = r => 30 + r * H;
@@ -207,15 +208,13 @@ async function montrerVersions(){
     const date = x.ouverte ? `pas encore publiée · modifiée le ${quand(x.maj)}` : `publiée le ${quand(x.fusion)}`;
     h += `<button class="rel" style="top:${Y(r) - 29}px" data-i="${r}"><b>${tag}#${x.n} · ${echappe(x.titre.replace(/^Life\s*(v\d+)?\s*:\s*/i, ""))}</b><small>${date} · ${echappe(x.sha.slice(0, 7))}</small></button>`;
   });
-  $("graphe").innerHTML = h; $("graphe").style.minHeight = (Y(lignes.length - 1) + 34) + "px";
-  $("graphe").onclick = e => { const b = e.target.closest(".rel"); if (!b) return; const x = lignes[+b.dataset.i];
+  G.innerHTML = h; G.style.minHeight = (Y(lignes.length - 1) + 34) + "px";
+  G.onclick = e => { const b = e.target.closest(".rel"); if (!b) return; const x = lignes[+b.dataset.i];
     if (x.derniere) return lancer(VERSIONS[0]);
     if (parti) return; parti = true; $("part").classList.add("on");
     setTimeout(() => location.assign(`version.html?sha=${x.sha}&f=${encodeURIComponent(x.fichier)}&l=1${x.ere === "v6" ? "#secours" : ""}`), 300); };
 }
-$("vers-btn").addEventListener("click", e => { e.stopPropagation(); montrerVersions(); });
-$("p-fermer").addEventListener("click", e => { e.stopPropagation(); $("panneau").classList.remove("on"); });
-$("panneau").addEventListener("pointerdown", e => e.stopPropagation());
+montrerVersions("graphe-ligne");
 // la carte de la version du jour affiche sa date de publication
 listeVersions().then(l => { const d = l.filter(x => !x.ouverte).sort((a, b) => a.fusion < b.fusion ? 1 : -1)[0]; if (d) { const e = $("liste").firstElementChild?.querySelector(".desc"); if (e) e.textContent = `#${d.n} · publiée le ${quand(d.fusion)}`; } }).catch(() => {});
 

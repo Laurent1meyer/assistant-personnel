@@ -332,6 +332,8 @@ const connu = id => id==="moi" || !!K.O[id];
 const vu = id => connu(id) || K.claude.montre.has(id);
 // Verbes écrits par Claude qui touchent au réseau, aux secrets ou aux données brutes : Laurent valide avant.
 // Verbes écrits par Claude qui touchent aux secrets ou aux données brutes de l'app : Laurent valide avant (le réseau seul est libre).
+// Types généraux (ceux de la base et des verbes d'origine) : Claude ne peut pas y ajouter une variante d'un verbe existant
+const GENERAUX = new Set(["*","rien","moi","dossier","tache","note","projet","idee","personne","lieu","bien","envie","besoin","fonction","decision","document","application","conversation","site web","prompt","import","fichier"]);
 const SENSIBLE = /\b(secret|oublierSecret|importScripts|localStorage|indexedDB|LifeDB|LifeClaude)\b|import\s*\(/;
 
 // ---------- couleurs par type ----------
@@ -773,6 +775,10 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
       execute:async o=>{ let id=String(o.id).replace(/[^\w-]/g,"_").slice(0,60); const chez = o.chez==="claude" ? "claude" : (K.V[id]?.chez||undefined);
         if (chez==="claude" && !id.startsWith("claude_")) id="claude_"+id;
         if (K.V[id] && K.V[id].chez!=="claude" && o.chez==="claude") throw new Error("cet id est un verbe de Laurent : choisis un autre id pour ton Life");
+        { const pour = Array.isArray(o.pour)&&o.pour.length ? o.pour.map(String) : ["*"];
+          const existe = Object.entries(K.V).some(([i,v])=>i!==id && v.nom===String(o.nom) && v.chez!=="claude" && v.actif!==false);
+          const generaux = pour.filter(t=>GENERAUX.has(t));
+          if (!K.V[id] && chez!=="claude" && existe && generaux.length) throw new Error(`refusé : une nouvelle variante de « ${o.nom} » pour ${generaux.join(", ")} s'appliquerait à TOUS ces objets de Laurent (c'est ce qui a bloqué ses dossiers). Donne à tes objets un type précis (ex. « dossier NAS ») et écris la variante pour ce type ; ou, si Laurent te demande de changer le comportement général, modifie le verbe existant (lire_verbe puis ecrire_verbe avec son id).`); }
         await sauverVerbe(id, { nom:String(o.nom), pour:Array.isArray(o.pour)&&o.pour.length?o.pour.map(String):(K.V[id]?.pour||["*"]), definition:String(o.definition||""), code:String(o.code), ...(chez?{chez}:{}) }, "Claude");
         trace(`écrit le verbe « ${o.nom} » (v${K.V[id].version})${K.V[id].aValider?" · à autoriser":""}`, {verbe:id}); return {id, version:K.V[id].version, aValider:!!K.V[id].aValider}; } },
     { name:"essayer_verbe", description:"Exécute un verbe pour de vrai, sous les yeux de Laurent, et renvoie les erreurs, les messages et ce que l'écran montre ensuite. Si le verbe demande quelque chose (question, secret, autorisation), Laurent répond en direct.",
@@ -913,6 +919,11 @@ async function semer(){
   if (!Object.keys(K.O).length) { const n=await migrer(); if (n) dire(`${n} objets repris de ta base`); }
   await semer();
   // une fois : les objets migrés sans lien « dans » sont rangés sous l'objet auquel ils se rapportent
+  if (!lsGet("life-v6-ombres")) { let n=0; const semences=new Set(SEMENCES.map(x=>x.id)); const noms=new Set(SEMENCES.map(x=>x.doc.nom));
+    for (const [id,v] of Object.entries(K.V)) { if (semences.has(id) || v.auteur!=="Claude" || v.chez==="claude" || v.actif===false || !noms.has(v.nom)) continue;
+      if (!(v.pour||["*"]).some(t=>GENERAUX.has(t))) continue;
+      K.V[id]={...v, actif:false}; await K.db.collection("verbes").doc(id).set(K.V[id]); await journal("verbe désactivé (masquait un verbe d'origine)", id); n++; }
+    lsSet("life-v6-ombres","1"); if (n) setTimeout(()=>dire(`${n} verbe${n>1?"s":""} de Claude désactivé${n>1?"s":""} : il${n>1?"s":""} masquai${n>1?"ent":"t"} un verbe d'origine (voir Verbes)`), 800); }
   if (!lsGet("life-v6-parents")) { let n=0;
     for (const [id,o] of Object.entries(K.O)) { if (o.parent!=="moi" || o.modifie || !(o.relations||[]).length) continue;
       const r=o.relations.find(r=>K.O[r.vers] && r.vers!=="moi" && r.vers!==id && racineDe(r.vers)==="moi" && !chezClaude(r.vers)); if (!r) continue;
