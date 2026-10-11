@@ -68,6 +68,23 @@ h1 span{opacity:0;transform:translateY(10px);animation:lettre .5s ease-out forwa
 .part{position:fixed;inset:0;background:var(--fond);opacity:0;pointer-events:none;transition:opacity .35s}
 .part.on{opacity:1}
 
+/* versions et branches */
+.vers-btn{margin-top:14px;align-self:center;color:var(--accent);font-size:14px;font-weight:600;padding:8px 12px;opacity:0;animation:fondu .6s 1.6s forwards}
+.panneau{position:fixed;inset:0;background:var(--fond);z-index:5;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px calc(env(safe-area-inset-bottom,0px) + 12px);transform:translateY(100%);transition:transform .3s ease;user-select:none}
+.panneau.on{transform:none}
+.p-tete{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.p-tete h2{flex:1;margin:0;font-size:22px}
+.p-tete button{color:var(--accent);font-weight:600}
+.p-doux{color:var(--doux);font-size:13px;margin:0 0 10px}
+.graphe{flex:1;overflow-y:auto;position:relative;-webkit-overflow-scrolling:touch}
+.graphe svg{position:absolute;left:0;top:0}
+.rel{position:absolute;left:62px;right:0;height:58px;display:flex;flex-direction:column;justify-content:center;padding:0 8px;border-radius:12px}
+.rel:active{background:var(--carte)}
+.rel b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rel small{color:var(--doux);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rel .tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:7px;margin-right:6px;vertical-align:1px;background:var(--accent);color:#fff}
+.rel .tag.br{background:#C96442}.rel .tag.v5{background:#5E6E80}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01s!important;animation-delay:0s!important;transition:none!important}
   .halo{animation:halo .01s forwards}
@@ -88,8 +105,14 @@ h1 span{opacity:0;transform:translateY(10px);animation:lettre .5s ease-out forwa
   <p class="sous" id="sous">Ouverture de la dernière version…</p>
   <div class="liste" id="liste" role="list"></div>
   <p class="aide" id="aide">Touche l'écran pour choisir une autre version</p>
+  <button class="vers-btn" id="vers-btn">Versions et branches ›</button>
 </main>
 <div class="part" id="part"></div>
+<section class="panneau" id="panneau" aria-label="Versions et branches">
+  <div class="p-tete"><h2>Versions</h2><button id="p-fermer">Fermer</button></div>
+  <p class="p-doux" id="p-info">Chaque point est une version publiée, avec sa date et son heure. En orange : les branches pas encore fusionnées, à essayer. Une version passée s'ouvre avec ses propres verbes d'origine, sur ta base du jour.</p>
+  <div class="graphe" id="graphe"></div>
+</section>
 
 <script>
 // La première ligne est la version ouverte par défaut.
@@ -145,6 +168,56 @@ addEventListener("pointerdown", e => { if (!e.target.closest(".version")) arrete
 addEventListener("keydown", e => { if (e.key === "Enter" && document.activeElement === document.body) lancer(VERSIONS[0]); else arreter(); });
 // Retour arrière vers le lanceur (cache bfcache) : on réaffiche le choix sans relancer
 addEventListener("pageshow", e => { if (e.persisted) { parti = false; $("part").classList.remove("on"); arreter(); } });
+
+// ---------- Versions et branches : l'historique réel du dépôt (GitHub), chaque fusion = une version publiée ----------
+const DEPOT = "Laurent1meyer/assistant-personnel";
+const quand = iso => new Date(iso).toLocaleString("fr-FR", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+const echappe = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function listeVersions(){
+  try { const c = JSON.parse(localStorage.getItem("life-versions") || "null"); if (c && Date.now() - c.t < 5 * 60e3) return c.l; } catch (_) {}
+  const r = await fetch(`https://api.github.com/repos/${DEPOT}/pulls?state=all&base=main&per_page=60&sort=created&direction=desc`);
+  if (!r.ok) throw new Error(r.status === 403 ? "GitHub limite les lectures (60 par heure) : réessaie plus tard." : "GitHub répond " + r.status);
+  const prs = (await r.json()).filter(p => /life/i.test(p.title + " " + p.head.ref) && (p.merged_at || p.state === "open"));
+  // le lanceur est arrivé avec la PR qui a créé v6.html : avant, la version était life/index.html
+  const lanceur = prs.find(p => p.merged_at && /lanceur/i.test(p.title));
+  const l = prs.map(p => ({ n:p.number, titre:p.title, fusion:p.merged_at, ouverte:p.state === "open", maj:p.updated_at, branche:p.head.ref,
+    sha: p.merged_at ? p.merge_commit_sha : p.head.sha,
+    fichier: p.state === "open" || (lanceur && p.merged_at >= lanceur.merged_at) ? "life/v6.html" : "life/index.html",
+    ere: p.number <= 2 ? "v5" : "v6" }));
+  try { localStorage.setItem("life-versions", JSON.stringify({ t:Date.now(), l })); } catch (_) {}
+  return l;
+}
+async function montrerVersions(){
+  arreter(); $("panneau").classList.add("on"); $("graphe").innerHTML = `<p class="p-doux">Lecture de l'historique sur GitHub…</p>`;
+  let l; try { l = await listeVersions(); } catch (e) { $("graphe").innerHTML = `<p class="p-doux">Impossible de lire l'historique : ${echappe(e.message)}<br>Hors ligne, seules les versions du lanceur sont disponibles.</p>`; return; }
+  const ouvertes = l.filter(x => x.ouverte), publiees = l.filter(x => !x.ouverte).sort((a, b) => a.fusion < b.fusion ? 1 : -1);
+  const lignes = [...ouvertes.map(x => ({ ...x, voie:1 })), ...publiees.map((x, i) => ({ ...x, voie:0, derniere: i === 0 }))];
+  const H = 62, X = v => 18 + v * 26, Y = r => 30 + r * H;
+  let svg = "";
+  const rp = lignes.map((x, r) => x.voie === 0 ? r : -1).filter(r => r >= 0);
+  if (rp.length) svg += `<line x1="${X(0)}" y1="${Y(rp[0])}" x2="${X(0)}" y2="${Y(rp.at(-1))}" stroke="#4C93FF" stroke-width="3"/>`;
+  lignes.forEach((x, r) => {
+    if (x.voie === 1 && rp.length) svg += `<path d="M${X(0)} ${Y(rp[0])} C ${X(0)} ${Y(r) + 20}, ${X(1)} ${Y(r) + 24}, ${X(1)} ${Y(r)}" fill="none" stroke="#C96442" stroke-width="2.5" stroke-dasharray="4 4"/>`;
+    const c = x.voie === 1 ? "#C96442" : x.ere === "v5" ? "#8A94A6" : "#4C93FF";
+    svg += `<circle cx="${X(x.voie)}" cy="${Y(r)}" r="${x.derniere ? 9 : 7}" fill="${x.derniere ? "#0F1524" : c}" stroke="${c}" stroke-width="${x.derniere ? 4 : 2}"/>`;
+  });
+  let h = `<svg width="60" height="${Y(lignes.length - 1) + 34}" aria-hidden="true">${svg}</svg>`;
+  lignes.forEach((x, r) => {
+    const tag = x.ouverte ? `<span class="tag br">branche</span>` : x.derniere ? `<span class="tag">en service</span>` : x.ere === "v5" ? `<span class="tag v5">v5</span>` : "";
+    const date = x.ouverte ? `pas encore publiée · modifiée le ${quand(x.maj)}` : `publiée le ${quand(x.fusion)}`;
+    h += `<button class="rel" style="top:${Y(r) - 29}px" data-i="${r}"><b>${tag}#${x.n} · ${echappe(x.titre.replace(/^Life\s*(v\d+)?\s*:\s*/i, ""))}</b><small>${date} · ${echappe(x.sha.slice(0, 7))}</small></button>`;
+  });
+  $("graphe").innerHTML = h; $("graphe").style.minHeight = (Y(lignes.length - 1) + 34) + "px";
+  $("graphe").onclick = e => { const b = e.target.closest(".rel"); if (!b) return; const x = lignes[+b.dataset.i];
+    if (x.derniere) return lancer(VERSIONS[0]);
+    if (parti) return; parti = true; $("part").classList.add("on");
+    setTimeout(() => location.assign(`version.html?sha=${x.sha}&f=${encodeURIComponent(x.fichier)}&l=1${x.ere === "v6" ? "#secours" : ""}`), 300); };
+}
+$("vers-btn").addEventListener("click", e => { e.stopPropagation(); montrerVersions(); });
+$("p-fermer").addEventListener("click", e => { e.stopPropagation(); $("panneau").classList.remove("on"); });
+$("panneau").addEventListener("pointerdown", e => e.stopPropagation());
+// la carte de la version du jour affiche sa date de publication
+listeVersions().then(l => { const d = l.filter(x => !x.ouverte).sort((a, b) => a.fusion < b.fusion ? 1 : -1)[0]; if (d) { const e = $("liste").firstElementChild?.querySelector(".desc"); if (e) e.textContent = `#${d.n} · publiée le ${quand(d.fusion)}`; } }).catch(() => {});
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
