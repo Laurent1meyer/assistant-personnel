@@ -1,0 +1,19 @@
+# Life NAS — à lancer dans Container Manager (Projet). Lecture seule.
+services:
+  life-nas:
+    image: node:22-alpine
+    container_name: life-nas
+    restart: unless-stopped
+    command: ["node", "/app/serveur.js"]
+    env_file: life-nas.env          # contient JETON=… (jamais dans le dépôt)
+    environment:
+      - PORT=8788
+      - RACINE=/data
+      - ORIGINES=https://laurent1meyer.github.io
+    ports:
+      - "127.0.0.1:8788:8788"       # seulement en local : Tailscale s'occupe de l'accès extérieur, en HTTPS
+    volumes:
+      - ./serveur.js:/app/serveur.js:ro
+      # Les dossiers du NAS que Life peut lire (lecture seule). Adapte les chemins à tes partages.
+      - /volume1/video:/data/Vidéos:ro
+      # - /volume1/photo:/data/Photos:ro
