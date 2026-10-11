@@ -322,11 +322,13 @@ const RACINE = { laurent:"moi", claude:"life_claude" };
 function racineDe(id){ let x=id, n=0; while (x && K.O[x] && K.O[x].parent && n++<40) x=K.O[x].parent; return x; }
 const chezClaude = id => racineDe(id)==="life_claude";
 // Ce que Claude connaît : ce que Laurent a partagé (ou que Claude a créé, qui naît partagé).
-const connu = id => id==="moi" || K.O[id]?.partage===true || chezClaude(id);
+// Décision de Laurent (11/10) : Claude voit TOUTE la base. Seuls les secrets du coffre restent privés.
+const connu = id => id==="moi" || !!K.O[id];
 // Ce que Claude voit à cet instant : ce qu'il connaît + ce que Laurent vient de lui montrer.
 const vu = id => connu(id) || K.claude.montre.has(id);
 // Verbes écrits par Claude qui touchent au réseau, aux secrets ou aux données brutes : Laurent valide avant.
-const SENSIBLE = /\b(fetch|XMLHttpRequest|WebSocket|EventSource|sendBeacon|secret|importScripts|localStorage|indexedDB|LifeDB|LifeClaude)\b|import\s*\(/;
+// Verbes écrits par Claude qui touchent aux secrets ou aux données brutes de l'app : Laurent valide avant (le réseau seul est libre).
+const SENSIBLE = /\b(secret|oublierSecret|importScripts|localStorage|indexedDB|LifeDB|LifeClaude)\b|import\s*\(/;
 
 // ---------- couleurs par type ----------
 const COULEURS = { moi:"#1D74F5", envie:"#E8467C", projet:"#2F6BD8", tache:"#F07A1A", idee:"#8E5CF0", personne:"#D9A20B", lieu:"#0E9B73", bien:"#5E6E80",
@@ -449,7 +451,7 @@ function ouvrir(url){ const u=String(url||""); if (!/^https?:\/\//i.test(u)) { d
 // Tuiles prêtes à l'emploi pour les verbes d'affichage
 function tuile(o){
   const nb = enfants(o.id).length, c=couleur(o.type);
-  const priv = !o.partage && o.id!=="moi" && !chezClaude(o.id) ? `<span class="prive" title="Privé : Claude ne le voit pas">🔒</span>` : "";
+  const priv = "";
   const st = o.champs?.statut, marque = st==="fait"||st==="traitée" ? `<span class="marque ok">✓</span>` : st==="bloqué" ? `<span class="marque bloque">!</span>` : o.champs?.pour==="Laurent" ? `<span class="marque toi">toi</span>` : "";
   const fond = nb ? `<div class="tuile dossier">${enfants(o.id).slice(0,9).map(e=>`<i style="background:${couleur(e.type)}"></i>`).join("")}<span class="nb">${nb}</span></div>`
     : `<div class="tuile" style="background:${c}">${esc(lettre(o))}${o.type==="tache"&&o.phrase?`<span class="joue">▶</span>`:""}</div>`;
@@ -513,7 +515,7 @@ function majVision(){
     ? `<span>✦ Claude voit l'écran, sauf ${m.sujet?"<b>cette page</b>":""}${m.sujet&&m.ids.length?" et ":""}${m.ids.length?`<b>${m.ids.length} élément${m.ids.length>1?"s":""}</b>`:""} (privé)</span><button data-vision="montrer">Lui montrer</button><button data-vision="couper">Couper</button>`
     : `<span>✦ Claude voit cet écran${K.claude.montre.size?" · montré pour cette fois":""}</span><button data-vision="couper">Couper</button>`;
 }
-function activerClaude(on){ K.claude.actif = on; if (!on) K.claude.montre.clear(); majVision(); dire(on ? "Claude voit l'écran. Ton privé reste masqué pour lui." : "Claude ne voit plus rien."); }
+function activerClaude(on){ K.claude.actif = on; if (!on) K.claude.montre.clear(); majVision(); dire(on ? "Claude voit l'écran et ta base (pas ton coffre)." : "Claude ne voit plus rien."); }
 $("#oeil").onclick = ()=>activerClaude(!K.claude.actif);
 $("#vision").onclick = e=>{ const b=e.target.closest("[data-vision]"); if (!b) return;
   if (b.dataset.vision==="couper") return activerClaude(false);
@@ -539,7 +541,7 @@ function validerVerbe(vid){
   const v = K.V[vid];
   return new Promise(res=>{
     fermerFeuille.annuler = ()=>res(false);
-    feuille(`<div class="q">Claude a écrit le verbe « ${esc(v.nom)} »</div><p class="doux">Il utilise le réseau, un secret ou les données brutes de l'app. Lis-le avant de l'autoriser : une fois autorisé, il s'exécute avec tous les droits de Life.</p>
+    feuille(`<div class="q">Claude a écrit le verbe « ${esc(v.nom)} »</div><p class="doux">Il utilise un secret de ton coffre ou les données brutes de l'app. Lis-le avant de l'autoriser : une fois autorisé, il s'exécute avec tous les droits de Life.</p>
       <p>${esc(v.definition||"")}</p><pre class="code">${esc(v.code)}</pre>
       <div class="rang"><button class="btn prim" id="val-ok">Autoriser</button><button class="btn" id="val-non">Refuser</button></div>`);
     $("#feuille-corps").onclick = async e=>{
@@ -639,7 +641,7 @@ const PROMPT_DEFAUT = `Je suis Claude, et je travaille dans Life avec Laurent.
 Life range une vie entière en objets et en verbes. Les verbes sont le code de l'app : quand j'écris un verbe, l'app change tout de suite, et l'ancienne version reste disponible.
 Quand Laurent me demande quelque chose, je le fais : j'écris les verbes et je crée les objets nécessaires, je les essaie, je corrige. Je ne me contente pas de noter.
 Je réutilise avant de créer : peu d'objets bien définis valent mieux que beaucoup de bruit. Tout ce que je crée a un nom et une définition en français ; mes verbes se lisent comme une phrase : un verbe et un complément.
-Je ne vois de chez Laurent que ce qu'il a partagé ou qu'il me montre à l'instant. Ce qu'il me montre, je m'en sers pour la demande en cours, sans le garder. Ses secrets restent dans son coffre : je n'en connais que le nom.
+Je vois toute la base de Laurent : ses objets, ses verbes, son Life comme le mien. Seuls ses secrets restent dans son coffre : je n'en connais que le nom.
 Ce que je ne peux pas faire moi-même (régler un appareil, donner une information que je n'ai pas), je le confie à Laurent sous forme de tâche, avec la marche à suivre pas à pas.`;
 
 const TECHNIQUE = `## Comment Life fonctionne (technique)
@@ -655,6 +657,7 @@ Styles : carte, rang, btn, btn prim, doux, liste, ligne, grille, champs (dl). É
 Une tâche exécutable porte phrase:{verbe, sujet, complements} : la toucher exécute la phrase.
 ctx.suivant() exécute la version suivante du même verbe (la moins précise) : un verbe pour un type peut s'en servir pour laisser passer les cas qui ne le concernent pas.
 ATTENTION au polymorphisme : un verbe écrit pour un type s'applique à TOUS les objets de ce type. N'écris jamais de verbe pour un type général déjà utilisé (dossier, tache, note, projet, personne…) : crée un type précis à toi (ex. « dossier NAS », « vidéo NAS ») et donne-le à tes objets. Les types existants et leur nombre sont listés plus bas.
+Un service web que tu ne connais pas (par exemple le NAS de Laurent) : lis d'abord sa racine (GET /), il peut décrire son API.
 L'app est une page web servie en HTTPS depuis https://laurent1meyer.github.io, sur l'iPhone de Laurent. Elle ne peut appeler que des adresses HTTPS qui autorisent cette origine (CORS). Pas de serveur à elle.
 La base vit sur l'iPhone (IndexedDB) : pas de gros fichiers dedans.
 
@@ -665,7 +668,7 @@ Dans le Life de Laurent, n'écris que ce qu'il te demande (ou ce qui découle d'
 ## Comment travailler
 1. Regarde ce qui existe déjà (verbes ci-dessous, chercher_objets) et réutilise.
 2. Si on t'a confié une tâche, range ton plan dessous : une fonction (type « fonction ») par capacité à rendre possible, champs.statut = « à faire », « fait » ou « bloqué ». Mets les statuts à jour en avançant.
-3. Écris les verbes, puis essaie-les avec essayer_verbe et corrige jusqu'à ce qu'ils marchent. Un verbe qui utilise le réseau ou un secret attend l'autorisation de Laurent : elle lui est demandée pendant ton essai.
+3. Écris les verbes, puis essaie-les avec essayer_verbe et corrige jusqu'à ce qu'ils marchent. Un verbe qui utilise un secret (ctx.secret) attend l'autorisation de Laurent : elle lui est demandée pendant ton essai.
 4. Ce que tu ne peux pas faire : une tâche pour Laurent (type tache, champs.pour = "Laurent", champs.statut = "à faire", desc = la marche à suivre numérotée). S'il te manque une info, demande_a_laurent. S'il te faut un de ses objets privés, demander_a_voir.
 5. Quand la tâche confiée est réalisable, donne-lui sa phrase (modifier_objet … phrase) pour que Laurent n'ait qu'à la toucher.
 6. Ne mets jamais un mot de passe, un jeton ou une clé dans un objet ou dans le code d'un verbe : ctx.secret.
@@ -677,11 +680,11 @@ async function claudeFaire(texte, opt={}){
     if (!k) return null; if (!/^sk-ant-/.test(k)) { dire("Ce n'est pas une clé Anthropic"); return null; }
     LifeClaude.definirCle(k, lsGet("life-garder-cle")==="1");
   }
-  if (!K.claude.actif) { if (!(await confirmer("Activer Claude ? Il verra l'écran, sauf ce qui est privé.", "Activer Claude"))) return null; activerClaude(true); }
+  if (!K.claude.actif) activerClaude(true);   // lui écrire, c'est l'activer
   const ecranVu = opt.ecran || (K.O[K.sujet]?.type==="conversation" ? "(Laurent est dans la fenêtre de conversation avec toi.)" : ecranPourClaude());
   const vb = Object.entries(K.V).filter(([,v])=>v.actif!==false).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.aValider?" (en attente d'autorisation)":""} : ${v.definition||""}`).join("\n");
-  const connus = Object.keys(K.O).filter(id=>vu(id) && !K.O[id].supprime && K.O[id].parent!=="corbeille");
-  const arbre = connus.slice(0,200).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
+  const connus = Object.keys(K.O).filter(id=>!K.O[id].supprime && K.O[id].parent!=="corbeille");
+  const arbre = connus.slice(0,600).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
   const nPrive = Object.keys(K.O).filter(id=>!vu(id) && !K.O[id].supprime).length;
   const tache = opt.tache && vu(opt.tache) ? K.O[opt.tache] : null;
   const systeme = `${K.O.prompt_claude?.desc || PROMPT_DEFAUT}
@@ -694,7 +697,7 @@ ${vb}
 ## Où regarde Laurent
 ${K.monde==="claude" ? "Laurent regarde TON Life (racine life_claude)." : "Laurent est dans son Life (racine moi)."}
 
-## Objets que tu connais (${connus.length}) — Laurent en a ${nPrive} autres, privés, que tu ne vois pas
+## Toute la base (${connus.length} objets ; « ⊂ » = rangé dans)
 ${arbre || "(aucun)"}
 
 ## Types d'objets existants (nombre d'objets, privés compris)
@@ -758,6 +761,10 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
     { name:"lire_conversation", description:"Relit une conversation (dossier « Conversations avec Claude »), par pages : depuis = index du premier message, nombre = combien (20 par défaut). Renvoie aussi le total. Les messages très longs sont coupés à 6000 caractères.", inputSchema:{type:"object",properties:{id:{type:"string"},depuis:{type:"number"},nombre:{type:"number"}},required:["id"]},
       execute:({id, depuis, nombre})=>{ id=visible(id); const o=K.O[id]; if (o.type!=="conversation") throw new Error("ce n'est pas une conversation"); const l=o.messages||[]; const d=Math.max(0, +depuis||0), n=Math.min(40, Math.max(1, +nombre||20));
         return { titre:o.titre, total:l.length, depuis:d, statut:o.champs?.statut, source:o.champs?.source, messages:l.slice(d, d+n).map((m,i)=>({n:d+i, role:m.role, quand:m.quand, texte:String(m.texte||"").length>6000?String(m.texte).slice(0,6000)+" […coupé]":m.texte, changements:(m.actions||[]).map(a=>a.t)})) }; } },
+    { name:"lire_adresse", description:"Lit une adresse web (GET, sans jeton ni secret) depuis l'iPhone de Laurent, donc avec son réseau (Tailscale compris). Renvoie le code, le type et le début du contenu. Utile pour lire la description d'un service (GET /) avant d'écrire un verbe.", inputSchema:{type:"object",properties:{url:{type:"string"}},required:["url"]},
+      execute:async ({url})=>{ const u=String(url); if (!/^https?:\/\//.test(u)) throw new Error("adresse http(s) attendue"); trace(`lit ${u.slice(0,60)}`);
+        try { const r=await fetch(u, {method:"GET"}); const t=await r.text(); return { code:r.status, type:r.headers.get("content-type"), contenu:t.slice(0,8000) }; }
+        catch(e){ return { erreur:"inaccessible depuis l'app : "+(e?.message||e)+". Causes possibles : adresse non HTTPS, service éteint, Tailscale coupé sur l'iPhone, ou le service n'autorise pas l'origine https://laurent1meyer.github.io (CORS)." }; } } },
     { name:"secrets_connus", description:"Noms des secrets rangés dans le coffre de Laurent (jamais les valeurs).", inputSchema:{type:"object",properties:{}}, execute:async()=>nomsSecrets() }
   ];
   const ctrl = new AbortController(); K.claude.travaille = ctrl; K.par = "Claude";
@@ -819,6 +826,7 @@ async function semer(){
   await o("corbeille", { titre:"Corbeille", type:"dossier", parent:"moi", desc:"Rien n'y est effacé : range ailleurs pour récupérer.", emoji:"🗑" });
   await o("conversations", { titre:"Conversations avec Claude", type:"dossier", parent:"moi", partage:true, desc:"Chaque conversation avec Claude, à rouvrir pour la continuer. Claude peut les relire.", emoji:"💬" });
   await o("reglages", { titre:"Réglages", type:"dossier", parent:"moi", desc:"Sauvegarde, Claude, coffre.", emoji:"⚙" });
+  if (K.O.prompt_claude && K.O.prompt_claude.desc && K.O.prompt_claude.desc.includes("Je ne vois de chez Laurent que ce qu'il a partagé")) { K.O.prompt_claude.desc = PROMPT_DEFAUT; await K.db.collection("objets").doc("prompt_claude").set(K.O.prompt_claude); }
   await o("prompt_claude", { titre:"Prompt de Claude", type:"prompt", parent:"reglages", emoji:"✦", desc:PROMPT_DEFAUT });
   await o("t_sauver", { titre:"Sauvegarder ma base", type:"tache", parent:"reglages", emoji:"⬇", phrase:{verbe:"exporter", sujet:null, complements:{}} });
   await o("t_restaurer", { titre:"Restaurer une sauvegarde", type:"tache", parent:"reglages", emoji:"⬆", phrase:{verbe:"importer", sujet:null, complements:{}} });
@@ -1033,7 +1041,6 @@ V("v_ajouter","ajouter depuis un fichier",["rien"],"Ajouter à ta base les objet
   return ctx.faire("accueil");
 }),
 V("v_traiter","traiter",["conversation"],"Confier une conversation à Claude : il la relit, range dans ton Life ce qui en découle, puis la marque « traitée ».", async function(sujet, c, ctx){
-  if (!sujet.partage) { if (!(await ctx.confirmer(`Claude va lire « ${sujet.titre} ».`, "Lui confier"))) return; await ctx.base.modifier(sujet.id, { partage: true }); }
   return ctx.faire("discuter", null, { texte: `Traite la conversation « ${sujet.titre} » [${sujet.id}].
 1. Lis-la en entier avec lire_conversation, page par page.
 2. Range dans mon Life ce qui en découle : projets, idées, tâches, décisions, besoins, personnes. Cherche avant de créer et complète l'existant plutôt que de dupliquer ; range chaque objet sous le bon parent ; relie chaque objet créé ou complété à la conversation (relation « source »).
@@ -1176,7 +1183,7 @@ V("v_partager","partager avec Claude",["*"],"Laisser Claude connaître cet objet
   await ctx.base.modifier(sujet.id, { partage: !sujet.partage });
   ctx.dire(sujet.partage ? "Redevenu privé : Claude ne le voit plus" : "Partagé : Claude le connaît");
   ctx.faire("afficher", sujet.parent || "moi");
-}),
+}, { cache:true }),
 V("v_chercher","chercher",["rien"],"Chercher un objet par son nom.", async function(sujet, c, ctx){
   const q = await ctx.demander("Chercher");
   if (!q) return;
@@ -1248,10 +1255,6 @@ V("v_discuter","discuter",["rien"],"La fenêtre de conversation avec Claude : la
   if (c.texte) await envoyer(c.texte);
 }),
 V("v_confier","confier à Claude",["tache"],"Confier une tâche à Claude : il la découpe, construit ce qu'il faut, et te laisse ce qu'il ne peut pas faire. La conversation reste rangée avec les autres.", async function(sujet, c, ctx){
-  if (!sujet.partage) {
-    if (!(await ctx.confirmer(`Claude va connaître la tâche « ${sujet.titre} » et ranger son plan dessous.`, "Confier"))) return;
-    await ctx.base.modifier(sujet.id, { partage: true });
-  }
   return ctx.faire("discuter", null, { tache: sujet.id, ecran: ctx.ecranClaude(), texte: `Je te confie la tâche « ${sujet.titre} » [${sujet.id}].${sujet.desc ? " " + sujet.desc : ""}` });
 }),
 V("v_fait","marquer fait",["tache"],"Marquer une tâche faite (ou la rouvrir).", async function(sujet, c, ctx){
@@ -1301,7 +1304,7 @@ V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et 
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
-for (const s of SEMENCES) s.doc.semence = 7;
+for (const s of SEMENCES) s.doc.semence = 9;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
