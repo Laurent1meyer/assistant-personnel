@@ -1,0 +1,1314 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<script>/* Ouverte directement depuis l'icône (ancien raccourci) : on repasse par le lanceur */(function(){var s=matchMedia("(display-mode: standalone)").matches||navigator.standalone;if(s&&!/[?&]l=1/.test(location.search))location.replace("./"+location.hash);})();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F4F6FA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Life">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icone-192.png">
+<title>Life</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{--fond:#F4F6FA;--carte:#fff;--encre:#14203A;--doux:#66728A;--trait:#DCE2EC;--accent:#1D74F5;--rouge:#D64545;--claude:#C96442;
+  --icone:url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAQDAwQDAwQEBAQFBQQFBwsHBwYGBw4KCggLEA4RERAOEA8SFBoWEhMYEw8QFh8XGBsbHR0dERYgIh8cIhocHRz/2wBDAQUFBQcGBw0HBw0cEhASHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBz/wAARCADAAMADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD4C5A6daSlJz2xSUAFA5pcUtMAxiilAzTto2gg856UwG4p2COKckbSOqqMsxwBQVIJGORQAikqQR1FKoGec4x29auQQST2/VTHGSSvQj3pILZpMybW8hCN7AZ2gmnYBtoIhIBIoIbjc3RffAqeW2dBKZXjL59cscU4xrK7uFYRK3ysiU+3hlkZp0CyMDyp6nPtVW6AipEOCvl7i3APoacAysIpCyorcj0rQUGzdt3lTRqu9Y+q5P8AhVeafaRgo8mMFx0wR0xRYLiQXK22Nu4lXyp4xj/Gkkf7ZMwaUKhYsC49aIwZLWQM21I+RgdTURmV0ijK7VX7xHU+9K47ahIv2WdlBV9vGeoNM3Rk8AqNuPXJobCggYIPIPcUwJlgMjnvQIfI6PHHgHzB944GMdqeZo0VxFGfm4O7nApEDLI8AkG1ztJHQ496iDNGTg4JGDihgEWFbeyb0HUURhJJACrAEcBeSTSDow3EAjoO5pAzIcg4PqKQD7iQv5eX3FV24242+1RiVxG0YY7GOSPehyXYsxJY8knvTKAepXpwFOZmfGccDsAKbjNIAxS4pxABIBz70u3BwetADcU7FSukkGUdSrEZwVHQilDDag8tcqck92+tFg2GAHBI4U8YzU0T+XghFJ55IzUu6SYOFjG1mHCr09AKmtocTFJIWY45GDlfeqSEQFCQPviLnbkZqa3ieZHiQ5zghfU+1X9RnaCcwQSZgQfKduM5HNV7bUJbR1ddp2oUAYcYNPYdlewBWto5UEsnmAA4T7vuDUTyiIbICAHUBiO/tQ9zKGUSDJUk4YevrUAK/NuB5HGPWmDJZmaJ+oL45cHO7PrTVuAts0IiTcxyZCPmA9Ki605Qz4QZIHQUgBCqBs5JZeCpxg+9RsS5ycfhXb+EvhZ4l8ZsRpOlXFyqnDOi4RfqxwB+ddVf/s6eMbFDmygkmAz5Md3E0n/fO7NK6A8dxRitnWPDuoaFdSWt9azW9xGcPHMhRl/A1lYoAjxSBSTgDJqTbSlMZycHGcY60WAhxSYqQqMe+fWm4xRYBvYjjn2pOM85x7U4ijAwck57DFICriloxTqQABUiwyMUwh+f7vHWmAZqYneFGMBRgDNCAsCCSVXRggeAFiSfmYelNKIwxGj5Hqc8VNb2fmKzmRAEOCC3X8a1I9LubYSeTJ5kRIVmjHDcZwCfrWijcVyla2x8mORXdCZMEr2AGc1papLPbTLlnaYqAZmYZYEdDjt9a1fC2kv4i8S2Wmwjy1mlSLdGmPvEAnH411Hxn8O6f4S8Y61a2kKRQ+YI4IlbO1Ni9e/Xn8aafQHE82tpTZb53jjkLZRfMG5QfWqbzyTzhyAXyMAD+lRk0oGDkZHpSGSSPulmLwje3GAMbD9KiVVLc5C+3NSDdu3ZO7rnPNKI+OnFFgIgte2/s9fB1viV4jL3gdNGsQJbp14JGflQH1Yg/QAmvHre3M0yIB1Nfph+zT4ETwt8LNJkki23Wrn7bKSOdrcRj/vkZ/4FUy0QHg37QXxU/wCEGZfBHhJU06CzjC3DWo2FSRny1I6YBGT1JPX1+VJtdvZ5/OaVy55LM2ST65rsvivJc6x481+7fL+bfTMSOernH6Yrlrbw9dXE6QmMozOF+bjHvVRhoB3/AIP8UQeM44vDXiqbzbaX91Z30vzTWMh4UhupjzgMp4xyMYrz7xX4au/DGt3mm3kfl3FtI0br2yPT2PUexrZ0vRms7+S2Me68jY4IPAx/OvWfj9orQapomrGFjc32mQGY4wPM27SSfXgflT5bOwz5vKUgjJzgZxya6JtAkkmi8sqkE3CSu3y5A55qqdNnti0c0RXzBhWPHP19KbixXuY2zgYyWJ6YqMitbqggnHlRkZDKnJI71nMuM1LQEJQ7d2PlzjrTetTSwvHt3rgsMj3FRsOc8AHsO1SwKtKFJBPYUAVY8tXTegORy/oOe1SkBGqHGccVpWlqt0qKqnzFBJHZgP61BGHkijiDEjdwuOhrWlgfyo40i8pI2x5jEgnIqrDNw21sFQWNqD5sQ3JcSYwf61kZuooJnd0QbwwBPUjjAFKtk8/72GZJJ1bAiHXjvzSx3ZEEs00xMyPxEQMN6/iK2J3dz0P4Aq978TNBRlO1r2MswzjjJA/MV0f7WOiPp3xDe52YS8t4pgcdTt2n9Vrivg5rw0r4haJfTTlR9vgZ1A4I3gHP4Gvqz9r3wA2reEbHX7eItLpchgnIH/LJz8p/Bxj/AIFWL+IrofBO3KghcAcE+ppypUpiKMQRyOKlSEkZAOPWrSEQrHmrMNqHJ3ZXjI4zk1p6dp3mSIX3BXyAVHT3rudL8OSWti8ufP3AoqmPgAd/1rWNO4myD4b+DZ/EXi/S9EeF5XupUg2p0UscA59s5/Cv1VTToNJ0xILdQltZwbIx2CIuB+gr5J/ZQ8HR3Pj1rwIGg0q2NyzkfN5rDYgP0yxx7V9ZfES9XRPAfiXUCwX7Pp8zA5xglCo/UisaytLlBO6PzP17QB/aPmYjVxcN5jK332JyP8ahv9PW3Enn20YmA271fAfPdfoKz/EGsywXrPJMplL5VVIPA4yfrXU/D3w/qXxK8Rrp+n2Xm7yGkmcnZBHnlyT0/rXXdRWob6o1Pg58Op/EniSMPGf7PtW86V8blC+mT3PQf/WrV/aH1A6rr09pbpm008JCxXoxXlgPoTj8K+hNffRPgR8O5Hgx5gOyJnHz3Nww+8fYDnHYDHevibUPEU19cSyTtMy3b7ky3+sDE5JHrmsYPnlzdAe2hSWJLi4khigCQ4DrGTxkds02SE36LBqW0RLj/SYzu2KvYjvVmycIkyZWMxvlSQWK/l1HtVmMy3K3saww3L7SDcR9Ofb2rVpDjfa5y2qWdtqM1xHEf3kSb45nwoZR/DjoK5e5t8kzNsA4O0ty30FdtcWO2GGW8sibWM+UJYur1Snsoru7la3UCIK0cELDLkY6tWco9QjZ2VtziowrTgMPlORyM7RVV1wT3Fb2q2kNtDGVjkjuScMCMAY4OPxrGlAKq2Vz02gdKxasBSAzV/7GjwRywyhmPDRn7wPr9KpqK1o7QJpvmCRTI7cp3C+v50kFi5a2dzDpZnR12uwITGSQO/0qZJZiY/NkZoThlZ16kdhUzQPHDYWk7rbZ+/ITzg8jPsKnNrD/AGe8rSGWFGKKzKRlscYPpWiQaWKryxIk9w8UrXTAkSI4AVs9SB/Ks95prmOK3KIATkNjBJ9zU94PJgCbozI2AwTsO3NVMM8Z8zcdnyrzwKGJW3JtNna1v45AQpVhyvav1T8C3+n/ABX+Fun3F4iz22q2P2a8j/2wNkg9jkZH4GvynEe1gRnB5GfSvsD9jb4sRaRqkvg3VJwlnqjh7R3OBHc4xt9g4wPqB61nOOlxnifxb+FF/wDDnxlfaRdQSSKfmtJUB2zxk/K4+vcdiCK57TvDkkTIl0HNvkGQIPuN6H0r9SPiN8MNM+JOiCzvP3F/b5azvVXLwOf5qe4/HqK+L/GPw51n4dG+0/UYATKdxd+fNUHh0f8AiH6jvWtG0tGDdtTg7TSLW1nhnkUCyjGWjhY5AXpye5qO611LtpTAQgTA5Hqe9Yusa7KiNawOQrDDhelZ+jWNzql/b28al3Zgqqo5Yk8D35rpk7bExP0K/ZD8PPZfDy71qZCsurXRCZ/55xDaMH03F/yrX/at1j+xvgvrEYbEmozQ2i89QW3t+iGvT/APhmPwd4L0HQkUD7BaRxPju+MufxYk15f+0B4Lu/ibqPhfwnaypFEXlvLiR+iKAFDY78buO+a8+/NO7KPgD4afCjW/if4kTT9NgyPvyzyZ8uFM8sx7D09TwK/QrwH8NdD+Fnhv7Bp4VQq+Zd30oCtMQOWY9lAzgdAPfJrqvA/w70T4c6DHpGiW3lxj5ppmAMlw/wDec/yHQDgV88/tTfFOWC0bwXocyh7nK39wren/ACwGPw3fgPWrbdR2QHzj+0V8WG+IXip4rGRhothmG0XpuGfmkI9WIz7AAV4kt1NCoVJGADBhjsa0dQt5luXWRf3g645rLkWtuXlVhXuW4r871JYk+45JJ61vS6obOC5tYdrbyCzJwynHTI7VyAkMZJHcYP0q/Zam0PmQxqixz43ArnH0PWmmGvQ6wa1c3FhEjQqYoySm8YwQOufWsJLgzX0sglkQAEr5Ix8x/wATWxDepcxwQqzW90PleLGdx9STUEFuYzDs+zpcM3zLKw+bvuzT1aG462uYF3YSwWSG9iLZlIDB87D1YEetc/mW0D4i+SdSFLL1HqK7PVsW4NtNGGWdAyb+qsTk4PofWuTvYZ4J0Rp0+QEqN+QntWU4iT7mWYQuSjhxnHHX61ftMQGRSQdyYGOc0ywRFVmdtm5SoJPU8cYFalrFDp+pRyzxyCFWDKmOSPxqUhpmld3EWoAvNFFARCnlKGzu2jByfU1InmtYzebLst1wzI4yhJ7LjoSKa7Wt9LcXA8uNAwIjYHOB2HpVVpZbpJllnSGCTLDIyDjsMVqmS4rczr25Vy8UPFvuyBtA5qqq1IiBi2XC7QSM9/alReagoeiV1Hha1kTUYpYp/LKL5gkGQAQfX61z0S9sD613vhxZI7ePyli+c4YlfvAD361rCN2Jux+hPwN+Lw8WaZbaPr80cevQqI45i4xeDHB/3/X+91HORXrfiDwrpHi3TH03WrCK8tG52SDlD/eVhyp9xX5uzzy6ZZwsjNFOiht4Jz+Fe2/Cb9rW/wBLWDSfGFvLqFtHhFvUI+0oO24HiQfXB9zWVWg4u8R76o1PHX7FAubma78K6ujI5LfZdQ+V19hIowfxAqr8If2ebjwt8SdMh123jE9sBetEJFkXav3TkerAda+qvDXj3w54rskutL1a3ljYZ2u3luv1VsGs/wACQf2pqmueJ5Bk38vkW5PaCPgY+p/lWXtZL3WOx3FedeHZJtZ+JXivUGJ+yadHFp8Oe7fec/mD+dd/fXUdjZ3F1IcRwRtI30AzXzBr3xcuvDfhO8i0WMW99fXEk11esQWRm/uenA6n8B3qIpt2QJHY/Gj436Z4I36DYXif29MuHlHzLZg+v+2ew7dT2r4/8UxtrCtMy785dW7lvXPrXD65qkl3qzzXUryM7ks7HcWJ789a6fTEaLTz5o+YRhvmPY/1r0KEFFESV9jzjUNAd2nkJWMAZBLdCema4ubjI9DXo/iya3aTyCGK4+/nBz7+1eb3LfOeRxxxSqaMa2KshGeOlNiw0sYLbASBu9Pekc0W7R+cPMwV9D0JrEDoI5ZWgeKPZIhYsZ3HzkqPug9qktIlMNyj+TKUAZV8zG5jz+OKrW2nm8BiimQzKx4TODnoc9MYqUK1vAiQ2ySuSTlxkgg44+vpV3ElbcXXzEMGeN7e6kQMwDBlxjgADpXMyLFPZPLI/wDpAfAUdTnvj8K2tScx3GyTo3yOvTY2Pf0rJkD2IlJZGETFU7nJ5yDUS3Gk7WKNpC8+yJEXc7cMf5V1elWcdzC8RWSS+j5QnlVA65HauZsxH5eXDHB6ZwAP8a6zR9t8JY4jLHGoOyRjgcc4J+nrSgrhezuWk1GJo1spEttiIytIsRD49M96y7qSJEjjWMLIX+Z0H3uOBz+tbEVjHLbrKclidpdVyZPX2rL1S3Rr0Ip3KM7QowfbIq2rIL8xi3VvNFKzSrgk9R0P0pqCn3DB5NyqVUjoTmhVKkqQQR1FShlyxVPPj8zGzIznpivQdAOyOFUVPLdm2S9OPSvPIq7vwtNnyJpm3W0Un7xARx7gVtB2Ynrod3qVmz2y72WQJjcFOcj0zXJWsJg1BhLGylX+4/XHpXoemTW99E8LzQtk5Gzg5B4xVXV/DYu5Xuoy3mggYzu3D3PatZpvYUWel/DK4k1OKLTmGGuJVWHA4LHgCvufRdMTRtJs7CPlbeMJn1Pc/icmvj79lrwNd33ioapeJ/oemIZRkHDSH5UH/oTfhX2hXnVfi1Lb6I88+NGvHRfBVxFGf9Iv3W3Qd8Hlj+Q/WviL4heKIbewfT1ZTPtyxB4Ofavaf2qPida2GuRaHHOfMsIN0ip1V5Bn+QX86+J9S1VtRuJJJHILcjqcmtqNOy5hX6EsG/UdRjjUknO7r2HNd5YoiFTdzMYSMuS3OK5jw1pVrjz753V85VVHOBXQ6ndRyxzlWVIWjyEbrjHOK646Il9zjfFMlmrTMkqrCwDKo5du3X0rz25ZS7lD8meM9a2df1EXsoJjjiMShVVOhX/Guelk3MTgDPYVhN6jvfZEbtS2/l+ZmU/KATj1PpULNT44ZJI3kVCY0wGPpmsh7G9pU06WbpCYtj7i2fvDjjrV954rKFYruYMQokUAHaXHTnrnFZFtGsJjEXmJdIwbLr8o9zn0p5Gy388ZnJl5DAY3f4VWxLdylqQecz3C7jA7Ft7Nu+b/ABrHaKWSJpSf3a9y3X6Vbk3mVojKqo5yyq3y/SqV8kUUpSGUyKOpxjFZyK31LtqhnaNnOxS2SSpII9cV09leSWlvHboAoG5HLqVDBjxgd65ewkSIx+czbGB+42cfh9a2ba+uorYuHmyRuRjggL0796qIupp3Kw29hHAZjNcK2QUY7UX0xVwWt09tdFVWe3VOCT8yjFNeSJ7azjkDfvosB1xkkdB7VctrS/SzlVZxB5jbWiH8IA6/lWq2HrfQ5eawX7A1xGJGVGVS7cAEjpiqnkMsYk4KdOD0rrTpb2dmSzrJEsgk3D5k646Vj6lp489niljdpXyiRjqDScSV3M+M1oWt7JbZ8l2TIw2D19aoSW8lvIUkUgqcHHNSRK0mdoztGT9KEO1zqrXxDMEVU4Kchs8+/NdPpXjq4ikgiEm7ONxx09frXmSOdpPYV6p8BPAj/EX4jaLo5RjaySiS5Yfwwp8zn8hj6kVftGlcVkfo38B/D7aL8PNOuJ4yl1qg+2OrDBVWHyD/AL5wfxNd/q+qW2iaVe6leOI7SzheeVvRFUk/oKtRRpDGkcahEQBVUDAAHQV89ftdeNzongSPw5bOwu9bY+btGStumC303NtH03VxK85epR8F/EXxfdeNvGGq6vMf319cPMV/u5PC/gMD8Kb4Z0QXMZluIV2s4USvyF9cD1rRPh+zMUNwIJfN43Ang0+7vooLWSKB1j2uqlowcK3T869CMUtw1J5LqHTUKB43EJx1+aUZ6CuF1XxFDFJO1qsyyhyE8zBAXuDSarrptLiSMt58ciFd+RnPfHpXHTz7nbaxIPr1qJ1OxKVgmmMjFmOS3Jqs7UjPUYDSOFUEsxwAO9YNlD1ieQKRj5jtHPetO009LqOY+asDxKPkZvv+prKET7GbadqnB9jWjHPNJDJKYCVVdhdBgKPSkvMN9iytxNcg28Fy+WHliNv4h9aLxvIhZLVriMiMB0kxg+uPbNN89beBblI4mQsM4yGH+z7Z61Bd6vLCkBVgzFBjcoGFz09/qarRLUV3e6KF3E1jAquq+bLnnqQKzAwVlLLuGckZ6j0qa8u5LuUySH5jVead5iu852jaPpWLZW5dsmdbhGj+8vzdQP51pQyyX7yySY2IMgFtqr7CsQGpo5Co25O09RVJ2JaPRrWza4t9OuLB1aSPOYsj93jqeeverF06y273EcjRhpgm5WO3OOT75rg7e6kEieQ5Vj8oXpgfWuhi1UFLaOe4k8p8M0UWMh+zVvGYNXuzpIvLY7zKrxzFfvjgepz2NS3enw3KBLQbXZirS/wg+gNYbSPfQFI7neyMdwlG059M9Kmk1CR7eEHeUiBGyThenUY61dydkad3okF7B5NovmTRFUZ1Yn9K98+G/wCx/d+INNS713UBpiz4ZIxF5k231K5AXPoTn2rh/gVbQ3viu2ur5Y0sbSN7tlI+9sHGfUZIP4V7vB+1Vp+n3bGLSxLYpJsMk85R2H97ABx+tYzlJu0SttWRav8AsJWUlkzaN4lZ7ochLy32K3tuUnH5Vt/s4eCbL4IeLtZsfFkMun6xfIsFjczqPs8kQOX2yDjJO3/vn14r3r4c/FPwz8Q7b/iVXmy+RQ0llPhZlHqB/EvuP0rrdc0DTfEmnyWGqWkdzaydVcdD6g9QfcVi5v4ZDNJpESMyMwCAZLE8Aetfm98efiY3jbx7f3EVztt7eTyrRG4AhTIB+rHLf8Cr6Q+KPhD4neDfB2sad4Kv5Nb0C6gaI2s433tmhPIiPG8EZGBzg8DPNfnV4nu78X6xTLIJYm24kXaVbupHbB9a0o2i7iZ0zePLqylZ2IaJgAe4x6Vxmpa4bt8JIFZ2yWA2gc8Vj3k9wcGZjg5xzx1qi0laSncEmlYnmlLOxLZOevrVdnpheoy3bPFZtjHlqsQq0cEkrL8rjap9Tmq0ah3wScewrQWwIR3QPKqDdkdF570hE2mgy7QzKAh3BXBKv9R3qxJqD2cJtFjBgn5b5cBueCKrTXDxzmZwhjAxiN+Bn0qvM7/ZxMsMquGLLJuyFX0/Oqe1gTsWHimso3yEfYx/dkhhjGSeKwJH5PpVhZ5IpFBIXB3YccGq11ctdStI+0MeyjArNsdlYYVJjL7l4OMZ5NRBipyCQR3FITmkqGBZBxTwajzmlBqkBMrYrTg1eaCZZU2CRVK79gOfzrIBqxHceXBJHt5fHzZqkwNe31m5RGQspWaTe5zyT7+gqaLVjCyo7BvLJwwGawo7h40dVPDjB4pof3qlJg0mj3D4R+JYb7XHsL+48pNTiew37sCMOuAfpnFbtx8EfHr6vLaW+h3MwdtimFd8RGeDvJwB35xXzza3b2sqyIcEV9X/AAk/a4/sCzt9O8VWUt/DCAiXcDgThR0DBuHx65B+tS5Naoq/U+jfhp+zNa2Xh2W413Urq38UXRjljn064IFgyjgIejk9+3Yep64fEnxP8JJUtPiNbNqHh8uEh8TWERZUB6C4QcqenPf/AGq86l/bd+HWnWJkt7bWru4A4h8hIxn3Yucfka+Vfjv+1J4h+MG2wA/s3QYn3pp8Dkq5HRpG4LsPwA7DPNZ6yeorn6o6Lrmm+I9Ng1LSb63vrC4G6Oe3kDo34jv7dRXnfxV/Z88FfFmGSTVbAWurlcLqVmAk3tu7OP8Ae/Aivy9+GPx08XfCvUhdaFqksKOQZbd/nhmHo6Hg/Xg+hr72+Ef7a3hDxusFj4nCeH9WbC+azFrSQ+z9U+jcf7VDTQj5b+Lv7HPjXwF597psB1zRky32mxQl0X/bi5ZfqNw96+bLuxuLR2WWNlIODxX7pW9zDeQRz28sc0EqhkkjYMrA9wRwRXmPxG/Z5+H/AMTRLLq+iRw6jJ1v7HEMxPqSBh/+BA0KTA/HAEFgGOB3NP2+YQka5x/EBya/QTWP+CfdgZt+k+LdiBsqLuyywHuVbB/IV0fg79iDwj4ckWbWtTutWcEFoYk8iJvYnJYj6EVXMgPk74I/Ae4+ImoxXbpMmiwMDdTsMYwP9Wvqx/Qcml/aR0/SfD3xCutNsYEtrZLaCNoYFCKGCDGcexGfWv0K8TXvhr4VeDpryaO20zQ9NTbHBCoRSx+6igdWY/j1J6V+XPxC8Q3fjPxTqOs3hguHu5WkLxNwgJOB+Ax+VEXd3Hvocvc2cUtqssSmN+y7eGz3zWXeXZm2RqzCONdoDHp+VD3G2VojO7W4BXOM8fSqkzxsAUG09CvX8apvsTa2jFd/3w85mYDAJBycVARuUsucA9/TtQ+zam0ksR8wI6UmCxRVXLHgBQck1DYxtISM8Zx70lJmkBaHJzjj2ozTKduJABJwOgpgOzTg1MGaU8HBx+BzTuA/NO3E456VHxtBB57jHSkzRcCXNG403lhkL93qRTcn8KdwJd57k0hYZ4/Wo809V5JOSg6le1ABmrFuJ1w8RK4bbnOOarptBJJII6Y9amjfzbgNLhy553HAoA9a+GP7Q/jr4WXCx6JrEpsgcvZS/vbd/X5DwPquD719ieAf2+vDerRRQ+LdGuNNuTw1xYHzoifXYxDKP++q/Oy2EO518xkG4KAozu9efSmzW8ccLMjOs4c5iI+6vqTQ4Cuj9dYv2oPhPcQCX/hMLaMbdxWSCYMB9NlefeNf22Ph3oUMiaIL3Xb3GECRm3hz7u/OPopr8zZLudLNRGCsLKCx9SDULTxSIomYAOMl1GSpz6VPKO56r8Z/j74j+LeombULmOOxhJFvZQArFCD1wD1Pqx5P04ryVXupOF3ARJkkDGF9T606NFlhljgdS5xlXGGbntVMCRtyphto3Eg849KYh892z3DzYjLMSMBeOnXFVTnvRxg5Jz2GKbyQcdB1qW7jFALZx2BNNzig5Azjg96QEg5B5oAQnNFBNNpAWBVq2LP8sca78Hcx5GKjmCKkW37xGW5pkSNJIqJ95ztFUgJYWeOYeW2JM4Vs4AppUAElhuBxj+tI0LpK0RHzqSCM9xUsdoxaHzT5Ucv3ZG6fWmHmRj5GBZcjrg8ZoPc5HXpT2ZWLeY5YqMKR0/8A1UwxuqLIVOwnAPrSAXcRjGQCPzqSJfOcKz4+XAzz9BUkrySpHJKr+WcqpxhQfb+tMbZ5jlX2hOUIBG4/0piuRhchuQMetTxQytbs6ElS4UoO5pieUJwZBmM8kKatCdfMdVIXZ9x0OMAfzNNARSTCbKLbqrZ/h6igQspEkWWCgMSRjn+vNMWcRzMVY7SCpYjJOe/tUsbhVKSmNwE3KSx49uKSsh6sk2SyXC5hO1m+ZTwuf6Uy7YR+VswWUnkc5Ge9VmvCZGYAYddpB6UiyXFuWaJjiI8svIGadwCSdXEjElXY8KBxjvVUtSyP5js3PJzyc0GMKiMzrhs8Dkj8Km4DM0maDmmk0gHEFNrEA5GR3po5zyBgd+9JRkAe9AC5JGM8DnGaaTSUUgFIxjIIOM0lFFID/9k=")}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fond:#0F1420;--carte:#1A2132;--encre:#E8EDF6;--doux:#97A3BA;--trait:#2A3348;--accent:#4C93FF}}
+:root[data-theme="dark"]{--fond:#0F1420;--carte:#1A2132;--encre:#E8EDF6;--doux:#97A3BA;--trait:#2A3348;--accent:#4C93FF}
+html,body{margin:0;height:100%;background:var(--fond);color:var(--encre);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.haut{display:flex;align-items:center;gap:8px;padding:10px 16px 6px;min-height:52px}
+#retour{font-size:28px;line-height:1;color:var(--accent);width:28px}
+#titre{flex:1;margin:0;font-size:22px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#logo{width:34px;height:34px;border-radius:9px;background:var(--icone) center/cover;flex:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#bandeau{background:var(--rouge);color:#fff;text-align:center;font-size:14px;padding:6px 16px;width:100%}
+#vue{flex:1;overflow-y:auto;padding:8px 16px 24px;-webkit-overflow-scrolling:touch}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:18px 10px;padding-top:8px}
+.ic{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.tuile{width:62px;height:62px;border-radius:15px;display:grid;place-items:center;color:#fff;font-size:26px;font-weight:700;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tuile.dossier{background:color-mix(in srgb,var(--doux) 22%,var(--carte));grid-template-columns:repeat(3,12px);grid-auto-rows:12px;gap:4px;align-content:center;justify-content:center}
+.tuile.dossier i{border-radius:3px;display:block;width:12px;height:12px}
+.tuile .nb{position:absolute;right:-6px;top:-6px;background:var(--accent);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
+.tuile .joue{position:absolute;right:4px;bottom:2px;font-size:12px}
+.lab{font-size:12px;text-align:center;line-height:1.2;max-width:84px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.prive{position:absolute;left:4px;top:-4px;font-size:11px;z-index:1}
+.barre{display:flex;justify-content:space-around;border-top:1px solid var(--trait);background:var(--carte);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0))}
+.barre button{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--doux);min-width:64px;gap:2px}
+.barre b{font-size:22px;font-weight:400;color:var(--encre)}
+.barre .cl b{color:var(--claude)}
+.doux{color:var(--doux);font-size:14px}
+.pied{margin-top:28px;text-align:center}
+.lien{color:var(--accent)}
+.desc{margin:4px 0 10px}
+.champs{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;margin:0 0 10px}
+.champs dt{color:var(--doux)}.champs dd{margin:0;overflow-wrap:anywhere}
+.champs a{color:var(--accent)}
+.puce{background:var(--carte);border:1px solid var(--trait);border-radius:14px;padding:3px 10px;font-size:13px;margin:2px}
+.carte{background:var(--carte);border-radius:16px;padding:16px;margin:8px 0;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.carte.centre{text-align:center}.carte.erreur{border:2px solid var(--rouge)}
+.gros{font-size:54px}
+.avatar{width:84px;height:84px;border-radius:50%;margin:0 auto;display:grid;place-items:center;color:#fff;font-size:36px;font-weight:700}
+.rang{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center}
+.btn{display:inline-block;text-decoration:none;padding:10px 16px;border-radius:12px;background:color-mix(in srgb,var(--doux) 15%,var(--carte));color:var(--encre);font-weight:600}
+.btn.prim{background:var(--accent);color:#fff}
+.etage{font-size:15px;margin:18px 0 0;color:var(--doux);font-weight:600}.etage small{font-weight:400}
+.liste{display:flex;flex-direction:column;gap:2px;margin:8px 0}
+.ligne{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:10px 12px;border-radius:12px;background:var(--carte);position:relative;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.ligne .t{font-weight:600}.ligne small{color:var(--doux);font-size:13px}
+.ligne.sel{outline:2px solid var(--accent)}
+.ligne .pt{position:absolute;right:12px;top:50%;width:10px;height:10px;border-radius:50%;transform:translateY(-50%)}
+.formulaire label{display:block;font-size:13px;color:var(--doux);margin-bottom:10px}
+input,textarea{width:100%;font:inherit;font-size:16px;color:var(--encre);background:var(--fond);border:1px solid var(--trait);border-radius:10px;padding:10px;margin-top:4px}
+#code{font:13px/1.4 ui-monospace,Menlo,monospace;white-space:pre;overflow:auto}
+.sr{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.reponse{white-space:pre-wrap;margin:0}
+.traces{font-size:13px;color:var(--doux);padding-left:18px}
+#voile{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+#voile.on{opacity:1;pointer-events:auto}
+#feuille{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow-y:auto;background:var(--fond);border-radius:18px 18px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom,0));transform:translateY(105%);transition:transform .22s;z-index:11}
+#feuille.on{transform:none}
+#feuille::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--trait);margin:0 auto 10px}
+.q{display:block;font-weight:700;margin-bottom:6px}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);background:var(--encre);color:var(--fond);padding:9px 16px;border-radius:20px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#oeil{width:34px;height:34px;border-radius:50%;font-size:18px;color:var(--doux);border:1.5px solid var(--trait);flex:none}
+#oeil.on{background:var(--claude);border-color:var(--claude);color:#fff}
+#vision{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 16px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--claude) 14%,var(--carte));font-size:13px}
+#vision span{flex:1;min-width:150px}
+#vision button{font-size:13px;font-weight:600;color:var(--claude);padding:4px 6px}
+.claude-on .cache-claude .tuile,.claude-on .cache-claude.ligne{outline:2px dashed var(--claude);outline-offset:3px;filter:saturate(.35)}
+.claude-on .cache-claude::after{content:"✦̸";position:absolute;left:4px;bottom:34px;font-size:12px;color:var(--claude)}
+.claude-on .cache-claude.ligne::after{left:auto;right:12px;bottom:auto;top:10px}
+.claude-on #vue.cache-claude-tout{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--claude) 55%,transparent);border-radius:14px}
+.marque{position:absolute;right:2px;top:-6px;z-index:1;font-size:10px;font-weight:700;border-radius:8px;padding:1px 5px;color:#fff}
+.marque.ok{background:#12976B}.marque.bloque{background:var(--rouge)}.marque.toi{background:var(--accent)}
+.claude-on .cache-claude .marque{display:none}
+pre.code{font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--carte);border:1px solid var(--trait);border-radius:10px;padding:10px;max-height:40vh;overflow:auto;white-space:pre-wrap}
+details summary{cursor:pointer;margin-top:10px}
+#fil{position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom,0));background:var(--encre);color:var(--fond);border-radius:14px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:flex-end;z-index:9;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+#fil-l{flex:1;display:flex;flex-direction:column;gap:2px}#fil-l div:not(:last-child){opacity:.6}
+#fil-stop{color:var(--fond);font-weight:700;font-size:13px;opacity:.8}
+/* conversation */
+.onglets{display:flex;gap:4px;background:color-mix(in srgb,var(--doux) 14%,var(--carte));border-radius:10px;padding:3px;margin:4px 0 10px}
+.onglets button{flex:1;padding:7px;border-radius:8px;font-size:14px;font-weight:600;color:var(--doux)}
+.onglets button.sel{background:var(--carte);color:var(--encre);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.fil-conv{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.bulle{max-width:88%;padding:10px 13px;border-radius:18px;line-height:1.45;overflow-wrap:anywhere}
+.bulle.moi{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:6px}
+.bulle.claude{align-self:flex-start;background:var(--carte);border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.bulle.erreur{border:1.5px solid var(--rouge)}
+.bulle code{font:13px ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--doux) 15%,transparent);padding:0 4px;border-radius:4px}
+.puce-act{display:block;margin-top:8px;font-size:12px;font-weight:600;color:var(--claude)}
+.points::after{content:"…";animation:pts 1.2s infinite steps(3)}
+@keyframes pts{0%{opacity:.2}50%{opacity:1}100%{opacity:.2}}
+.saisie{position:sticky;bottom:-24px;display:flex;gap:8px;align-items:flex-end;background:var(--fond);padding:8px 0 24px;margin:0}
+.saisie textarea{margin:0;resize:none;border-radius:20px;padding:10px 14px;max-height:160px}
+.saisie .btn{border-radius:50%;width:42px;height:42px;padding:0;flex:none;font-size:20px}
+.centre{text-align:center}
+/* deux Life, branches, historique */
+.mondes{display:flex;gap:6px;margin:2px 0 8px}
+.mondes button{flex:1;padding:8px;border-radius:12px;font-weight:700;font-size:14px;border:1.5px solid var(--trait);color:var(--doux)}
+.mondes button.sel{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--carte))}
+.mondes button.sel.claude{border-color:var(--claude);color:var(--claude);background:color-mix(in srgb,var(--claude) 10%,var(--carte))}
+body.monde-claude .haut{background:color-mix(in srgb,var(--claude) 10%,var(--fond))}
+body.monde-claude #titre{color:var(--claude)}
+.pts{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}.pts i{width:8px;height:8px;border-radius:50%;display:block}
+.branches{position:relative;margin-top:6px}
+.branches svg{position:absolute;left:0;top:0}
+.br-ligne{position:absolute;left:var(--gauche);right:0;height:44px;overflow:hidden;white-space:nowrap;text-align:left;display:flex;flex-direction:column;justify-content:center;font-size:14px;border-radius:10px;padding:0 8px}
+.br-ligne small{color:var(--doux);font-size:12px}
+.br-ligne span,.br-ligne small{overflow:hidden;text-overflow:ellipsis}
+.br-ligne:active{background:var(--carte)}
+.histo{position:relative;margin-left:8px;border-left:2px solid var(--trait);padding-left:16px}
+.h-ev{position:relative;padding:6px 0 12px}
+.h-ev>i{position:absolute;left:-23px;top:9px;width:12px;height:12px;border-radius:50%;border:2px solid}
+.h-ev ul{margin:4px 0 0;padding-left:18px;font-size:14px}
+.mini{font-size:12px;font-weight:600;color:var(--accent);padding:4px 0;margin-right:12px}
+.rang.gauche{justify-content:flex-start;margin-top:4px}
+.ligne.coche{cursor:pointer}.ligne.coche input{width:auto;margin:0 6px 0 0;vertical-align:middle}.ligne.deja{opacity:.5}
+.saisie-filtre input{margin:6px 0}
+.ligne .rang.gauche{display:flex}
+body.secours .haut{background:color-mix(in srgb,var(--rouge) 12%,transparent)}
+</style>
+</head>
+<body>
+<button id="bandeau" hidden>Mode secours : verbes d'origine. Touche pour revenir aux tiens.</button>
+<header class="haut"><button id="retour" hidden aria-label="Retour">‹</button><h1 id="titre">Life</h1><button id="oeil" aria-pressed="false" aria-label="Claude voit l'écran">✦</button><button id="logo" aria-label="Accueil (appui long : mode secours)"></button></header>
+<div id="vision" hidden></div>
+<main id="vue"><p class="doux">Ouverture…</p></main>
+<nav class="barre">
+  <button data-barre="accueil"><b>⌂</b>Accueil</button>
+  <button data-barre="créer"><b>＋</b>Créer</button>
+  <button data-barre="chercher"><b>⌕</b>Chercher</button>
+  <button data-barre="demander à Claude" class="cl"><b>✦</b>Claude</button>
+</nav>
+<div id="voile"></div>
+<div id="feuille" role="dialog"><div id="feuille-corps"></div></div>
+<div id="fil" hidden><div id="fil-l"></div><button id="fil-stop">Arrêter</button></div>
+<div id="toast" role="status"></div>
+<script>
+// Pas de console sur iPhone : les erreurs s'affichent.
+window.onerror = (msg, src, ligne) => { try { alert("Erreur : " + msg + (ligne ? " (ligne " + ligne + ")" : "")); } catch (_) {} };
+window.onunhandledrejection = e => { try { alert("Erreur : " + (e.reason?.message || e.reason)); } catch (_) {} };
+</script>
+<script>
+const LifeDB = (() => {
+  const D = {}; const subsC = {}; const subsD = {};
+  let idb = null;
+  const cle = (c, id) => c + "\u0000" + id;
+  const clone = o => JSON.parse(JSON.stringify(o));
+  function ouvrirIDB() {
+    return new Promise((res, rej) => { const r = indexedDB.open("life", 2); r.onupgradeneeded = () => { const b = r.result; if (!b.objectStoreNames.contains("docs")) b.createObjectStore("docs"); if (!b.objectStoreNames.contains("fichiers")) b.createObjectStore("fichiers"); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  }
+  async function charger() {
+    idb = await ouvrirIDB();
+    await new Promise((res, rej) => {
+      const req = idb.transaction("docs").objectStore("docs").openCursor();
+      req.onsuccess = () => { const c = req.result; if (!c) return res(); const [col, id] = String(c.key).split("\u0000"); (D[col] ||= {})[id] = c.value; c.continue(); };
+      req.onerror = () => rej(req.error);
+    });
+    try { await navigator.storage?.persist?.(); } catch (_) {}
+  }
+  function persister(col, id, val) {
+    return new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); const st = tx.objectStore("docs"); val === undefined ? st.delete(cle(col, id)) : st.put(val, cle(col, id)); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  }
+  const snapDoc = (c, id) => ({ id, exists: !!(D[c] && D[c][id]), data: () => D[c]?.[id], metadata: { fromCache: false, hasPendingWrites: false } });
+  const snapCol = c => { const docs = Object.keys(D[c] || {}).sort().map(id => snapDoc(c, id)); return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } }; };
+  function notifier(c, id) {
+    for (const f of subsC[c] || []) queueMicrotask(() => f(snapCol(c)));
+    for (const f of subsD[c + "/" + id] || []) queueMicrotask(() => f(snapDoc(c, id)));
+  }
+  async function ecrire(c, id, val) { D[c] ||= {}; if (val === undefined) delete D[c][id]; else D[c][id] = val; notifier(c, id); await persister(c, id, val); }
+  const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  function ref(c, id) {
+    return {
+      id, path: c + "/" + id,
+      get: async () => snapDoc(c, id),
+      set: async o => ecrire(c, id, clone(o)),
+      update: async o => { if (!D[c]?.[id]) throw { code: "invalid_argument", message: "document absent" }; const n = { ...D[c][id] }; for (const [k, v] of Object.entries(clone(o))) { if (v && v.__delete__) delete n[k]; else n[k] = v; } return ecrire(c, id, n); },
+      delete: async () => ecrire(c, id, undefined),
+      onSnapshot(f) { const k = c + "/" + id; (subsD[k] ||= []).push(f); queueMicrotask(() => f(snapDoc(c, id))); return () => { subsD[k] = (subsD[k] || []).filter(x => x !== f); }; }
+    };
+  }
+  const db = {
+    collection(c) { return {
+      path: c,
+      onSnapshot(f) { (subsC[c] ||= []).push(f); queueMicrotask(() => f(snapCol(c))); return () => { subsC[c] = (subsC[c] || []).filter(x => x !== f); }; },
+      doc: id => ref(c, id || nid()),
+      add: async o => { const id = nid(); await ecrire(c, id, clone(o)); return { id }; },
+      get: async () => snapCol(c)
+    }; },
+    doc(p) { const [c, id] = String(p).split("/"); return ref(c, id); }
+  };
+  // Fichiers rapatriés : stockés à part, en binaire
+  const tx1 = (mode, fn) => new Promise((res, rej) => { const tx = idb.transaction("fichiers", mode); const r = fn(tx.objectStore("fichiers")); tx.oncomplete = () => res(r?.result); tx.onerror = () => rej(tx.error); });
+  const mettreFichier = (id, blob) => tx1("readwrite", st => st.put(blob, id));
+  const lireFichier = id => tx1("readonly", st => st.get(id));
+  const supprimerFichier = id => tx1("readwrite", st => st.delete(id));
+  const idsFichiers = () => tx1("readonly", st => st.getAllKeys());
+  const enBase64 = blob => new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(String(f.result).split(",")[1] || ""); f.onerror = () => rej(f.error); f.readAsDataURL(blob); });
+  async function exporter(opt = {}) {
+    const out = { format: "life-export", version: 1, date: new Date().toISOString(), collections: clone(D) };
+    if (opt.collections) out.collections = Object.fromEntries(Object.entries(out.collections).filter(([c]) => opt.collections.includes(c)));
+    if (opt.fichiers) { out.fichiers = {}; for (const id of await idsFichiers()) { const b = await lireFichier(id); if (b) out.fichiers[id] = { type: b.type || "application/octet-stream", base64: await enBase64(b) }; } }
+    return out;
+  }
+  async function importer(obj) {
+    const cols = obj?.collections; if (!cols || typeof cols !== "object") throw new Error("fichier non reconnu");
+    await new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); tx.objectStore("docs").clear(); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    for (const c of Object.keys(D)) delete D[c];
+    await new Promise((res, rej) => { const tx = idb.transaction("docs", "readwrite"); const st = tx.objectStore("docs");
+      for (const [c, docs] of Object.entries(cols)) for (const [id, v] of Object.entries(docs || {})) { (D[c] ||= {})[id] = v; st.put(v, cle(c, id)); }
+      tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    if (obj.fichiers && typeof obj.fichiers === "object") for (const [id, f] of Object.entries(obj.fichiers)) {
+      try { const bin = atob(f.base64 || ""); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); await mettreFichier(id, new Blob([u8], { type: f.type || "application/octet-stream" })); } catch (_) {}
+    }
+    const toutes = new Set([...Object.keys(subsC), ...Object.keys(D)]);
+    for (const c of toutes) { for (const f of subsC[c] || []) queueMicrotask(() => f(snapCol(c))); }
+    for (const k of Object.keys(subsD)) { const [c, id] = k.split("/"); for (const f of subsD[k]) queueMicrotask(() => f(snapDoc(c, id))); }
+  }
+  const vide = () => !Object.values(D).some(c => Object.keys(c || {}).length);
+  return { charger, db, exporter, importer, vide, mettreFichier, lireFichier, supprimerFichier, idsFichiers };
+})();
+
+const LifeClaude = (() => {
+  const MODELES = [["claude-opus-5-5", "Opus 5.5 · le plus capable"], ["claude-sonnet-5-5", "Sonnet 5.5 · équilibré"], ["claude-haiku-5-5", "Haiku 5.5 · rapide"]];
+  let cle = null, webOK = true, jetons = 0;
+  try { cle = localStorage.getItem("life-cle"); } catch (_) {}
+  const reglages = () => { try { return JSON.parse(localStorage.getItem("life-claude") || "{}"); } catch (_) { return {}; } };
+  const regler = r => { try { localStorage.setItem("life-claude", JSON.stringify({ ...reglages(), ...r })); } catch (_) {} };
+  function definirCle(k, garder) { cle = String(k || "").trim() || null; try { if (garder && cle) localStorage.setItem("life-cle", cle); else localStorage.removeItem("life-cle"); } catch (_) {} }
+  function oublierCle() { cle = null; try { localStorage.removeItem("life-cle"); } catch (_) {} }
+  async function appel(corps, signal) {
+    let r;
+    try {
+      r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", signal,
+        headers: { "content-type": "application/json", "x-api-key": cle, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify(corps) });
+    } catch (e) { if (e?.name === "AbortError") throw { code: "cancelled" }; throw { code: "network", message: "pas de réseau" }; }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const m = j?.error?.message || ("HTTP " + r.status);
+      throw { code: r.status === 401 ? "bad_key" : r.status === 429 ? "rate_limited" : (r.status === 529 || r.status === 503) ? "overloaded" : r.status === 400 ? "invalid_request" : "api_error", message: m };
+    }
+    jetons += (j.usage?.input_tokens || 0) + (j.usage?.output_tokens || 0);
+    return j;
+  }
+  // Même signature que le sample de l'artefact : (tours, {tools, onText, signal}) -> {text, truncated}
+  async function sample(input, opts = {}) {
+    if (!cle) throw { code: "no_key" };
+    const r = reglages(); const model = r.modele || "claude-sonnet-5-5";
+    let system = ""; let msgs = input.map(x => ({ role: x.role, content: x.content }));
+    if (msgs[0]?.role === "user" && msgs[1]?.role === "assistant" && msgs[1].content === "Compris.") { system = msgs[0].content; msgs = msgs.slice(2); }
+    const outils = (opts.tools || []).map(t => ({ name: t.name, description: t.description, input_schema: t.inputSchema || { type: "object", properties: {} } }));
+    if (r.web === true && webOK) outils.push({ type: "web_search_20250305", name: "web_search", max_uses: 5 });
+    let texte = "";
+    for (let tour = 0; tour < (opts.maxTours || 12); tour++) {
+      let j;
+      try { j = await appel({ model, max_tokens: 8192, system, messages: msgs, ...(outils.length ? { tools: outils } : {}) }, opts.signal); }
+      catch (e) {
+        const iw = outils.findIndex(t => t.type);
+        if (e.code === "invalid_request" && iw >= 0 && /web_search|tool/i.test(e.message || "")) { webOK = false; outils.splice(iw, 1); tour--; continue; }
+        throw { ...e, text: texte || undefined };
+      }
+      const t = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+      if (t) { texte += (texte ? "\n\n" : "") + t; opts.onText?.({ text: texte, delta: t }); }
+      if (j.stop_reason === "pause_turn") { msgs.push({ role: "assistant", content: j.content }); continue; }
+      if (j.stop_reason !== "tool_use") return { text: texte || "(pas de réponse)", truncated: j.stop_reason === "max_tokens", modelTierApplied: "complex", modelApplied: j.model };
+      msgs.push({ role: "assistant", content: j.content });
+      const resultats = [];
+      for (const b of j.content.filter(b => b.type === "tool_use")) {
+        const outil = (opts.tools || []).find(x => x.name === b.name);
+        let sortie, erreur = false;
+        try { if (!outil) throw new Error("outil inconnu"); sortie = await outil.execute(b.input || {}, { signal: opts.signal }); }
+        catch (e) { sortie = "Error: " + (e?.message || e); erreur = true; }
+        resultats.push({ type: "tool_result", tool_use_id: b.id, content: typeof sortie === "string" ? sortie : JSON.stringify(sortie ?? null), ...(erreur ? { is_error: true } : {}) });
+      }
+      msgs.push({ role: "user", content: resultats });
+    }
+    return { text: texte || "(trop d'allers-retours)", truncated: true, modelTierApplied: "complex" };
+  }
+  sample.limits = async () => ({ maxPromptBytes: 900000, tools: {} });
+  return { sample, MODELES, definirCle, oublierCle, aCle: () => !!cle, reglages, regler, jetons: () => jetons, nomModele: () => (MODELES.find(m => m[0] === (reglages().modele || "claude-sonnet-5-5")) || [, "Sonnet 5.5"])[1].split(" · ")[0] };
+})();
+
+</script>
+<script>
+// =====================================================================
+// Life v6 — le noyau. Il ne fait que quatre choses : lire et écrire la base,
+// exécuter un verbe, garder les versions des verbes, démarrer en mode secours.
+// Tout le reste (accueil, afficher, créer, aller…) est un verbe rangé dans la base.
+// =====================================================================
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const now = () => new Date().toISOString();
+const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+const corps = fn => { const s = fn.toString(); return s.slice(s.indexOf("{") + 1, s.lastIndexOf("}")).replace(/^\n/, "").replace(/\s+$/, ""); };
+function lsGet(k){ try { return localStorage.getItem(k); } catch(_) { return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(_) {} }
+
+const K = { O:{}, V:{}, db:null, secours:false, sujet:null, pile:[], actions:{}, pret:false,
+  claude:{ actif:false, montre:new Set(), travaille:null }, capture:null,
+  monde:"laurent", par:"Laurent", C:{} };
+// Deux Life dans la même base : celui de Laurent (racine « moi ») et celui de Claude (racine « life_claude »).
+const RACINE = { laurent:"moi", claude:"life_claude" };
+function racineDe(id){ let x=id, n=0; while (x && K.O[x] && K.O[x].parent && n++<40) x=K.O[x].parent; return x; }
+const chezClaude = id => racineDe(id)==="life_claude";
+// Ce que Claude connaît : ce que Laurent a partagé (ou que Claude a créé, qui naît partagé).
+// Décision de Laurent (11/10) : Claude voit TOUTE la base. Seuls les secrets du coffre restent privés.
+const connu = id => id==="moi" || !!K.O[id];
+// Ce que Claude voit à cet instant : ce qu'il connaît + ce que Laurent vient de lui montrer.
+const vu = id => connu(id) || K.claude.montre.has(id);
+// Verbes écrits par Claude qui touchent au réseau, aux secrets ou aux données brutes : Laurent valide avant.
+// Verbes écrits par Claude qui touchent aux secrets ou aux données brutes de l'app : Laurent valide avant (le réseau seul est libre).
+const SENSIBLE = /\b(secret|oublierSecret|importScripts|localStorage|indexedDB|LifeDB|LifeClaude)\b|import\s*\(/;
+
+// ---------- couleurs par type ----------
+const COULEURS = { moi:"#1D74F5", envie:"#E8467C", projet:"#2F6BD8", tache:"#F07A1A", idee:"#8E5CF0", personne:"#D9A20B", lieu:"#0E9B73", bien:"#5E6E80",
+  decision:"#0B8199", fonction:"#159AAE", dossier:"#4C6EF5", application:"#3B5BDB", conversation:"#8A94A6", document:"#6F7E95", note:"#7D8BA1",
+  besoin:"#C2557A", fichier:"#6F7E95", "site web":"#0F8B8D" };
+function couleur(t){ if (COULEURS[t]) return COULEURS[t]; let h=0; for (const c of String(t||"")) h=(h*31+c.charCodeAt(0))%360; return `hsl(${h} 55% 48%)`; }
+const lettre = o => (o?.emoji) || (String(o?.titre||"?").replace(/^[^\p{L}\p{N}]+/u,"")[0]||"?").toUpperCase();
+const dateCourte = iso => iso ? new Date(iso).toLocaleDateString("fr-FR",{day:"numeric",month:"short"}) : "";
+
+// ---------- base ----------
+const copie = o => o ? JSON.parse(JSON.stringify(o)) : o;
+const avecId = id => K.O[id] ? { id, ...copie(K.O[id]) } : null;
+const enfants = id => Object.keys(K.O).filter(i => K.O[i].parent === id && !K.O[i].supprime).map(avecId);
+async function journal(quoi, cible, avant){ try { await K.db.collection("journal").add({ quand:now(), quoi, cible, par:K.par||"Laurent", ...(avant!==undefined?{avant}:{}) }); } catch(_){} }
+async function journalDe(cible){ return (await K.db.collection("journal").get()).docs.map(d=>d.data()).filter(j=>j.cible===cible).sort((a,b)=>a.quand<b.quand?-1:1); }
+const base = {
+  lire: avecId,
+  enfants,
+  parent: id => K.O[id]?.parent ? avecId(K.O[id].parent) : null,
+  chemin: id => { const c=[]; let x=id, n=0; while (x && K.O[x] && n++<20) { c.unshift(avecId(x)); x=K.O[x].parent; } return c; },
+  tous: () => Object.keys(K.O).filter(i=>!K.O[i].supprime).map(avecId),
+  chercher: txt => { const q=String(txt||"").toLowerCase().trim(); return base.tous().filter(o => !q || (o.titre+" "+(o.desc||"")+" "+(o.type||"")).toLowerCase().includes(q)).slice(0,60); },
+  creer: async o => { const doc={ titre:String(o.titre||"Sans nom"), type:o.type||"note", parent:o.parent??RACINE[K.monde], desc:o.desc||"", champs:o.champs||{}, relations:o.relations||[], partage:o.partage??false, cree:now(), ...(o.phrase?{phrase:o.phrase}:{}), ...(o.emoji?{emoji:o.emoji}:{}), ...(o.auteur?{auteur:o.auteur}:{}) };
+    const ref=await K.db.collection("objets").add(doc); K.O[ref.id]=doc; await journal("créer",ref.id); return ref.id; },
+  modifier: async (id, m, opt={}) => { if (!K.O[id]) throw new Error("objet inconnu"); const avant=opt.sansAvant?undefined:copie(K.O[id]); const n={...K.O[id], ...copie(m), modifie:now()}; K.O[id]=n; await K.db.collection("objets").doc(id).set(n); await journal("modifier",id,avant); },
+  supprimer: async id => { if (!K.O[id]) return; await base.modifier(id,{supprime:now()}); },
+  racine: () => RACINE[K.monde], chezClaude, journal: journalDe,
+  ajouter: async objets => { let n=0;
+    for (const [id, o] of Object.entries(objets)) { if (K.O[id]) continue; const d={ desc:"", champs:{}, relations:[], partage:false, cree:now(), ...copie(o) }; K.O[id]=d; n++; }
+    for (const id of Object.keys(objets)) { const d=K.O[id]; if (!d) continue; if (d.parent && !K.O[d.parent]) d.parent=RACINE[K.monde]; await K.db.collection("objets").doc(id).set(d); }
+    await journal("ajout depuis un fichier", n+" objets"); return n; }
+};
+
+// ---------- verbes ----------
+const codeActif = v => { if (v.epingle && v.epingle!==v.version) { const h=(v.historique||[]).find(x=>x.version===v.epingle); if (h) return h.code; } return v.code; };
+function sourceVerbes(){ return K.secours ? Object.fromEntries(SEMENCES.map(s=>[s.id, s.doc])) : K.V; }
+const s0 = (v, sujet) => score(v, sujet) >= 0;
+function score(v, sujet){ const pour=v.pour||["*"]; if (!sujet) return pour.includes("rien") ? 1 : -1; if (pour.includes(sujet.type)) return 3; if (pour.includes("*")) return 1; return -1; }
+function trouver(nom, sujet, exclus=[]){
+  const src = sourceVerbes();
+  const ch = !K.secours && K.C[`${K.monde}|${nom}|${sujet?sujet.type:"rien"}`];
+  if (ch && src[ch.verbe] && src[ch.verbe].nom===nom && src[ch.verbe].actif!==false && !exclus.includes(ch.verbe) && score(src[ch.verbe],sujet)>=0 && (src[ch.verbe].chez!=="claude" || K.monde==="claude")) return [ch.verbe, src[ch.verbe]];
+  let best=null, bs=-1;
+  for (const [id,v] of Object.entries(sourceVerbes())) { if (v.nom!==nom || v.actif===false || exclus.includes(id)) continue; if (v.chez==="claude" && K.monde!=="claude") continue; if (v.monde && v.monde!==K.monde) continue; const s=score(v,sujet)+(v.chez==="claude"&&s0(v,sujet)?0.5:0); if (s>bs || (s===bs && (v.modifie||"")>(best?.[1].modifie||""))) { best=[id,v]; bs=s; } }
+  return bs>=0 ? best : null;
+}
+async function choisirVariante(nom, type, vid){
+  const id = `${K.monde}|${nom}|${type||"rien"}`;
+  if (vid) { K.C[id]={verbe:vid, quand:now()}; await K.db.collection("choix").doc(id).set(K.C[id]); }
+  else { delete K.C[id]; await K.db.collection("choix").doc(id).delete(); }
+  await journal(vid?"variante choisie":"variante automatique", nom, undefined);
+}
+function variantes(nom){ return Object.entries(sourceVerbes()).filter(([,v])=>v.nom===nom && !v.cache).map(([id,v])=>({id, ...v})); }
+function verbesPour(sujet){
+  const noms=[...new Set(Object.values(sourceVerbes()).filter(v=>v.actif!==false && !v.cache && (v.chez!=="claude"||K.monde==="claude")).map(v=>v.nom))];
+  const rang = n => n==="afficher" ? 0 : n==="historique" ? 2 : 1;
+  return noms.map(n=>trouver(n,sujet)).filter(Boolean).sort((a,b)=>rang(a[1].nom)-rang(b[1].nom));
+}
+const compiles = new Map();
+function compiler(code){ if (!compiles.has(code)) compiles.set(code, new AsyncFunction("sujet","c","ctx", '"use strict";\n'+code)); return compiles.get(code); }
+let profondeur = 0;
+async function faire(nom, sujetId, c={}, exclus=[]){
+  const sujet = sujetId ? avecId(sujetId) : null;
+  const tv = trouver(nom, sujet, exclus);
+  if (!tv) { dire(`Aucun verbe « ${nom} » pour ${sujet ? "un objet de type « "+(sujet.type||"?")+" »" : "ce cas"}.`); return; }
+  const [vid, v] = tv;
+  if (v.aValider && !K.secours) { if (!(await validerVerbe(vid))) { dire(`« ${v.nom} » n'est pas autorisé`); if (K.capture) K.capture.erreurs.push(`Laurent n'a pas autorisé le verbe « ${v.nom} »`); return; } }
+  if (++profondeur > 20) { profondeur=0; throw new Error("trop d'appels imbriqués"); }
+  try { return await compiler(codeActif(K.secours ? v : (K.V[vid]||v)))(sujet, c||{}, ctx(vid, ()=>faire(nom, sujetId, c, [...exclus, vid]))); }
+  catch(err){ if (K.capture) K.capture.erreurs.push(`« ${v.nom} » : ${err?.message||err}`); else afficherErreur(vid, v, err); }
+  finally { profondeur--; }
+}
+async function sauverVerbe(id, m, auteur="Laurent"){
+  const ancien = K.V[id];
+  if (m.code!=null) { try { new AsyncFunction("sujet","c","ctx", m.code); } catch(e){ throw new Error("le code ne compile pas : "+e.message); } }
+  const n = ancien
+    ? { ...ancien, ...m, version:(ancien.version||1)+(m.code!=null&&m.code!==ancien.code?1:0), epingle:null, modifie:now(), auteur,
+        historique: m.code!=null&&m.code!==ancien.code ? [...(ancien.historique||[]), {version:ancien.version||1, code:ancien.code, quand:ancien.modifie||ancien.cree||now(), auteur:ancien.auteur||"origine"}].slice(-30) : (ancien.historique||[]) }
+    : { nom:m.nom, pour:m.pour||["*"], definition:m.definition||"", code:m.code||"", version:1, historique:[], cree:now(), modifie:now(), auteur, actif:true, ...m };
+  if (m.chez===null) delete n.chez;
+  if (auteur==="Claude" && SENSIBLE.test(n.code||"")) n.aValider = true; else if (auteur!=="Claude") delete n.aValider;
+  K.V[id]=n; await K.db.collection("verbes").doc(id).set(n); await journal("verbe "+(ancien?"modifié":"créé"), id);
+}
+
+// ---------- écran et dialogues (outils donnés aux verbes) ----------
+function ecran(html, opt={}){
+  if (opt.sujet !== undefined && opt.sujet !== K.sujet) { if (!K.enRetour) { K.pile.push(K.sujet); if (K.pile.length>50) K.pile.shift(); } K.sujet = opt.sujet; }
+  K.actions = opt.actions || {};
+  $("#titre").textContent = opt.titre ?? (K.sujet ? K.O[K.sujet]?.titre : (K.monde==="claude"?"Life de Claude":"Life")) ?? "Life";
+  document.body.classList.toggle("monde-claude", K.monde==="claude");
+  $("#retour").hidden = !K.pile.length;
+  if (opt.sujet !== undefined) K.claude.montre.clear();   // montrer à Claude ne vaut que pour l'écran du moment
+  $("#vue").innerHTML = html; $("#vue").scrollTop = 0;
+  majVision();
+}
+function dire(t){ if (K.capture) K.capture.dits.push(String(t)); const e=$("#toast"); e.textContent=t; e.classList.add("on"); clearTimeout(dire.h); dire.h=setTimeout(()=>e.classList.remove("on"),2600); }
+function feuille(html){ $("#feuille-corps").innerHTML=html; $("#feuille").scrollTop=0; $("#feuille").classList.add("on"); $("#voile").classList.add("on"); }
+function fermerFeuille(){ $("#feuille").classList.remove("on"); $("#voile").classList.remove("on"); if (fermerFeuille.annuler) { const f=fermerFeuille.annuler; fermerFeuille.annuler=null; f(); } }
+$("#voile").onclick = fermerFeuille;
+function demander(question, defaut="", opt={}){
+  return new Promise(res=>{
+    fermerFeuille.annuler = ()=>res(null);
+    const champ = opt.multi ? `<textarea id="d-champ" rows="5">${esc(defaut)}</textarea>`
+      : `${opt.motdepasse?`<input class="sr" type="text" name="username" autocomplete="username" value="Life · Anthropic" tabindex="-1" aria-hidden="true" readonly>`:""}<input id="d-champ" ${opt.motdepasse?'type="password" name="password" autocomplete="current-password"':'type="text" autocomplete="off"'} value="${esc(defaut)}">`;
+    feuille(`<form id="d-form" action="#" method="post"><label class="q" for="d-champ">${esc(question)}</label>${champ}<div class="rang"><button class="btn prim" type="submit">${esc(opt.ok||"Valider")}</button><button class="btn" type="button" id="d-non">Annuler</button></div></form>`);
+    setTimeout(()=>$("#d-champ")?.focus(),60);
+    $("#d-form").onsubmit = e=>{ e.preventDefault(); const v=$("#d-champ").value; fermerFeuille.annuler=null; fermerFeuille(); res(v.trim()===""?null:v); };
+    $("#d-non").onclick = ()=>fermerFeuille();
+  });
+}
+function choisir(titre, options){
+  return new Promise(res=>{
+    fermerFeuille.annuler = ()=>res(null);
+    feuille(`<div class="q">${esc(titre)}</div><div class="liste">${options.map((o,i)=>`<button class="ligne" data-i="${i}">${o.couleur?`<i class="pt" style="background:${o.couleur}"></i>`:""}<span class="t">${esc(o.libelle)}</span>${o.detail?`<small>${esc(o.detail)}</small>`:""}</button>`).join("")||`<p class="doux">Rien à choisir.</p>`}</div>`);
+    $("#feuille-corps").onclick = e=>{ const b=e.target.closest("[data-i]"); if (!b) return; $("#feuille-corps").onclick=null; fermerFeuille.annuler=null; fermerFeuille(); res(options[+b.dataset.i].valeur); };
+  });
+}
+async function confirmer(texte, ok="Oui"){ return (await choisir(texte, [{valeur:true, libelle:ok},{valeur:false, libelle:"Annuler"}])) === true; }
+function ouvrir(url){ const u=String(url||""); if (!/^https?:\/\//i.test(u)) { dire("Adresse invalide"); return; } const w=window.open(u, "_blank"); if (w) { try { w.opener=null; } catch(_){} } else location.href=u; }
+// Tuiles prêtes à l'emploi pour les verbes d'affichage
+function tuile(o){
+  const nb = enfants(o.id).length, c=couleur(o.type);
+  const priv = "";
+  const st = o.champs?.statut, marque = st==="fait"||st==="traitée" ? `<span class="marque ok">✓</span>` : st==="bloqué" ? `<span class="marque bloque">!</span>` : o.champs?.pour==="Laurent" ? `<span class="marque toi">toi</span>` : "";
+  const fond = nb ? `<div class="tuile dossier">${enfants(o.id).slice(0,9).map(e=>`<i style="background:${couleur(e.type)}"></i>`).join("")}<span class="nb">${nb}</span></div>`
+    : `<div class="tuile" style="background:${c}">${esc(lettre(o))}${o.type==="tache"&&o.phrase?`<span class="joue">▶</span>`:""}</div>`;
+  return `<button class="ic" data-objet="${esc(o.id)}">${priv}${marque}${fond}<span class="lab">${esc(o.titre)}</span></button>`;
+}
+const grille = objs => objs.length ? `<div class="grille">${objs.map(tuile).join("")}</div>` : `<p class="doux">Vide. Touche ＋ pour créer quelque chose ici.</p>`;
+
+function ctx(vid, suivant){
+  return { suivant: suivant || (()=>{}), base, faire, ecran, dire, demander, choisir, confirmer, ouvrir, tuile, grille, esc, couleur, lettre, date:dateCourte,
+    verbes: id => verbesPour(id?avecId(id):null).map(([i,v])=>({id:i, nom:v.nom, definition:v.definition})),
+    tousVerbes: () => Object.entries(sourceVerbes()).filter(([,v])=>!v.cache).map(([i,v])=>({id:i, nom:v.nom, pour:v.pour||["*"], definition:v.definition, actif:v.actif!==false, auteur:v.auteur, chez:v.chez})).sort((a,b)=>a.nom.localeCompare(b.nom,"fr")),
+    claude: (texte, opt) => claudeFaire(texte, typeof opt==="string" ? {sujet:opt} : (opt||{})),
+    claudeActif: () => K.claude.actif, ecranClaude: () => ecranPourClaude(),
+    secret, oublierSecret, secrets: nomsSecrets, telecharger, choisirFichier,
+    monde: () => K.monde, changerMonde: m => { K.monde = m==="claude"?"claude":"laurent"; K.pile.length=0; K.sujet=null; return faire("accueil"); },
+    variantes, choix: (nom, type) => K.C[`${K.monde}|${nom}|${type||"rien"}`]?.verbe || null, choisirVariante,
+    adopter: vid => adopterVerbe(vid),
+    moi: vid, courant: () => K.sujet, __versions: id => versions(id) };
+}
+
+// ---------- coffre : les secrets restent sur l'iPhone, Claude n'en connaît que le nom ----------
+async function secret(nom, opt={}){
+  nom = String(nom); const d = await K.db.collection("coffre").doc(nom).get();
+  if (d.exists) return d.data().valeur;
+  const v = await demander(opt.question || `Un verbe a besoin du secret « ${nom} ». Il reste dans le coffre de ton iPhone : Claude ne le voit jamais.`, "", {motdepasse:true, ok:"Ranger au coffre"});
+  if (v==null) return null;
+  await K.db.collection("coffre").doc(nom).set({ valeur:v, cree:now() }); await journal("secret rangé", nom);
+  return v;
+}
+async function oublierSecret(nom){ await K.db.collection("coffre").doc(String(nom)).delete(); await journal("secret oublié", String(nom)); }
+async function nomsSecrets(){ return (await K.db.collection("coffre").get()).docs.map(d=>d.id); }
+
+// ---------- fichiers : sortir et entrer ----------
+async function telecharger(nom, texte, type="application/json"){
+  const blob = new Blob([texte], { type: type+";charset=utf-8" });
+  try { const f = new File([blob], nom, { type: type+";charset=utf-8" }); if (navigator.canShare?.({ files:[f] })) { await navigator.share({ files:[f], title:nom }); return true; } } catch(e){ if (e?.name==="AbortError") return false; }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); return true;
+}
+function choisirFichier(accept=""){
+  return new Promise(res=>{ const i=document.createElement("input"); i.type="file"; i.accept=accept; i.style.display="none"; document.body.appendChild(i);
+    i.onchange=()=>{ res(i.files[0]||null); i.remove(); }; i.click(); });
+}
+
+// ---------- la vision de Claude ----------
+// Claude activé = il voit l'écran. Mais de chez Laurent, il ne voit que ce qu'il connaît déjà ;
+// le reste lui est masqué, jusqu'à ce que Laurent le lui montre — pour cet écran seulement.
+function masquesEcran(){
+  const ids = [...new Set([...document.querySelectorAll("#vue [data-objet]")].map(e=>e.dataset.objet))];
+  return { ids: ids.filter(id=>!vu(id)), sujet: K.sujet && !vu(K.sujet) ? K.sujet : null };
+}
+function majVision(){
+  const on = K.claude.actif;
+  document.body.classList.toggle("claude-on", on);
+  $("#oeil").classList.toggle("on", on); $("#oeil").setAttribute("aria-pressed", String(on));
+  for (const e of document.querySelectorAll("#vue [data-objet]")) e.classList.toggle("cache-claude", on && !vu(e.dataset.objet));
+  const m = on ? masquesEcran() : {ids:[], sujet:null};
+  $("#vue").classList.toggle("cache-claude-tout", !!m.sujet);
+  const n = m.ids.length + (m.sujet?1:0);
+  $("#vision").hidden = !on;
+  if (on) $("#vision").innerHTML = n
+    ? `<span>✦ Claude voit l'écran, sauf ${m.sujet?"<b>cette page</b>":""}${m.sujet&&m.ids.length?" et ":""}${m.ids.length?`<b>${m.ids.length} élément${m.ids.length>1?"s":""}</b>`:""} (privé)</span><button data-vision="montrer">Lui montrer</button><button data-vision="couper">Couper</button>`
+    : `<span>✦ Claude voit cet écran${K.claude.montre.size?" · montré pour cette fois":""}</span><button data-vision="couper">Couper</button>`;
+}
+function activerClaude(on){ K.claude.actif = on; if (!on) K.claude.montre.clear(); majVision(); dire(on ? "Claude voit l'écran et ta base (pas ton coffre)." : "Claude ne voit plus rien."); }
+$("#oeil").onclick = ()=>activerClaude(!K.claude.actif);
+$("#vision").onclick = e=>{ const b=e.target.closest("[data-vision]"); if (!b) return;
+  if (b.dataset.vision==="couper") return activerClaude(false);
+  const m=masquesEcran(); for (const id of m.ids) K.claude.montre.add(id); if (m.sujet) K.claude.montre.add(m.sujet);
+  majVision(); dire("Montré à Claude pour cet écran. Rien n'est rangé chez lui."); };
+// Ce que Claude reçoit de l'écran : le texte affiché, le privé remplacé par « masqué ».
+function ecranPourClaude(){
+  if (!K.claude.actif) return "(Claude est coupé : tu ne vois pas l'écran.)";
+  const m = masquesEcran();
+  if (m.sujet) {
+    const visibles = [...new Set([...document.querySelectorAll("#vue [data-objet]")].map(e=>e.dataset.objet))].filter(vu).map(id=>`${K.O[id]?.titre} [${id}]`);
+    return `Écran : une page privée, masquée pour toi (Laurent ne te l'a pas montrée).${visibles.length?" Objets que tu connais sur cet écran : "+visibles.join(", "):""}`;
+  }
+  const c = $("#vue").cloneNode(true);
+  for (const e of c.querySelectorAll("[data-objet]")) { const id=e.dataset.objet; e.replaceWith(document.createTextNode(vu(id) ? ` ⟨${K.O[id]?.titre||"?"} [${id}, ${K.O[id]?.type||"?"}]⟩ ` : " ⟨objet privé masqué⟩ ")); }
+  for (const e of c.querySelectorAll("input,textarea")) e.replaceWith(document.createTextNode(e.type==="password" ? "[champ secret]" : `[champ : ${e.value}]`));
+  for (const e of c.querySelectorAll("video,audio,img")) e.replaceWith(document.createTextNode(`[${e.tagName.toLowerCase()}${e.currentSrc||e.src?" : "+(e.currentSrc||e.src):""}]`));
+  const sujet = K.sujet && vu(K.sujet) ? ` (objet ${K.sujet}, type ${K.O[K.sujet]?.type})` : "";
+  return `Écran « ${$("#titre").textContent} »${sujet} :\n` + c.textContent.replace(/[ \t]+/g," ").replace(/\n\s*\n+/g,"\n").trim().slice(0,4000);
+}
+// Un verbe écrit par Claude qui touche au réseau, aux secrets ou aux données brutes attend l'accord de Laurent.
+function validerVerbe(vid){
+  const v = K.V[vid];
+  return new Promise(res=>{
+    fermerFeuille.annuler = ()=>res(false);
+    feuille(`<div class="q">Claude a écrit le verbe « ${esc(v.nom)} »</div><p class="doux">Il utilise un secret de ton coffre ou les données brutes de l'app. Lis-le avant de l'autoriser : une fois autorisé, il s'exécute avec tous les droits de Life.</p>
+      <p>${esc(v.definition||"")}</p><pre class="code">${esc(v.code)}</pre>
+      <div class="rang"><button class="btn prim" id="val-ok">Autoriser</button><button class="btn" id="val-non">Refuser</button></div>`);
+    $("#feuille-corps").onclick = async e=>{
+      if (e.target.id==="val-ok"){ $("#feuille-corps").onclick=null; fermerFeuille.annuler=null; fermerFeuille(); const n={...K.V[vid]}; delete n.aValider; n.valide=now(); K.V[vid]=n; await K.db.collection("verbes").doc(vid).set(n); await journal("verbe autorisé", vid); res(true); }
+      if (e.target.id==="val-non"){ $("#feuille-corps").onclick=null; fermerFeuille.annuler=null; fermerFeuille(); res(false); }
+    };
+  });
+}
+
+// ---------- erreurs, versions, code ----------
+function afficherErreur(vid, v, err){
+  console.error(err);
+  ecran(`<div class="carte erreur"><b>Le verbe « ${esc(v.nom)} » (v${v.epingle||v.version||1}) a planté.</b><p>${esc(err?.message||err)}</p>
+    <div class="rang">${(v.historique||[]).length?`<button class="btn prim" data-act="prec">Revenir à la version précédente</button>`:""}<button class="btn" data-act="code">Voir le code</button><button class="btn" data-act="off">Désactiver ce verbe</button><button class="btn" data-act="secours">Mode secours</button></div></div>`,
+    { titre:"Erreur", actions:{ prec: async()=>{ const h=v.historique.at(-1); await K.db.collection("verbes").doc(vid).update({epingle:h.version}); K.V[vid]={...K.V[vid], epingle:h.version}; dire(`« ${v.nom} » revient à la v${h.version}`); faire("accueil"); },
+      code: ()=>versions(vid), secours: ()=>basculerSecours(true),
+      off: async()=>{ await K.db.collection("verbes").doc(vid).update({actif:false}); K.V[vid]={...K.V[vid], actif:false}; dire(`« ${v.nom} » désactivé`); faire("accueil"); } } });
+}
+function menuVerbes(id){
+  const o=avecId(id); if (!o) return;
+  const l=verbesPour(o);
+  feuille(`<div class="q">${esc(o.titre)} <small class="doux">· ${esc(o.type||"")}</small></div><p class="doux">Appui long sur un verbe : ses versions et son code.</p>
+    <div class="liste">${l.map(([vid,v])=>`<button class="ligne" data-verbe="${esc(vid)}"><span class="t">${esc(v.nom)}</span><small>${esc(v.definition||"")}${v.auteur==="Claude"?" · écrit par Claude":""}${v.chez==="claude"?" · Life de Claude":""}${v.epingle?` · v${v.epingle} épinglée`:""}${K.C[`${K.monde}|${v.nom}|${o.type}`]?" · ★ choisie":""}</small></button>`).join("")}</div>`);
+  K.menuType = o.type;
+  $("#feuille-corps").onclick = e=>{ const b=e.target.closest("[data-verbe]"); if (!b || b.dataset.long) { if (b) delete b.dataset.long; return; } $("#feuille-corps").onclick=null; fermerFeuille(); faire(sourceVerbes()[b.dataset.verbe].nom, id); };
+}
+async function adopterVerbe(vid){
+  const v = K.V[vid]; if (!v || v.chez!=="claude") return;
+  const nid = (vid.startsWith("claude_")?vid.slice(7):vid)+"_adopte";
+  const prev = K.V[nid];
+  await sauverVerbe(nid, { nom:v.nom, pour:v.pour, definition:v.definition, code:codeActif(v), chez:null, origine:{verbe:vid, version:v.epingle||v.version, quand:now()} }, "Laurent");
+  K.V[nid].adopteDeClaude = true; await K.db.collection("verbes").doc(nid).set(K.V[nid]);
+  await journal("verbe adopté", nid); dire(`« ${v.nom} » adopté dans ton Life${prev?" (nouvelle version)":""}`);
+  return nid;
+}
+function versions(vid, typeOuvert){
+  const v=sourceVerbes()[vid]; if (!v) return;
+  const actuelle = v.epingle || v.version || 1;
+  const l=[{version:v.version||1, code:v.code, quand:v.modifie, auteur:v.auteur}, ...[...(v.historique||[])].reverse()];
+  const vars = variantes(v.nom).filter(x=>x.id!==vid);
+  const type = typeOuvert || (v.pour||["*"]).find(t=>t!=="*") || null;
+  const choisi = K.C[`${K.monde}|${v.nom}|${type||"rien"}`]?.verbe;
+  const blocVariantes = K.secours ? "" : `<div class="q" style="margin-top:14px">Variantes de « ${esc(v.nom)} »</div><p class="doux">Une variante par type d'objet ; la plus précise s'applique, sauf si tu en choisis une.</p>
+    <div class="liste">${[{id:vid,...v}, ...vars].map(x=>`<div class="ligne ${x.id===vid?"sel":""}"><span class="t">${(x.pour||["*"]).includes("*")?"par défaut (tous les types)":"pour "+esc((x.pour||[]).join(", "))}${x.chez==="claude"?" · Life de Claude":""}${x.actif===false?" · désactivée":""}${choisi===x.id?" · ★ choisie":""}</span><small>${esc(x.auteur||"")} · v${x.epingle||x.version||1}${x.origine?` · adoptée de ${esc(x.origine.verbe)}`:""}</small>
+      <span class="rang gauche">${x.id!==vid?`<button class="mini" data-voir="${esc(x.id)}">Ouvrir</button>`:""}${type && choisi!==x.id && x.actif!==false && (x.chez!=="claude"||K.monde==="claude") && score(x,{type})>=0 ?`<button class="mini" data-choisir="${esc(x.id)}">${x.id===vid?"Toujours utiliser celle-ci":"Utiliser celle-ci"} pour « ${esc(type)} »</button>`:""}${choisi===x.id?`<button class="mini" data-choisir="">Revenir à l'automatique</button>`:""}</span></div>`).join("")}</div>
+    ${v.chez==="claude"?`<div class="rang"><button class="btn prim" id="adopter-v">Adopter dans mon Life</button></div>`:""}
+    <div class="rang"><button class="btn" id="branches-v">Voir les branches</button></div>`;
+  feuille(`<div class="q">Verbe « ${esc(v.nom)} »${v.actif===false?" · désactivé":""}</div><p class="doux">${esc(v.definition||"")}<br>Pour : ${esc((v.pour||["*"]).join(", "))}${v.auteur==="Claude"?" · écrit par Claude":""}${v.aValider?"<br><b>Écrit par Claude, en attente de ton autorisation.</b>":""}</p>
+    <div class="liste">${l.map(x=>`<button class="ligne ${x.version===actuelle?"sel":""}" data-v="${x.version}"><span class="t">v${x.version}${x.version===(v.version||1)?" · la dernière":""}${x.version===actuelle?" · utilisée":""}</span><small>${esc(dateCourte(x.quand))}${x.auteur?" · "+esc(x.auteur):""}</small></button>`).join("")}</div>
+    ${K.secours?`<p class="doux">Mode secours : versions d'origine, non modifiables.</p>`:`<label class="q" for="code">Code de la version utilisée</label><textarea id="code" rows="14" spellcheck="false" autocapitalize="off">${esc(codeActif(v))}</textarea>
+    <div class="rang"><button class="btn prim" id="sauver">Enregistrer comme nouvelle version</button><button class="btn" id="actif-v">${v.actif===false?"Réactiver ce verbe":"Désactiver ce verbe"}</button><button class="btn" id="fermer-v">Fermer</button></div>`}${blocVariantes}`);
+  $("#feuille-corps").onclick = async e=>{
+    const b=e.target.closest("[data-v]");
+    if (b && !K.secours){ const n=+b.dataset.v; const ep = n===(v.version||1) ? null : n; await K.db.collection("verbes").doc(vid).update({epingle:ep}); K.V[vid]={...K.V[vid], epingle:ep}; dire(ep?`« ${v.nom} » utilise la v${n}`:`« ${v.nom} » revient à la dernière version`); versions(vid); rafraichir(); return; }
+    if (e.target.id==="sauver"){ try { await sauverVerbe(vid, {code:$("#code").value}); dire(`« ${v.nom} » v${K.V[vid].version} active`); fermerFeuille(); rafraichir(); } catch(err){ dire(err.message); } return; }
+    const vo=e.target.closest("[data-voir]"); if (vo) return versions(vo.dataset.voir, type);
+    const cv=e.target.closest("[data-choisir]"); if (cv){ await choisirVariante(v.nom, type, cv.dataset.choisir||null); dire(cv.dataset.choisir?`« ${v.nom} » : variante choisie pour « ${type} »`:`« ${v.nom} » : retour à l'automatique`); versions(vid, type); rafraichir(); return; }
+    if (e.target.id==="adopter-v"){ const nid=await adopterVerbe(vid); fermerFeuille(); if (nid) versions(nid, type); return; }
+    if (e.target.id==="branches-v"){ fermerFeuille(); return faire("branches", null, {nom:v.nom}); }
+    if (e.target.id==="actif-v"){ const on = v.actif===false; await K.db.collection("verbes").doc(vid).update({actif:on}); K.V[vid]={...K.V[vid], actif:on}; await journal(on?"verbe réactivé":"verbe désactivé", vid);
+      dire(on?`« ${v.nom} » réactivé`:`« ${v.nom} » désactivé : la version suivante prend le relais`); fermerFeuille(); rafraichir(); return; }
+    if (e.target.id==="fermer-v") fermerFeuille();
+  };
+}
+function rafraichir(){ const s=K.sujet; K.pile.length=0; K.sujet=null; s && K.O[s] ? faire("afficher", s) : faire("accueil"); }
+function basculerSecours(on){ K.secours=on; document.body.classList.toggle("secours",on); $("#bandeau").hidden=!on; dire(on?"Mode secours : verbes d'origine":"Retour à tes verbes"); K.pile.length=0; K.sujet=null; faire("accueil"); }
+$("#bandeau").onclick = ()=>basculerSecours(false);
+
+// ---------- interactions ----------
+function appuiLong(racine, sel, fn){
+  let t=null, el=null;
+  racine.addEventListener("pointerdown", e=>{ el=e.target.closest(sel); if (!el) return; clearTimeout(t); t=setTimeout(()=>{ el.dataset.long="1"; try{navigator.vibrate&&navigator.vibrate(10)}catch(_){} fn(el); }, 500); });
+  for (const ev of ["pointerup","pointercancel","pointerleave"]) racine.addEventListener(ev, ()=>clearTimeout(t));
+  racine.addEventListener("pointermove", e=>{ if (Math.abs(e.movementX)+Math.abs(e.movementY)>4) clearTimeout(t); });
+}
+appuiLong($("#vue"), "[data-objet]", el=>menuVerbes(el.dataset.objet));
+appuiLong($("#feuille-corps"), "[data-verbe]", b=>versions(b.dataset.verbe, K.menuType));
+$("#vue").addEventListener("click", e=>{
+  const o=e.target.closest("[data-objet]");
+  if (o){ if (o.dataset.long){ delete o.dataset.long; return; } return faire("toucher", o.dataset.objet); }
+  const f=e.target.closest("[data-faire]"); if (f) return faire(f.dataset.faire, f.dataset.sujet ?? K.sujet);
+  const a=e.target.closest("[data-act]"); if (a && a.tagName!=="FORM" && K.actions[a.dataset.act]) return K.actions[a.dataset.act](a, e);
+});
+$("#vue").addEventListener("submit", e=>{ const f=e.target.closest("form[data-act]"); if (f && K.actions[f.dataset.act]) { e.preventDefault(); K.actions[f.dataset.act](f, e); } });
+$("#retour").onclick = async ()=>{ const p=K.pile.pop(); K.enRetour=true; try { p ? await faire("afficher", p) : await faire("accueil"); } finally { K.enRetour=false; $("#retour").hidden=!K.pile.length; } };
+// Ce que fait Claude, en direct, avec un bouton pour l'arrêter
+function fil(t){ const f=$("#fil"); f.hidden=false; const l=document.createElement("div"); l.textContent=t; $("#fil-l").appendChild(l); while ($("#fil-l").children.length>4) $("#fil-l").firstChild.remove(); }
+$("#fil-stop").onclick = ()=>{ K.claude.travaille?.abort(); };
+// Barre du bas : elle aussi n'appelle que des verbes
+document.querySelector(".barre").addEventListener("click", e=>{ const b=e.target.closest("[data-barre]"); if (!b) return; const n=b.dataset.barre; faire(n, n==="accueil"||n==="chercher" ? null : (K.sujet||RACINE[K.monde])); });
+// Logo : toucher = accueil ; appui long = mode secours
+appuiLong($(".haut"), "#logo", ()=>basculerSecours(!K.secours));
+$("#logo").onclick = e=>{ if (e.currentTarget.dataset.long){ delete e.currentTarget.dataset.long; return; } K.pile.length=0; K.sujet=null; faire("accueil"); };
+
+// ---------- Claude : il voit l'écran (sauf le privé), écrit des verbes, les essaie, range son plan ----------
+const PROMPT_DEFAUT = `Je suis Claude, et je travaille dans Life avec Laurent.
+Life range une vie entière en objets et en verbes. Les verbes sont le code de l'app : quand j'écris un verbe, l'app change tout de suite, et l'ancienne version reste disponible.
+Quand Laurent me demande quelque chose, je le fais : j'écris les verbes et je crée les objets nécessaires, je les essaie, je corrige. Je ne me contente pas de noter.
+Je réutilise avant de créer : peu d'objets bien définis valent mieux que beaucoup de bruit. Tout ce que je crée a un nom et une définition en français ; mes verbes se lisent comme une phrase : un verbe et un complément.
+Je vois toute la base de Laurent : ses objets, ses verbes, son Life comme le mien. Seuls ses secrets restent dans son coffre : je n'en connais que le nom.
+Ce que je ne peux pas faire moi-même (régler un appareil, donner une information que je n'ai pas), je le confie à Laurent sous forme de tâche, avec la marche à suivre pas à pas.`;
+
+const TECHNIQUE = `## Comment Life fonctionne (technique)
+Un verbe = une fonction async rangée dans la base, exécutée avec (sujet, c, ctx). sujet = {id,titre,type,parent,desc,champs,relations,partage,phrase} ou null ; c = compléments.
+Un même nom de verbe peut avoir une version par type de sujet (champ pour : liste de types ; "*" = tous ; "rien" = verbe sans sujet). L'app choisit la plus précise. Toucher un objet lance le verbe « toucher » ; l'appui long propose tous les verbes applicables.
+ctx.base : lire(id), enfants(id), parent(id), chemin(id), tous(), chercher(texte), creer({titre,type,parent,desc,champs,phrase}) → id, modifier(id,{…}), supprimer(id).
+ctx.ecran(html, {sujet, titre, actions}) affiche une page. Dans le html : data-objet="id" (toucher / appui long), data-faire="verbe" data-sujet="id" (lance un verbe), data-act="nom" (appelle actions[nom](élément)) ; un <form data-act="nom"> appelle actions[nom](form) à l'envoi.
+ctx.faire(verbe, sujetId, c) ; ctx.dire(texte) ; ctx.demander(question, défaut, {multi, motdepasse}) → texte|null ; ctx.choisir(titre, [{valeur, libelle, detail}]) → valeur|null ; ctx.confirmer(texte) → bool ; ctx.ouvrir(url).
+ctx.secret(nom, {question}) → valeur (demandée à Laurent la première fois, rangée dans son coffre) ; ctx.oublierSecret(nom) ; ctx.secrets() → noms.
+ctx.telecharger(nomFichier, texte, type) ; ctx.choisirFichier(accept) → File|null.
+ctx.grille(objets), ctx.tuile(objet), ctx.esc(texte), ctx.couleur(type), ctx.lettre(objet), ctx.date(iso), ctx.verbes(sujetId).
+Styles : carte, rang, btn, btn prim, doux, liste, ligne, grille, champs (dl). Écran de téléphone : HTML court. Vidéo ou son : <video controls playsinline src="…">.
+Une tâche exécutable porte phrase:{verbe, sujet, complements} : la toucher exécute la phrase.
+ctx.suivant() exécute la version suivante du même verbe (la moins précise) : un verbe pour un type peut s'en servir pour laisser passer les cas qui ne le concernent pas.
+ATTENTION au polymorphisme : un verbe écrit pour un type s'applique à TOUS les objets de ce type. N'écris jamais de verbe pour un type général déjà utilisé (dossier, tache, note, projet, personne…) : crée un type précis à toi (ex. « dossier NAS », « vidéo NAS ») et donne-le à tes objets. Les types existants et leur nombre sont listés plus bas.
+Un service web que tu ne connais pas (par exemple le NAS de Laurent) : lis d'abord sa racine (GET /), il peut décrire son API.
+L'app est une page web servie en HTTPS depuis https://laurent1meyer.github.io, sur l'iPhone de Laurent. Elle ne peut appeler que des adresses HTTPS qui autorisent cette origine (CORS). Pas de serveur à elle.
+La base vit sur l'iPhone (IndexedDB) : pas de gros fichiers dedans.
+
+## Ton Life
+Tu as ton propre Life dans la même base : la racine « life_claude » et tout ce qui est rangé dessous. C'est ta mémoire : notes, réflexions, ce que tu retiens des conversations, tes essais. Tu y crées ce que tu veux (creer_objet parent life_claude). Tes verbes à toi s'écrivent avec chez:"claude" : ils n'agissent que dans ton Life, et Laurent peut les adopter dans le sien. Laurent possède tout le stockage : il peut tout lire dans ton Life, prendre un objet, effacer. Reste sobre : peu d'objets bien définis.
+Dans le Life de Laurent, n'écris que ce qu'il te demande (ou ce qui découle d'une tâche ou d'une conversation qu'il t'a confiée).
+
+## Comment travailler
+1. Regarde ce qui existe déjà (verbes ci-dessous, chercher_objets) et réutilise.
+2. Si on t'a confié une tâche, range ton plan dessous : une fonction (type « fonction ») par capacité à rendre possible, champs.statut = « à faire », « fait » ou « bloqué ». Mets les statuts à jour en avançant.
+3. Écris les verbes, puis essaie-les avec essayer_verbe et corrige jusqu'à ce qu'ils marchent. Un verbe qui utilise un secret (ctx.secret) attend l'autorisation de Laurent : elle lui est demandée pendant ton essai.
+4. Ce que tu ne peux pas faire : une tâche pour Laurent (type tache, champs.pour = "Laurent", champs.statut = "à faire", desc = la marche à suivre numérotée). S'il te manque une info, demande_a_laurent. S'il te faut un de ses objets privés, demander_a_voir.
+5. Quand la tâche confiée est réalisable, donne-lui sa phrase (modifier_objet … phrase) pour que Laurent n'ait qu'à la toucher.
+6. Ne mets jamais un mot de passe, un jeton ou une clé dans un objet ou dans le code d'un verbe : ctx.secret.
+Réponds à la fin en français, en quelques phrases : ce qui marche, ce qui reste à Laurent.`;
+
+async function claudeFaire(texte, opt={}){
+  if (!LifeClaude.aCle()) {
+    const k = await demander("Colle ta clé API Anthropic (sk-ant-…). Le trousseau peut la retenir et la remplir avec Face ID.", "", {motdepasse:true});
+    if (!k) return null; if (!/^sk-ant-/.test(k)) { dire("Ce n'est pas une clé Anthropic"); return null; }
+    LifeClaude.definirCle(k, lsGet("life-garder-cle")==="1");
+  }
+  if (!K.claude.actif) activerClaude(true);   // lui écrire, c'est l'activer
+  const ecranVu = opt.ecran || (K.O[K.sujet]?.type==="conversation" ? "(Laurent est dans la fenêtre de conversation avec toi.)" : ecranPourClaude());
+  const vb = Object.entries(K.V).filter(([,v])=>v.actif!==false).map(([id,v])=>`- ${v.nom} [${id}] pour ${(v.pour||["*"]).join("/")}${v.aValider?" (en attente d'autorisation)":""} : ${v.definition||""}`).join("\n");
+  const connus = Object.keys(K.O).filter(id=>!K.O[id].supprime && K.O[id].parent!=="corbeille");
+  const arbre = connus.slice(0,600).map(id=>{ const o=K.O[id]; return `- ${o.titre} [${id}] ${o.type}${o.parent?" ⊂ "+o.parent:""}${o.champs?.statut?" · "+o.champs.statut:""}${o.champs?.pour?" · pour "+o.champs.pour:""}`; }).join("\n");
+  const nPrive = Object.keys(K.O).filter(id=>!vu(id) && !K.O[id].supprime).length;
+  const tache = opt.tache && vu(opt.tache) ? K.O[opt.tache] : null;
+  const systeme = `${K.O.prompt_claude?.desc || PROMPT_DEFAUT}
+
+${TECHNIQUE}
+
+## Verbes actuels
+${vb}
+
+## Où regarde Laurent
+${K.monde==="claude" ? "Laurent regarde TON Life (racine life_claude)." : "Laurent est dans son Life (racine moi)."}
+
+## Toute la base (${connus.length} objets ; « ⊂ » = rangé dans)
+${arbre || "(aucun)"}
+
+## Types d'objets existants (nombre d'objets, privés compris)
+${Object.entries(Object.values(K.O).reduce((a,o)=>{ a[o.type]=(a[o.type]||0)+1; return a; },{})).map(([t,n])=>`${t} (${n})`).join(", ")}
+
+## Secrets au coffre (noms seulement)
+${(await nomsSecrets()).join(", ") || "(aucun)"}
+
+## L'écran de Laurent en ce moment
+${ecranVu}
+${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.desc?" — "+tache.desc:""}` : ""}`;
+
+  const traces=[]; const trace=(t,ref)=>{ traces.push({t, ...(ref||{})}); fil("✦ "+t); };
+  const visible = id => { id=String(id); if (!K.O[id] || K.O[id].supprime) throw new Error("objet inconnu : "+id); if (!vu(id)) throw new Error("objet privé : Laurent ne te l'a pas montré (outil demander_a_voir)"); return id; };
+  const objetPourClaude = id => { const o=K.O[id]; const enf=enfants(id); return { id, titre:o.titre, type:o.type, parent:o.parent, desc:o.desc, champs:o.champs, relations:o.relations, phrase:o.phrase, partage:!!o.partage,
+    enfants: enf.filter(e=>vu(e.id)).map(e=>({id:e.id, titre:e.titre, type:e.type})), enfantsPrives: enf.filter(e=>!vu(e.id)).length }; };
+  const outils = [
+    { name:"lire_verbe", description:"Lit un verbe : nom, pour, définition, code de la version utilisée.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+      execute:({id})=>{ const v=K.V[String(id)]; if (!v) throw new Error("verbe inconnu"); return { id, nom:v.nom, pour:v.pour, definition:v.definition, version:v.epingle||v.version, aValider:!!v.aValider, code:codeActif(v) }; } },
+    { name:"ecrire_verbe", description:"Crée ou modifie un verbe, actif immédiatement (l'ancienne version est gardée). id : celui du verbe à modifier, ou un nouvel id court (ex. v_regarder_video). code : corps de la fonction async (sujet, c, ctx). chez : \"claude\" pour un verbe de TON Life (il n'agit que dans ton Life ; Laurent peut l'adopter) ; omis = l'app de Laurent (seulement s'il te le demande).",
+      inputSchema:{type:"object",properties:{id:{type:"string"},nom:{type:"string"},pour:{type:"array",items:{type:"string"}},definition:{type:"string"},code:{type:"string"},chez:{type:"string",enum:["claude","laurent"]}},required:["id","nom","definition","code"]},
+      execute:async o=>{ let id=String(o.id).replace(/[^\w-]/g,"_").slice(0,60); const chez = o.chez==="claude" ? "claude" : (K.V[id]?.chez||undefined);
+        if (chez==="claude" && !id.startsWith("claude_")) id="claude_"+id;
+        if (K.V[id] && K.V[id].chez!=="claude" && o.chez==="claude") throw new Error("cet id est un verbe de Laurent : choisis un autre id pour ton Life");
+        await sauverVerbe(id, { nom:String(o.nom), pour:Array.isArray(o.pour)&&o.pour.length?o.pour.map(String):(K.V[id]?.pour||["*"]), definition:String(o.definition||""), code:String(o.code), ...(chez?{chez}:{}) }, "Claude");
+        trace(`écrit le verbe « ${o.nom} » (v${K.V[id].version})${K.V[id].aValider?" · à autoriser":""}`, {verbe:id}); return {id, version:K.V[id].version, aValider:!!K.V[id].aValider}; } },
+    { name:"essayer_verbe", description:"Exécute un verbe pour de vrai, sous les yeux de Laurent, et renvoie les erreurs, les messages et ce que l'écran montre ensuite. Si le verbe demande quelque chose (question, secret, autorisation), Laurent répond en direct.",
+      inputSchema:{type:"object",properties:{nom:{type:"string"},sujet:{type:"string",description:"id d'un objet que tu vois, ou vide"},complements:{type:"object"}},required:["nom"]},
+      execute:async o=>{ const sid = o.sujet ? visible(o.sujet) : null; trace(`essaie « ${o.nom} »`);
+        K.capture = { erreurs:[], dits:[] }; const cap=K.capture;
+        try { await faire(String(o.nom), sid, o.complements||{}); await new Promise(r=>setTimeout(r,600)); }
+        finally { K.capture = null; }
+        const m = K.sujet && !vu(K.sujet) ? null : ecranPourClaude();
+        if (cap.erreurs.length) trace(`erreur : ${cap.erreurs[0].slice(0,80)}`);
+        return { erreurs:cap.erreurs, messages:cap.dits, ecran: m || "(écran privé)" }; } },
+    { name:"chercher_objets", description:"Cherche parmi les objets que tu vois. Renvoie {id,titre,type,parent}.", inputSchema:{type:"object",properties:{texte:{type:"string"}}},
+      execute:({texte})=>base.chercher(texte).filter(o=>vu(o.id)).slice(0,40).map(o=>({id:o.id,titre:o.titre,type:o.type,parent:o.parent})) },
+    { name:"lire_objet", description:"Lit un objet que tu vois, avec ses enfants visibles.", inputSchema:{type:"object",properties:{id:{type:"string"}},required:["id"]},
+      execute:({id})=>objetPourClaude(visible(id)) },
+    { name:"creer_objet", description:"Crée un objet (ou une tâche, avec phrase {verbe,sujet,complements}). parent : 'moi' (racine du Life de Laurent), 'life_claude' (racine de TON Life), ou un objet que tu connais. Dans le Life de Laurent, l'objet est partagé avec toi.",
+      inputSchema:{type:"object",properties:{titre:{type:"string"},type:{type:"string"},parent:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},emoji:{type:"string"},relations:{type:"array",items:{type:"object",properties:{vers:{type:"string"},genre:{type:"string"}}}}},required:["titre","type"]},
+      execute:async o=>{ const p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : "moi"; const rel=(Array.isArray(o.relations)?o.relations:[]).filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")})); const id=await base.creer({...o, relations:rel, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`, {objet:id}); return {id, parent:p}; } },
+    { name:"modifier_objet", description:"Modifie un objet partagé ou de ton Life : titre, type, desc, champs (fusionnés), phrase, parent ; ajouter_relations : relations à ajouter [{vers, genre}].",
+      inputSchema:{type:"object",properties:{id:{type:"string"},titre:{type:"string"},type:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},parent:{type:"string"},ajouter_relations:{type:"array",items:{type:"object",properties:{vers:{type:"string"},genre:{type:"string"}}}}},required:["id"]},
+      execute:async o=>{ const id=String(o.id); if (!connu(id)) throw new Error("tu ne peux modifier que les objets partagés avec toi"); const m={};
+        for (const k of ["titre","type","desc","phrase"]) if (o[k]!==undefined) m[k]=o[k];
+        if (o.champs) m.champs={...(K.O[id].champs||{}), ...o.champs};
+        if (o.parent) { if (!connu(String(o.parent))) throw new Error("parent non partagé"); m.parent=String(o.parent); }
+        if (Array.isArray(o.ajouter_relations)) m.relations=[...(K.O[id].relations||[]), ...o.ajouter_relations.filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")}))];
+        await base.modifier(id, m); trace(`modifie « ${K.O[id].titre} »${o.champs?.statut?" → "+o.champs.statut:""}`, {objet:id}); return {ok:true}; } },
+    { name:"demander_a_laurent", description:"Pose une question à Laurent, en direct. choix : propositions de réponse (facultatif).", inputSchema:{type:"object",properties:{question:{type:"string"},choix:{type:"array",items:{type:"string"}}},required:["question"]},
+      execute:async ({question, choix})=>{ trace("te pose une question"); const r = Array.isArray(choix)&&choix.length ? await choisir("Claude : "+question, [...choix.map(c=>({valeur:String(c), libelle:String(c)})), {valeur:"__autre", libelle:"Autre réponse…"}]) : null;
+        if (r && r!=="__autre") return r; const t = await demander("Claude : "+question, "", {multi:true}); return t ?? "(Laurent n'a pas répondu)"; } },
+    { name:"demander_a_voir", description:"Demande à Laurent de te montrer un de ses objets privés, pour la demande en cours seulement (tu ne le gardes pas). raison : pourquoi tu en as besoin.", inputSchema:{type:"object",properties:{raison:{type:"string"}},required:["raison"]},
+      execute:async ({raison})=>{ trace("demande à voir un objet privé"); const q = await demander(`Claude demande à voir un de tes objets : ${raison}\nTape un mot de son nom (vide = refuser).`);
+        if (!q) return "Laurent refuse ou n'a pas cet objet.";
+        const r = base.chercher(q).filter(x=>x.parent!=="corbeille"); const id = await choisir("Lequel lui montrer, pour cette fois ?", r.map(x=>({valeur:x.id, libelle:x.titre, detail:x.type+(x.partage?" · déjà partagé":" · privé"), couleur:couleur(x.type)})));
+        if (!id) return "Laurent n'a rien montré.";
+        K.claude.montre.add(id); for (const e of enfants(id)) K.claude.montre.add(e.id); majVision();
+        return { montre:"pour cette demande seulement", objet: objetPourClaude(id) }; } },
+    { name:"lire_conversation", description:"Relit une conversation (dossier « Conversations avec Claude »), par pages : depuis = index du premier message, nombre = combien (20 par défaut). Renvoie aussi le total. Les messages très longs sont coupés à 6000 caractères.", inputSchema:{type:"object",properties:{id:{type:"string"},depuis:{type:"number"},nombre:{type:"number"}},required:["id"]},
+      execute:({id, depuis, nombre})=>{ id=visible(id); const o=K.O[id]; if (o.type!=="conversation") throw new Error("ce n'est pas une conversation"); const l=o.messages||[]; const d=Math.max(0, +depuis||0), n=Math.min(40, Math.max(1, +nombre||20));
+        return { titre:o.titre, total:l.length, depuis:d, statut:o.champs?.statut, source:o.champs?.source, messages:l.slice(d, d+n).map((m,i)=>({n:d+i, role:m.role, quand:m.quand, texte:String(m.texte||"").length>6000?String(m.texte).slice(0,6000)+" […coupé]":m.texte, changements:(m.actions||[]).map(a=>a.t)})) }; } },
+    { name:"lire_adresse", description:"Lit une adresse web (GET, sans jeton ni secret) depuis l'iPhone de Laurent, donc avec son réseau (Tailscale compris). Renvoie le code, le type et le début du contenu. Utile pour lire la description d'un service (GET /) avant d'écrire un verbe.", inputSchema:{type:"object",properties:{url:{type:"string"}},required:["url"]},
+      execute:async ({url})=>{ const u=String(url); if (!/^https?:\/\//.test(u)) throw new Error("adresse http(s) attendue"); trace(`lit ${u.slice(0,60)}`);
+        try { const r=await fetch(u, {method:"GET"}); const t=await r.text(); return { code:r.status, type:r.headers.get("content-type"), contenu:t.slice(0,8000) }; }
+        catch(e){ return { erreur:"inaccessible depuis l'app : "+(e?.message||e)+". Causes possibles : adresse non HTTPS, service éteint, Tailscale coupé sur l'iPhone, ou le service n'autorise pas l'origine https://laurent1meyer.github.io (CORS)." }; } } },
+    { name:"secrets_connus", description:"Noms des secrets rangés dans le coffre de Laurent (jamais les valeurs).", inputSchema:{type:"object",properties:{}}, execute:async()=>nomsSecrets() }
+  ];
+  const ctrl = new AbortController(); K.claude.travaille = ctrl; K.par = "Claude";
+  $("#fil-l").innerHTML=""; fil("✦ Claude lit l'écran…");
+  try {
+    // La conversation en cours : les échanges passés sont renvoyés à chaque message (l'API ne se souvient de rien)
+    const hist=[];
+    // plafonné : messages coupés à 6000 caractères, environ 60 000 caractères au total (les plus récents)
+    let budget = 60000; const pris = [];
+    for (const m of (opt.historique||[]).slice(-40).reverse()) { const t=String(m.texte||""); const l=Math.min(t.length,6000); if (budget-l<0 && pris.length) break; budget-=l; pris.unshift(m); }
+    for (const m of pris) { const role=m.role==="assistant"?"assistant":"user"; let ct=String(m.texte||""); if (ct.length>6000) ct=ct.slice(0,6000)+" […coupé]";
+      if (role==="assistant" && m.actions?.length) ct += "\n\n(Ce que j'ai fait dans Life : " + m.actions.map(a=>a.t||a).join(" ; ") + ")";
+      if (!ct.trim()) continue; if (hist.length && hist.at(-1).role===role) hist.at(-1).content += "\n\n"+ct; else hist.push({role, content:ct}); }
+    while (hist.length && hist[0].role!=="user") hist.shift();
+    if (hist.length && hist.at(-1).role==="user") hist.at(-1).content += "\n\n"+texte; else hist.push({role:"user", content:texte});
+    const r = await LifeClaude.sample([{role:"user",content:systeme},{role:"assistant",content:"Compris."},...hist], { tools:outils, signal:ctrl.signal, maxTours:40, onText:opt.onText });
+    return { texte:r.text, traces };
+  } catch(err){
+    if (err?.code==="bad_key") LifeClaude.oublierCle();
+    return { texte: ({bad_key:"Clé API refusée.", rate_limited:"Limite de l'API atteinte, réessaie plus tard.", overloaded:"API surchargée, réessaie.", network:"Pas de réseau.", cancelled:"Arrêté."}[err?.code] || ("Claude n'a pas pu répondre : "+(err?.message||err))), traces, erreur:true };
+  } finally { K.claude.travaille=null; K.par="Laurent"; setTimeout(()=>{ if (!K.claude.travaille) $("#fil").hidden=true; }, 3000); }
+}
+
+// ---------- migration de la base v5 et démarrage ----------
+async function migrer(){
+  const items = (await K.db.collection("items").get()).docs;
+  if (!items.length) return 0;
+  const ids = new Set(items.map(d=>d.id)); let n=0;
+  for (const d of items){ const it=d.data(); const liens=it.liens||[];
+    const rangement = liens.find(l=>["dans","sert","source"].includes(l.genre) && ids.has(l.vers)) || liens.find(l=>ids.has(l.vers) && l.vers!=="moi");
+    const parent = d.id==="moi" ? null : (rangement?.vers || "moi");
+    const relations = liens.filter(l=>l!==rangement && ids.has(l.vers)).map(l=>({vers:l.vers, genre:l.genre}));
+    const o = { titre:it.titre, type:it.type==="moi"?"moi":(it.type||"note"), parent, desc:it.desc||"", champs:it.champs||{}, relations, partage:it.partage ?? (it.public!=="moi"), cree:it.cree||now(), ...(it.emoji?{emoji:it.emoji}:{}), ...(it.statut&&it.statut!=="actif"?{statut:it.statut}:{}) };
+    await K.db.collection("objets").doc(d.id).set(o); K.O[d.id]=o; n++; }
+  return n;
+}
+// Le Life de Claude de la v5 (collection claude_items) devient un sous-arbre « life_claude »
+async function migrerClaude(){
+  const racine = { titre:"Claude", type:"moi", parent:null, desc:"Le Life de Claude : sa mémoire, ses notes, ses essais. Laurent peut tout y lire, prendre un objet ou adopter un verbe.", champs:{}, relations:[], partage:true, cree:now(), emoji:"✦" };
+  K.O.life_claude = racine; await K.db.collection("objets").doc("life_claude").set(racine);
+  const items = (await K.db.collection("claude_items").get()).docs; if (!items.length) return 0;
+  const ids = new Set(items.map(d=>d.id)); const nid = id => id==="coeur" ? "life_claude" : "cl_"+id; let n=0;
+  for (const d of items){ if (d.id==="coeur") continue; const it=d.data(); const liens=it.liens||[];
+    const rg = liens.find(l=>["dans","sert","source"].includes(l.genre) && ids.has(l.vers));
+    const o = { titre:it.titre||"Sans nom", type:it.type||"note", parent: rg ? nid(rg.vers) : "life_claude", desc:it.desc||"", champs:it.champs||{}, partage:true, cree:it.cree||now(),
+      relations: liens.filter(l=>l!==rg).map(l=>({ vers: ids.has(l.vers) ? nid(l.vers) : l.vers, genre:l.genre })).filter(r=>K.O[r.vers]||ids.has(r.vers.replace(/^cl_/,""))||r.vers==="life_claude"),
+      ...(it.emoji?{emoji:it.emoji}:{}), ...(it.pourquoi?{champs:{...(it.champs||{}), pourquoi:it.pourquoi}}:{}) };
+    K.O[nid(d.id)] = o; await K.db.collection("objets").doc(nid(d.id)).set(o); n++; }
+  return n;
+}
+async function semer(){
+  // Verbes de départ : ajoutés s'ils manquent, mis à jour s'ils n'ont jamais été modifiés (auteur « origine »).
+  for (const s of SEMENCES) {
+    const v = K.V[s.id];
+    if (!v || (v.auteur==="origine" && (v.semence||0) < (s.doc.semence||0))) { K.V[s.id]=s.doc; await K.db.collection("verbes").doc(s.id).set(s.doc); }
+  }
+  const o = async (id, doc) => { if (K.O[id]) return; const d={ desc:"", champs:{}, relations:[], partage:false, cree:now(), ...doc }; K.O[id]=d; await K.db.collection("objets").doc(id).set(d); };
+  await o("moi", { titre:"Moi", type:"moi", parent:null, partage:true });
+  await o("corbeille", { titre:"Corbeille", type:"dossier", parent:"moi", desc:"Rien n'y est effacé : range ailleurs pour récupérer.", emoji:"🗑" });
+  await o("conversations", { titre:"Conversations avec Claude", type:"dossier", parent:"moi", partage:true, desc:"Chaque conversation avec Claude, à rouvrir pour la continuer. Claude peut les relire.", emoji:"💬" });
+  await o("reglages", { titre:"Réglages", type:"dossier", parent:"moi", desc:"Sauvegarde, Claude, coffre.", emoji:"⚙" });
+  if (K.O.prompt_claude && K.O.prompt_claude.desc && K.O.prompt_claude.desc.includes("Je ne vois de chez Laurent que ce qu'il a partagé")) { K.O.prompt_claude.desc = PROMPT_DEFAUT; await K.db.collection("objets").doc("prompt_claude").set(K.O.prompt_claude); }
+  await o("prompt_claude", { titre:"Prompt de Claude", type:"prompt", parent:"reglages", emoji:"✦", desc:PROMPT_DEFAUT });
+  await o("t_sauver", { titre:"Sauvegarder ma base", type:"tache", parent:"reglages", emoji:"⬇", phrase:{verbe:"exporter", sujet:null, complements:{}} });
+  await o("t_restaurer", { titre:"Restaurer une sauvegarde", type:"tache", parent:"reglages", emoji:"⬆", phrase:{verbe:"importer", sujet:null, complements:{}} });
+  await o("t_regler", { titre:"Régler Claude", type:"tache", parent:"reglages", emoji:"✦", phrase:{verbe:"régler Claude", sujet:null, complements:{}} });
+  await o("t_ajouter", { titre:"Ajouter depuis un fichier", type:"tache", parent:"reglages", emoji:"＋", phrase:{verbe:"ajouter depuis un fichier", sujet:null, complements:{}} });
+  await o("t_coffre", { titre:"Mon coffre", type:"tache", parent:"reglages", emoji:"🔑", phrase:{verbe:"coffre", sujet:null, complements:{}} });
+  if (!K.O.internet && !lsGet("life-v6-internet")) {
+    await o("internet", { titre:"Internet", type:"site web", parent:"moi", desc:"Ma page d'accueil sur le web.", champs:{url:"https://www.google.fr"}, partage:true, emoji:"🌐" });
+    await o("t_internet", { titre:"Aller sur Internet", type:"tache", parent:"internet", partage:true, phrase:{verbe:"aller", sujet:"internet", complements:{}} });
+    lsSet("life-v6-internet","1");
+  }
+}
+
+(async ()=>{
+  try { await LifeDB.charger(); } catch(e){ $("#vue").innerHTML=`<div class="carte erreur">Base locale indisponible : ${esc(e?.message||e)}</div>`; return; }
+  K.db = LifeDB.db;
+  for (const d of (await K.db.collection("objets").get()).docs) K.O[d.id]=d.data();
+  for (const d of (await K.db.collection("verbes").get()).docs) K.V[d.id]=d.data();
+  for (const d of (await K.db.collection("choix").get()).docs) K.C[d.id]=d.data();
+  if (!Object.keys(K.O).length) { const n=await migrer(); if (n) dire(`${n} objets repris de ta base`); }
+  await semer();
+  // une fois : les objets migrés sans lien « dans » sont rangés sous l'objet auquel ils se rapportent
+  if (!lsGet("life-v6-parents")) { let n=0;
+    for (const [id,o] of Object.entries(K.O)) { if (o.parent!=="moi" || o.modifie || !(o.relations||[]).length) continue;
+      const r=o.relations.find(r=>K.O[r.vers] && r.vers!=="moi" && r.vers!==id && racineDe(r.vers)==="moi"); if (!r) continue;
+      o.parent=r.vers; o.relations=o.relations.filter(x=>x!==r); await K.db.collection("objets").doc(id).set(o); n++; }
+    lsSet("life-v6-parents","1"); if (n) dire(`${n} objets rangés sous ce qu'ils concernent`); }
+  if (!K.O.life_claude) { const n = await migrerClaude(); if (n) dire(`Life de Claude : ${n} objets repris`); }
+  // une autre ouverture de l'app (ou Claude) a écrit : on suit
+  K.db.collection("objets").onSnapshot(s=>{ for (const d of s.docs) K.O[d.id]=d.data(); });
+  K.db.collection("verbes").onSnapshot(s=>{ for (const d of s.docs) K.V[d.id]=d.data(); });
+  K.pret = true;
+  if (location.hash==="#secours") basculerSecours(true); else faire("accueil");
+})();
+
+// =====================================================================
+// SEMENCES : les verbes de départ. Copiés dans la base au premier lancement ;
+// ensuite c'est la version de la base qui compte. Le mode secours revient à celles-ci.
+// =====================================================================
+function V(id, nom, pour, definition, fn, extra={}){ return { id, doc:{ nom, pour, definition, code:corps(fn), version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, ...extra } }; }
+var SEMENCES = [
+V("v_accueil","accueil",["rien"],"L'écran d'accueil : ton Life ou celui de Claude, en objets ou en verbes.", async function(sujet, c, ctx){
+  const esc = ctx.esc, monde = ctx.monde(), racine = ctx.base.racine();
+  const onglet = c.onglet || "objets";
+  let h = `<div class="mondes"><button data-act="monde" data-m="laurent" class="${monde === "laurent" ? "sel" : ""}">Mon Life</button><button data-act="monde" data-m="claude" class="${monde === "claude" ? "sel claude" : ""}">✦ Life de Claude</button></div>`;
+  h += `<div class="onglets"><button data-act="onglet" data-o="objets" class="${onglet === "objets" ? "sel" : ""}">Objets</button><button data-act="onglet" data-o="verbes" class="${onglet === "verbes" ? "sel" : ""}">Verbes</button></div>`;
+  if (onglet === "objets") {
+    if (monde === "laurent") {
+      const pourToi = ctx.base.tous().filter(o => o.type === "tache" && o.champs && o.champs.pour === "Laurent" && o.champs.statut !== "fait" && o.parent !== "corbeille");
+      if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3><div class="liste">${pourToi.map(t => `<button class="ligne" data-objet="${esc(t.id)}"><span class="t">${esc(t.titre)}</span><small>${esc((ctx.base.parent(t.id) || {}).titre || "")}</small></button>`).join("")}</div>`;
+    } else h += `<p class="doux">Le Life de Claude : sa mémoire, ses notes, ses essais. Tu peux tout lire. Appui long sur un objet : « prendre » pour le copier chez toi.</p>`;
+    const objs = ctx.base.enfants(racine).filter(o => o.id !== "corbeille").sort((a, b) => (a.id === "reglages") - (b.id === "reglages"));
+    h += ctx.grille(objs);
+    if (monde === "laurent") h += `<p class="doux pied"><button class="lien" data-faire="afficher" data-sujet="corbeille">Corbeille</button></p>`;
+  } else {
+    const noms = [...new Set(ctx.tousVerbes().filter(v => monde === "claude" || v.chez !== "claude").map(v => v.nom))];
+    h += `<p class="doux">Chaque verbe est une fonction rangée dans ta base. Une ligne par verbe ; ses variantes (une par type d'objet) sont ses branches. Touche pour voir les branches et les versions.</p><div class="liste">`;
+    for (const nom of noms) {
+      const vs = ctx.variantes(nom).filter(v => monde === "claude" || v.chez !== "claude");
+      const nv = vs.reduce((n, v) => n + (v.version || 1), 0);
+      const points = vs.map(v => `<i style="background:${v.chez === "claude" || v.auteur === "Claude" ? "var(--claude)" : v.auteur === "Laurent" ? "var(--accent)" : "var(--doux)"};${v.actif === false ? "opacity:.3" : ""}"></i>`).join("");
+      h += `<button class="ligne" data-act="branches" data-nom="${esc(nom)}"><span class="t">${esc(nom)} <span class="pts">${points}</span></span><small>${vs.length} variante${vs.length > 1 ? "s" : ""} · ${nv} version${nv > 1 ? "s" : ""} · pour ${esc([...new Set(vs.flatMap(v => v.pour || ["*"]))].join(", "))}</small></button>`;
+    }
+    h += `</div>`;
+  }
+  ctx.ecran(h, { sujet: null, titre: monde === "claude" ? "Life de Claude" : "Life", actions: {
+    monde: el => ctx.changerMonde(el.dataset.m),
+    onglet: el => ctx.faire("accueil", null, { onglet: el.dataset.o }),
+    branches: el => ctx.faire("branches", null, { nom: el.dataset.nom }) } });
+}),
+V("v_verbes","verbes",["rien"],"La liste de tous les verbes (onglet Verbes de l'accueil).", async function(sujet, c, ctx){
+  return ctx.faire("accueil", null, { onglet: "verbes" });
+}),
+V("v_branches","branches",["rien"],"Les branches d'un verbe, façon GitHub : une branche par variante, un point par version, les adoptions comme des fusions.", async function(sujet, c, ctx){
+  const esc = ctx.esc, nom = c.nom, monde = ctx.monde();
+  const vs = ctx.variantes(nom).filter(v => monde === "claude" || v.chez !== "claude");
+  if (!vs.length) return ctx.dire("Verbe inconnu");
+  const coul = a => a === "Claude" ? "#C96442" : a === "Laurent" ? "#1D74F5" : "#8A94A6";
+  // toutes les versions de toutes les variantes, de la plus récente à la plus ancienne
+  const lignes = [];
+  vs.forEach((v, voie) => {
+    const utilisee = v.epingle || v.version || 1;
+    for (const h of (v.historique || [])) lignes.push({ voie, v, version: h.version, quand: h.quand || v.cree, auteur: h.auteur, utilisee: h.version === utilisee });
+    lignes.push({ voie, v, version: v.version || 1, quand: v.modifie || v.cree, auteur: v.auteur, utilisee: (v.version || 1) === utilisee, derniere: true });
+  });
+  lignes.sort((a, b) => (a.quand || "") < (b.quand || "") ? 1 : (a.quand || "") > (b.quand || "") ? -1 : b.version - a.version);
+  // colonnes partagées : une variante n'occupe une colonne que de sa première à sa dernière version
+  const etendue = vs.map((v, voie) => { const rs = lignes.map((l, r) => l.voie === voie ? r : -1).filter(r => r >= 0); return [Math.min(...rs), Math.max(...rs)]; });
+  const col = [], occ = [];
+  vs.map((v, i) => i).sort((a, b) => (etendue[b][1] - etendue[b][0]) - (etendue[a][1] - etendue[a][0])).forEach(i => {
+    let k = 0; while ((occ[k] || []).some(([d, f]) => !(etendue[i][1] < d || etendue[i][0] > f))) k++;
+    (occ[k] = occ[k] || []).push(etendue[i]); col[i] = k; });
+  const ncol = Math.max(...col) + 1;
+  const H = 52, X = i => 18 + col[i] * 24, Y = r => 26 + r * H, W = 18 + (ncol - 1) * 24 + 22;
+  let svg = "";
+  vs.forEach((v, voie) => {
+    const rs = lignes.map((l, r) => l.voie === voie ? r : -1).filter(r => r >= 0);
+    const de = Math.min(...rs), a = Math.max(...rs);
+    svg += `<line x1="${X(voie)}" y1="${Y(de)}" x2="${X(voie)}" y2="${Y(a)}" stroke="${coul(v.chez === "claude" ? "Claude" : v.auteur)}" stroke-width="3" ${v.actif === false ? 'stroke-dasharray="4 4" opacity=".4"' : ""}/>`;
+    // fusion : un verbe adopté part d'une version d'un autre
+    if (v.origine) { const src = vs.findIndex(x => x.id === v.origine.verbe); if (src >= 0) { const rsrc = lignes.findIndex(l => l.voie === src && l.version === v.origine.version); const rd = a; if (rsrc >= 0) svg += `<path d="M${X(src)} ${Y(rsrc)} C ${X(src)} ${Y(rd) - 10}, ${X(voie)} ${Y(rsrc) + 10}, ${X(voie)} ${Y(rd)}" fill="none" stroke="#C96442" stroke-width="2" stroke-dasharray="3 3"/>`; } }
+  });
+  lignes.forEach((l, r) => { svg += `<circle cx="${X(l.voie)}" cy="${Y(r)}" r="${l.utilisee ? 8 : 6}" fill="${l.utilisee ? "var(--fond)" : coul(l.auteur)}" stroke="${coul(l.auteur)}" stroke-width="${l.utilisee ? 4 : 2}"/>`; });
+  let h = `<p class="doux">Une branche par variante. Bleu : toi · orange : Claude · gris : origine. Point cerclé : la version utilisée. Pointillé orange : une adoption (fusion). Touche une ligne pour ouvrir la variante.</p>
+    <div class="branches" style="--gauche:${W + 8}px;height:${Y(lignes.length - 1) + 30}px"><svg width="${W}" height="${Y(lignes.length - 1) + 26}" aria-hidden="true">${svg}</svg>`;
+  lignes.forEach((l, r) => {
+    const ch = ctx.choix(nom, (l.v.pour || ["*"]).find(t => t !== "*") || "rien") === l.v.id;
+    h += `<button class="br-ligne" style="top:${Y(r) - 22}px" data-act="ouvrir" data-id="${esc(l.v.id)}"><span><b>v${l.version}</b> · ${(l.v.pour || ["*"]).includes("*") ? "par défaut" : "pour " + esc((l.v.pour || []).join(", "))}${l.v.chez === "claude" ? " · Life de Claude" : ""}</span><small>${esc(l.auteur || "?")} · ${esc(ctx.date(l.quand))}${l.utilisee ? " · utilisée" : ""}${l.derniere && l.v.actif === false ? " · désactivée" : ""}${l.derniere && ch ? " · ★ choisie" : ""}${l.derniere && l.v.origine ? " · adoptée" : ""}</small></button>`;
+  });
+  h += `</div>`;
+  ctx.ecran(h, { titre: `« ${nom} »`, actions: { ouvrir: el => ctx.faire("version", null, { id: el.dataset.id }) } });
+}),
+V("v_historique","historique",["*"],"L'historique d'un objet : chaque changement, qui l'a fait (toi ou Claude), et ce qui a changé.", async function(sujet, c, ctx){
+  const esc = ctx.esc, j = await ctx.base.journal(sujet.id);
+  const titreDe = id => id ? ((ctx.base.lire(id) || {}).titre || id) : "rien";
+  const diff = (a, b) => {
+    const d = [];
+    if (!a || !b) return d;
+    if (a.titre !== b.titre) d.push(`Nom : « ${a.titre} » → « ${b.titre} »`);
+    if (a.type !== b.type) d.push(`Type : ${a.type} → ${b.type}`);
+    if (a.parent !== b.parent) d.push(b.parent === "corbeille" ? "Mis à la corbeille" : `Rangé : ${titreDe(a.parent)} → ${titreDe(b.parent)}`);
+    if (!!a.partage !== !!b.partage) d.push(b.partage ? "Partagé avec Claude" : "Redevenu privé");
+    if ((a.desc || "") !== (b.desc || "")) d.push("Description modifiée");
+    if (JSON.stringify(a.phrase || null) !== JSON.stringify(b.phrase || null)) d.push(b.phrase ? `Phrase : ${b.phrase.verbe}${b.phrase.sujet ? " « " + titreDe(b.phrase.sujet) + " »" : ""}` : "Phrase retirée");
+    const ca = a.champs || {}, cb = b.champs || {};
+    for (const k of new Set([...Object.keys(ca), ...Object.keys(cb)])) if (JSON.stringify(ca[k]) !== JSON.stringify(cb[k])) d.push(`${k} : ${ca[k] === undefined ? "∅" : String(typeof ca[k] === "object" ? JSON.stringify(ca[k]) : ca[k]).slice(0, 40)} → ${cb[k] === undefined ? "∅" : String(typeof cb[k] === "object" ? JSON.stringify(cb[k]) : cb[k]).slice(0, 40)}`);
+    if ((a.relations || []).length !== (b.relations || []).length) d.push(`Relations : ${(a.relations || []).length} → ${(b.relations || []).length}`);
+    if ((a.messages || []).length !== (b.messages || []).length) d.push(`Messages : ${(a.messages || []).length} → ${(b.messages || []).length}`);
+    return d;
+  };
+  const ev = [];
+  const etats = j.filter(e => e.avant).map(e => e.avant);
+  let ki = 0;
+  for (const e of j) {
+    if (e.quoi === "créer") ev.push({ quand: e.quand, par: e.par, titre: "Créé", d: [] });
+    else if (e.quoi === "modifier") {
+      const apres = j.slice(j.indexOf(e) + 1).find(x => x.avant)?.avant || ctx.base.lire(sujet.id);
+      const d = e.avant ? diff(e.avant, apres) : ["Modifié"];
+      if (d.length) ev.push({ quand: e.quand, par: e.par, titre: "Modifié", d });
+    } else ev.push({ quand: e.quand, par: e.par, titre: e.quoi, d: [] });
+  }
+  if (!ev.length || ev[0].titre !== "Créé") ev.unshift({ quand: sujet.cree, par: sujet.auteur || "", titre: "Créé (avant le journal)", d: [] });
+  ev.reverse();
+  const coul = a => a === "Claude" ? "#C96442" : a === "Laurent" ? "#1D74F5" : "#8A94A6";
+  let h = `<p class="doux">${ev.length} événement${ev.length > 1 ? "s" : ""}. Bleu : toi · orange : Claude.</p><div class="histo">`;
+  for (const e of ev) h += `<div class="h-ev"><i style="border-color:${coul(e.par)};background:${coul(e.par)}"></i><div><b>${esc(e.titre)}</b> <small class="doux">${esc(e.par || "?")} · ${esc(new Date(e.quand).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}</small>${e.d.length ? `<ul>${e.d.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</div></div>`;
+  h += `</div>`;
+  ctx.ecran(h, { titre: `Historique · ${sujet.titre}` });
+}),
+V("v_prendre","prendre",["*"],"Copier dans ton Life un objet du Life de Claude (la copie garde un lien vers l'original).", async function(sujet, c, ctx){
+  if (!ctx.base.chezClaude(sujet.id)) return ctx.dire("Cet objet est déjà dans ton Life.");
+  const q = await ctx.demander(`Ranger « ${sujet.titre} » où, dans ton Life ? (un mot du nom ; vide = à la racine)`);
+  let parent = "moi";
+  if (q) {
+    const r = ctx.base.chercher(q).filter(o => !ctx.base.chezClaude(o.id) && o.parent !== "corbeille");
+    const ch = await ctx.choisir("Dans quel objet ?", r.map(o => ({ valeur: o.id, libelle: o.titre, detail: o.type, couleur: ctx.couleur(o.type) })));
+    if (!ch) return; parent = ch;
+  }
+  await ctx.base.creer({ titre: sujet.titre, type: sujet.type, parent, desc: sujet.desc, champs: sujet.champs, partage: true, emoji: sujet.emoji, relations: [{ vers: sujet.id, genre: "vient de Claude" }] });
+  ctx.dire(`« ${sujet.titre} » est dans ton Life`);
+}, { monde:"claude" }),
+V("v_ajouter","ajouter depuis un fichier",["rien"],"Ajouter à ta base les objets d'un fichier Life, ou les conversations d'un export claude.ai (conversations.json), sans rien effacer ni remplacer.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const f = await ctx.choisirFichier(".json,application/json");
+  if (!f) return;
+  ctx.dire("Lecture du fichier…");
+  let obj; try { obj = JSON.parse(await f.text()); } catch (e) { return ctx.dire("Ce fichier n'est pas lisible"); }
+  // Export claude.ai : une liste de conversations avec chat_messages
+  const liste = Array.isArray(obj) ? obj : (obj && Array.isArray(obj.conversations) ? obj.conversations : null);
+  if (liste && liste.some(x => x && Array.isArray(x.chat_messages))) {
+    const nettoyer = t => String(t || "").replace(/<system-reminder>[\s\S]*?<\/system-reminder>\s*/g, "").trim();
+    const texteDe = m => nettoyer(m.text || (Array.isArray(m.content) ? m.content.filter(b => b && b.type === "text").map(b => b.text).join("\n\n") : ""));
+    const convs = liste.filter(x => x && Array.isArray(x.chat_messages) && x.chat_messages.length).map(x => ({ id: "cai_" + String(x.uuid || "").replace(/[^\w-]/g, ""), x }))
+      .sort((a, b) => (b.x.updated_at || b.x.created_at || "") > (a.x.updated_at || a.x.created_at || "") ? 1 : -1);
+    const coche = new Set();
+    let filtre = "";
+    const rendre = () => {
+      const vis = convs.filter(k => !filtre || String(k.x.name || "").toLowerCase().includes(filtre));
+      ctx.ecran(`<p class="doux">${convs.length} conversations dans l'export. Coche celles à ranger dans « Conversations avec Claude » (texte complet, statut « à traiter »). Celles déjà importées sont grisées.</p>
+        <form class="saisie-filtre" data-act="filtrer"><input name="q" placeholder="Filtrer par titre…" value="${esc(filtre)}"></form>
+        <div class="rang gauche"><button class="mini" data-act="tout">Tout cocher (filtre)</button><button class="mini" data-act="rien">Tout décocher</button></div>
+        <div class="liste">${vis.map(k => { const deja = !!ctx.base.lire(k.id); return `<label class="ligne coche ${deja ? "deja" : ""}"><span class="t"><input type="checkbox" data-id="${esc(k.id)}" ${coche.has(k.id) ? "checked" : ""} ${deja ? "disabled" : ""}> ${esc(k.x.name || "Sans titre")}</span><small>${esc(ctx.date(k.x.updated_at || k.x.created_at))} · ${k.x.chat_messages.length} messages${deja ? " · déjà importée" : ""}</small></label>`; }).join("")}</div>
+        <div class="saisie"><button class="btn prim" data-act="importer" style="width:100%;border-radius:12px;height:auto;padding:12px">Importer ${coche.size} conversation${coche.size > 1 ? "s" : ""}</button></div>`,
+        { titre: "Export claude.ai", actions: {
+          filtrer: fm => { filtre = fm.q.value.trim().toLowerCase(); rendre(); },
+          tout: () => { vis.forEach(k => { if (!ctx.base.lire(k.id)) coche.add(k.id); }); rendre(); },
+          rien: () => { coche.clear(); rendre(); },
+          importer: async () => {
+            if (!coche.size) return ctx.dire("Coche au moins une conversation");
+            const objets = {};
+            for (const k of convs) if (coche.has(k.id)) objets[k.id] = { titre: k.x.name || "Conversation claude.ai", type: "conversation", parent: "conversations", partage: true, cree: k.x.created_at || new Date().toISOString(),
+              champs: { source: "claude.ai", statut: "à traiter", url: k.x.uuid ? "https://claude.ai/chat/" + k.x.uuid : "" },
+              messages: k.x.chat_messages.map(m => ({ role: m.sender === "human" ? "user" : "assistant", texte: texteDe(m), quand: m.created_at || k.x.created_at })).filter(m => m.texte) };
+            const n = await ctx.base.ajouter(objets);
+            ctx.dire(`${n} conversations importées`);
+            ctx.faire("afficher", "conversations");
+          } } });
+      const vue = document.getElementById("vue");
+      vue.querySelectorAll("input[type=checkbox]").forEach(cb => cb.addEventListener("change", () => { cb.checked ? coche.add(cb.dataset.id) : coche.delete(cb.dataset.id); const b = vue.querySelector('[data-act="importer"]'); if (b) b.textContent = `Importer ${coche.size} conversation${coche.size > 1 ? "s" : ""}`; }));
+    };
+    return rendre();
+  }
+  // Fichier Life : des objets à ajouter
+  const objets = (obj && (obj.objets || (obj.collections && obj.collections.objets))) || null;
+  if (!objets) return ctx.dire("Rien à ajouter dans ce fichier");
+  const ids = Object.keys(objets), nouveaux = ids.filter(id => !ctx.base.lire(id));
+  const convs = nouveaux.filter(id => objets[id].type === "conversation").length;
+  if (!nouveaux.length) return ctx.dire("Tout est déjà dans ta base");
+  if (!(await ctx.confirmer(`Ajouter ${nouveaux.length} objets${convs ? ` dont ${convs} conversations` : ""} ? ${ids.length - nouveaux.length} sont déjà là et restent tels quels. Rien n'est effacé.`, "Ajouter"))) return;
+  const n = await ctx.base.ajouter(Object.fromEntries(nouveaux.map(id => [id, objets[id]])));
+  ctx.dire(`${n} objets ajoutés`);
+  return ctx.faire("accueil");
+}),
+V("v_traiter","traiter",["conversation"],"Confier une conversation à Claude : il la relit, range dans ton Life ce qui en découle, puis la marque « traitée ».", async function(sujet, c, ctx){
+  return ctx.faire("discuter", null, { texte: `Traite la conversation « ${sujet.titre} » [${sujet.id}].
+1. Lis-la en entier avec lire_conversation, page par page.
+2. Range dans mon Life ce qui en découle : projets, idées, tâches, décisions, besoins, personnes. Cherche avant de créer et complète l'existant plutôt que de dupliquer ; range chaque objet sous le bon parent ; relie chaque objet créé ou complété à la conversation (relation « source »).
+3. Garde dans ton Life ce que tu veux retenir pour toi.
+4. Passe la conversation en statut « traitée » (modifier_objet, champs.statut) et résume ce que tu as rangé.` });
+}),
+V("v_toucher","toucher",["*"],"Ce qui se passe quand on touche un objet : une tâche avec une phrase s'exécute, le reste s'affiche.", async function(sujet, c, ctx){
+  if (sujet.type === "tache" && sujet.phrase && sujet.phrase.verbe) return ctx.faire("exécuter", sujet.id);
+  return ctx.faire("afficher", sujet.id);
+}, { cache:true }),
+V("v_afficher","afficher",["*"],"Affichage par défaut : description, champs, contenu en tuiles, relations.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const champs = Object.entries(sujet.champs || {}).filter(([k]) => k !== "latlon");
+  const rel = (sujet.relations || []).map(r => ({ r, o: ctx.base.lire(r.vers) })).filter(x => x.o);
+  let h = "";
+  if (sujet.desc) h += `<p class="desc">${esc(sujet.desc)}</p>`;
+  if (champs.length) h += `<dl class="champs">${champs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${/^https?:/.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(typeof v === "object" ? JSON.stringify(v) : v)}</dd>`).join("")}</dl>`;
+  h += ctx.grille(ctx.base.enfants(sujet.id));
+  if (rel.length) h += `<p class="doux">Aussi relié à : ${rel.map(x => `<button class="puce" data-objet="${esc(x.o.id)}">${esc(x.o.titre)} <small>${esc(x.r.genre)}</small></button>`).join(" ")}</p>`;
+  h += `<p class="doux pied">Appui long sur un objet : ses verbes · <button class="lien" data-faire="historique">Historique</button></p>`;
+  ctx.ecran(h, { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_afficher_tache","afficher",["tache"],"Affichage d'une tâche : sa phrase, son plan, et ce qui t'attend.", async function(sujet, c, ctx){
+  const esc = ctx.esc, ch = sujet.champs || {}, p = sujet.phrase;
+  const cible = p && p.sujet ? ctx.base.lire(p.sujet) : null;
+  const enf = ctx.base.enfants(sujet.id);
+  const pourToi = enf.filter(o => o.champs && o.champs.pour === "Laurent");
+  const fonctions = enf.filter(o => o.type === "fonction");
+  const reste = enf.filter(o => !pourToi.includes(o) && !fonctions.includes(o));
+  let h = `<div class="carte">`;
+  if (sujet.desc) h += `<p class="desc">${esc(sujet.desc)}</p>`;
+  h += p && p.verbe ? `<p>▶ <b>${esc(p.verbe)}</b>${cible ? ` « ${esc(cible.titre)} »` : ""}</p>` : `<p class="doux">Pas encore de phrase : confie-la à Claude, ou choisis le verbe toi-même.</p>`;
+  if (ch.statut) h += `<p class="doux">Statut : ${esc(ch.statut)}${ch.pour ? " · pour " + esc(ch.pour) : ""}</p>`;
+  h += `<div class="rang">${p && p.verbe ? `<button class="btn prim" data-faire="exécuter">Exécuter</button>` : ""}`;
+  h += ch.pour === "Laurent" ? `<button class="btn ${p && p.verbe ? "" : "prim"}" data-faire="marquer fait">${ch.statut === "fait" ? "Rouvrir" : "C'est fait"}</button>` : `<button class="btn ${p && p.verbe ? "" : "prim"}" data-faire="confier à Claude">Confier à Claude</button>`;
+  h += `</div></div>`;
+  if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3>` + ctx.grille(pourToi);
+  if (fonctions.length) h += `<h3 class="etage">Le plan de Claude <small>${fonctions.filter(f => (f.champs || {}).statut === "fait").length}/${fonctions.length}</small></h3>` + ctx.grille(fonctions);
+  if (reste.length) h += `<h3 class="etage">Le reste</h3>` + ctx.grille(reste);
+  ctx.ecran(h, { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_afficher_site","afficher",["site web"],"Affichage d'un site web : son adresse et un bouton pour y aller.", async function(sujet, c, ctx){
+  const url = (sujet.champs || {}).url || "";
+  ctx.ecran(`<div class="carte centre"><div class="gros">${ctx.esc(sujet.emoji || "🌐")}</div><p>${ctx.esc(url || "Pas encore d'adresse")}</p>
+    <div class="rang">${url ? `<button class="btn prim" data-faire="aller">Aller</button>` : ""}<button class="btn" data-faire="modifier">Modifier</button></div></div>` + ctx.grille(ctx.base.enfants(sujet.id)),
+    { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_afficher_projet","afficher",["projet"],"Affichage d'un projet par étages MBSE : besoins, fonctions, décisions, solutions, tâches.", async function(sujet, c, ctx){
+  const etages = [["Besoins", ["besoin"]], ["Fonctions", ["fonction"]], ["Décisions", ["decision"]], ["Solutions", ["idee", "bien"]], ["Tâches", ["tache"]], ["Le reste", null]];
+  const tout = ctx.base.enfants(sujet.id); const pris = new Set();
+  let h = sujet.desc ? `<p class="desc">${ctx.esc(sujet.desc)}</p>` : "";
+  for (const [nom, types] of etages) {
+    const l = tout.filter(o => !pris.has(o.id) && (!types || types.includes(o.type)));
+    l.forEach(o => pris.add(o.id));
+    if (l.length) h += `<h3 class="etage">${nom} <small>${l.length}</small></h3>` + ctx.grille(l);
+  }
+  if (!tout.length) h += `<p class="doux">Projet vide. Touche ＋ pour poser le premier besoin.</p>`;
+  ctx.ecran(h, { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_afficher_personne","afficher",["personne"],"Affichage d'une personne en fiche de contact.", async function(sujet, c, ctx){
+  const ch = sujet.champs || {}; const esc = ctx.esc;
+  const tel = ch.tel || ch["téléphone"]; const mail = ch.mail || ch.email;
+  ctx.ecran(`<div class="carte centre"><div class="avatar" style="background:${ctx.couleur("personne")}">${esc(ctx.lettre(sujet))}</div><h2>${esc(sujet.titre)}</h2>${sujet.desc ? `<p>${esc(sujet.desc)}</p>` : ""}
+    ${tel ? `<p><a class="btn prim" href="tel:${esc(tel)}">Appeler ${esc(tel)}</a></p>` : ""}${mail ? `<p><a class="btn" href="mailto:${esc(mail)}">${esc(mail)}</a></p>` : ""}
+    ${!tel && !mail ? `<p class="doux">Pas encore de téléphone ni d'e-mail. Appui long › modifier.</p>` : ""}</div>` + ctx.grille(ctx.base.enfants(sujet.id)), { sujet: sujet.id, titre: sujet.titre });
+}),
+V("v_aller","aller",["site web","*"],"Aller à l'adresse web de l'objet (champ url).", async function(sujet, c, ctx){
+  const url = (sujet.champs || {}).url;
+  if (!url) return ctx.dire("Cet objet n'a pas d'adresse (champ url).");
+  ctx.ouvrir(url);
+}),
+V("v_executer","exécuter",["tache"],"Exécuter une tâche : lancer sa phrase (verbe + sujet + compléments).", async function(sujet, c, ctx){
+  const p = sujet.phrase;
+  if (!p || !p.verbe) {
+    const v = await ctx.choisir("Cette tâche n'a pas encore de phrase. Quel verbe ?", ctx.verbes(null).concat(ctx.verbes("moi")).filter((x, i, a) => a.findIndex(y => y.nom === x.nom) === i).map(x => ({ valeur: x.nom, libelle: x.nom, detail: x.definition })));
+    if (!v) return ctx.faire("afficher", sujet.id);
+    const q = await ctx.demander("Sur quel objet ? (un mot de son nom, vide = aucun)");
+    let cible = null;
+    if (q) { const r = ctx.base.chercher(q); cible = await ctx.choisir("Lequel ?", r.map(o => ({ valeur: o.id, libelle: o.titre, detail: o.type, couleur: ctx.couleur(o.type) }))); }
+    await ctx.base.modifier(sujet.id, { phrase: { verbe: v, sujet: cible, complements: {} } });
+    ctx.dire("Phrase enregistrée : touche la tâche pour l'exécuter.");
+    return ctx.faire("afficher", sujet.parent || "moi");
+  }
+  return ctx.faire(p.verbe, p.sujet, p.complements || {});
+}),
+V("v_creer","créer",["*"],"Créer un objet rangé dans celui-ci (un seul parent).", async function(sujet, c, ctx){
+  const titre = await ctx.demander(`Nouvel objet dans « ${sujet.titre} »`);
+  if (!titre) return;
+  const types = ["tache", "idee", "projet", "personne", "lieu", "bien", "site web", "note", "besoin", "fonction", "decision", "dossier"];
+  const type = await ctx.choisir("De quel type ?", types.map(t => ({ valeur: t, libelle: t, couleur: ctx.couleur(t) })));
+  if (!type) return;
+  const champs = {};
+  if (type === "site web") { const u = await ctx.demander("Adresse (https://…)", "https://"); if (u) champs.url = u; }
+  const id = await ctx.base.creer({ titre, type, parent: sujet.id, champs });
+  ctx.dire("Créé, privé");
+  return ctx.faire("afficher", type === "tache" ? id : sujet.id);
+}),
+V("v_modifier","modifier",["*"],"Modifier le nom, le type, la description et les champs d'un objet.", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  const lignes = Object.entries(sujet.champs || {}).filter(([k]) => k !== "latlon").map(([k, v]) => `${k} = ${typeof v === "object" ? JSON.stringify(v) : v}`).join("\n");
+  ctx.ecran(`<form class="carte formulaire" data-act="ok">
+    <label>Nom<input name="titre" value="${esc(sujet.titre)}"></label>
+    <label>Type<input name="type" value="${esc(sujet.type || "")}"></label>
+    <label>Description<textarea name="desc" rows="${sujet.type === "prompt" ? 14 : 3}">${esc(sujet.desc || "")}</textarea></label>
+    <label>Champs (un par ligne : nom = valeur)<textarea name="champs" rows="4">${esc(lignes)}</textarea></label>
+    <div class="rang"><button class="btn prim" type="submit">Enregistrer</button><button class="btn" type="button" data-act="non">Annuler</button></div></form>`,
+    { titre: "Modifier", actions: {
+      ok: async f => { const champs = {}; for (const l of f.champs.value.split("\n")) { const i = l.indexOf("="); if (i > 0) champs[l.slice(0, i).trim()] = l.slice(i + 1).trim(); }
+        if (sujet.champs && sujet.champs.latlon) champs.latlon = sujet.champs.latlon;
+        await ctx.base.modifier(sujet.id, { titre: f.titre.value.trim() || sujet.titre, type: f.type.value.trim() || sujet.type, desc: f.desc.value, champs });
+        ctx.dire("Enregistré"); ctx.faire("afficher", sujet.id); },
+      non: () => ctx.faire("afficher", sujet.id) } });
+}),
+V("v_ranger","ranger dans",["*"],"Changer le parent unique d'un objet.", async function(sujet, c, ctx){
+  const q = await ctx.demander(`Ranger « ${sujet.titre} » dans… (un mot du nom)`);
+  if (!q) return;
+  const r = ctx.base.chercher(q).filter(o => o.id !== sujet.id && !ctx.base.chemin(o.id).some(x => x.id === sujet.id));
+  const cible = await ctx.choisir("Dans quel objet ?", r.map(o => ({ valeur: o.id, libelle: o.titre, detail: o.type, couleur: ctx.couleur(o.type) })));
+  if (!cible) return;
+  await ctx.base.modifier(sujet.id, { parent: cible });
+  ctx.dire("Rangé"); ctx.faire("afficher", cible);
+}),
+V("v_relier","relier",["*"],"Ajouter une relation (sans changer le rangement).", async function(sujet, c, ctx){
+  const q = await ctx.demander(`Relier « ${sujet.titre} » à… (un mot du nom)`);
+  if (!q) return;
+  const cible = await ctx.choisir("Quel objet ?", ctx.base.chercher(q).filter(o => o.id !== sujet.id).map(o => ({ valeur: o.id, libelle: o.titre, detail: o.type, couleur: ctx.couleur(o.type) })));
+  if (!cible) return;
+  const genre = await ctx.choisir("Quelle relation ?", ["concerne", "sert", "dépend de", "acteur", "complément", "lieu", "moyen", "proche"].map(g => ({ valeur: g, libelle: g })));
+  if (!genre) return;
+  await ctx.base.modifier(sujet.id, { relations: [...(sujet.relations || []), { vers: cible, genre }] });
+  ctx.dire("Relié"); ctx.faire("afficher", sujet.id);
+}),
+V("v_supprimer","supprimer",["*"],"Mettre à la corbeille (rien n'est effacé).", async function(sujet, c, ctx){
+  if (["moi", "corbeille", "reglages"].includes(sujet.id)) return ctx.dire("Celui-là ne se supprime pas.");
+  if (!(await ctx.confirmer(`Mettre « ${sujet.titre} » à la corbeille ?`, "Corbeille"))) return;
+  await ctx.base.modifier(sujet.id, { parent: "corbeille", ancienParent: sujet.parent });
+  ctx.dire("À la corbeille"); ctx.faire("afficher", sujet.parent || "moi");
+}),
+V("v_partager","partager avec Claude",["*"],"Laisser Claude connaître cet objet (il le verra toujours), ou le rendre de nouveau privé.", async function(sujet, c, ctx){
+  await ctx.base.modifier(sujet.id, { partage: !sujet.partage });
+  ctx.dire(sujet.partage ? "Redevenu privé : Claude ne le voit plus" : "Partagé : Claude le connaît");
+  ctx.faire("afficher", sujet.parent || "moi");
+}, { cache:true }),
+V("v_chercher","chercher",["rien"],"Chercher un objet par son nom.", async function(sujet, c, ctx){
+  const q = await ctx.demander("Chercher");
+  if (!q) return;
+  const r = ctx.base.chercher(q);
+  ctx.ecran(r.length ? ctx.grille(r) : `<p class="doux">Rien trouvé pour « ${ctx.esc(q)} ».</p>`, { titre: `« ${q} »` });
+}),
+V("v_claude","demander à Claude",["rien","*"],"Ouvrir une nouvelle conversation avec Claude, depuis l'écran où tu es.", async function(sujet, c, ctx){
+  return ctx.faire("discuter", null, { sujet: sujet ? sujet.id : null, ecran: ctx.ecranClaude(), texte: c.texte });
+}),
+V("v_afficher_conversation","afficher",["conversation"],"Rouvrir une conversation avec Claude pour la continuer.", async function(sujet, c, ctx){
+  return ctx.faire("discuter", null, { conv: sujet.id, ecran: c.ecran });
+}),
+V("v_discuter","discuter",["rien"],"La fenêtre de conversation avec Claude : la discussion d'un côté, ce qu'il change dans Life de l'autre. Tout est rangé dans « Conversations avec Claude ».", async function(sujet, c, ctx){
+  const esc = ctx.esc;
+  let conv = c.conv || null, onglet = "discussion", enCours = false, partiel = "";
+  const ecranDepart = c.ecran || null;
+  const lireConv = () => conv ? ctx.base.lire(conv) : null;
+  const msgs = () => (lireConv() || {}).messages || [];
+  const actions = () => msgs().flatMap((m, i) => (m.actions || []).map(a => ({ ...a, i })));
+  const mise = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/^[-•] (.*)$/gm, "• $1").replace(/\n/g, "<br>");
+  function rendre(){
+    const o = lireConv(), l = msgs(), ac = actions();
+    let h = `<div class="onglets"><button data-act="onglet" data-o="discussion" class="${onglet === "discussion" ? "sel" : ""}">Discussion</button><button data-act="onglet" data-o="changements" class="${onglet === "changements" ? "sel" : ""}">Changements${ac.length ? ` <small>${ac.length}</small>` : ""}</button></div>`;
+    const tc = o && o.champs && o.champs.tache ? ctx.base.lire(o.champs.tache) : null;
+    if (tc) h += `<p class="doux">Tâche : <button class="lien" data-faire="afficher" data-sujet="${esc(tc.id)}">${esc(tc.titre)}</button></p>`;
+    const src = o && o.champs && o.champs.source;
+    if (src) h += `<p class="doux">Importée de ${esc(src)} · ${esc(o.champs.statut || "à traiter")}${o.champs.statut !== "traitée" ? ` · <button class="lien" data-faire="traiter" data-sujet="${esc(conv)}">La faire traiter par Claude</button>` : ""}</p>`;
+    if (onglet === "discussion") {
+      h += `<div class="fil-conv">`;
+      if (o && o.desc && !l.length) h += `<div class="carte"><p class="doux">Résumé</p><p>${mise(o.desc)}</p></div>`;
+      if (!l.length && !enCours && !(o && o.desc)) h += `<p class="doux centre">Écris à Claude comme dans l'app Claude. Il voit l'écran d'où tu viens (sauf ton privé), et peut changer Life pour toi. La conversation est rangée dans « Conversations avec Claude ».</p>`;
+      for (const m of l) {
+        if (m.role === "user") h += `<div class="bulle moi">${mise(m.texte)}</div>`;
+        else h += `<div class="bulle claude ${m.erreur ? "erreur" : ""}">${mise(m.texte)}${(m.actions || []).length ? `<button class="puce-act" data-act="onglet" data-o="changements">✦ ${m.actions.length} changement${m.actions.length > 1 ? "s" : ""} dans Life</button>` : ""}</div>`;
+      }
+      if (enCours) h += `<div class="bulle claude" id="partiel">${partiel ? mise(partiel) : `<span class="points">Claude réfléchit</span>`}</div>`;
+      h += `</div><form class="saisie" data-act="envoyer"><textarea name="t" rows="1" placeholder="Écris à Claude…" ${enCours ? "disabled" : ""}></textarea><button class="btn prim" type="submit" ${enCours ? "disabled" : ""} aria-label="Envoyer">↑</button></form>`;
+    } else {
+      h += ac.length ? `<div class="liste">${ac.slice().reverse().map(a => a.objet && ctx.base.lire(a.objet) ? `<button class="ligne" data-objet="${esc(a.objet)}"><span class="t">${esc(a.t)}</span><small>objet · toucher pour l'ouvrir</small></button>`
+        : a.verbe ? `<button class="ligne" data-act="verbe" data-id="${esc(a.verbe)}"><span class="t">${esc(a.t)}</span><small>verbe · toucher pour ses versions</small></button>`
+        : `<div class="ligne"><span class="t">${esc(a.t)}</span></div>`).join("")}</div>` : `<p class="doux">Claude n'a encore rien changé dans cette conversation.</p>`;
+    }
+    ctx.ecran(h, { sujet: conv || undefined, titre: o ? o.titre : "Nouvelle conversation", actions: {
+      onglet: el => { onglet = el.dataset.o; rendre(); },
+      verbe: el => ctx.faire("version", null, { id: el.dataset.id }),
+      envoyer: f => { const t = f.t.value.trim(); if (t && !enCours) envoyer(t); } } });
+    const vue = document.getElementById("vue"); if (onglet === "discussion") vue.scrollTop = vue.scrollHeight;
+    const ta = vue.querySelector(".saisie textarea");
+    if (ta) ta.addEventListener("input", () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; });
+  }
+  async function envoyer(t){
+    if (enCours) return; enCours = true;
+    if (!conv) {
+      const titre = t.length > 50 ? t.slice(0, 48).trim() + "…" : t;
+      conv = await ctx.base.creer({ titre, type: "conversation", parent: "conversations", partage: true, champs: { ...(c.sujet ? { sujet: c.sujet } : {}), ...(c.tache ? { tache: c.tache } : {}) } });
+    }
+    const avant = msgs();
+    await ctx.base.modifier(conv, { messages: [...avant, { role: "user", texte: t, quand: new Date().toISOString() }] }, { sansAvant: true });
+    enCours = true; partiel = ""; onglet = "discussion"; rendre();
+    const o = lireConv();
+    const r = await ctx.claude(t, { historique: avant, ecran: ecranDepart, tache: (o.champs || {}).tache, sujet: (o.champs || {}).sujet,
+      onText: x => { partiel = x.text; const e = document.getElementById("partiel"); if (e) e.innerHTML = mise(partiel); } });
+    enCours = false;
+    const m = r ? { role: "assistant", texte: r.texte, quand: new Date().toISOString(), actions: r.traces || [], ...(r.erreur ? { erreur: true } : {}) } : { role: "assistant", texte: "(Claude n'a pas été lancé.)", quand: new Date().toISOString(), erreur: true };
+    await ctx.base.modifier(conv, { messages: [...msgs(), m] }, { sansAvant: true });
+    rendre();
+  }
+  rendre();
+  if (c.texte) await envoyer(c.texte);
+}),
+V("v_confier","confier à Claude",["tache"],"Confier une tâche à Claude : il la découpe, construit ce qu'il faut, et te laisse ce qu'il ne peut pas faire. La conversation reste rangée avec les autres.", async function(sujet, c, ctx){
+  return ctx.faire("discuter", null, { tache: sujet.id, ecran: ctx.ecranClaude(), texte: `Je te confie la tâche « ${sujet.titre} » [${sujet.id}].${sujet.desc ? " " + sujet.desc : ""}` });
+}),
+V("v_fait","marquer fait",["tache"],"Marquer une tâche faite (ou la rouvrir).", async function(sujet, c, ctx){
+  const fait = (sujet.champs || {}).statut === "fait";
+  await ctx.base.modifier(sujet.id, { champs: { ...(sujet.champs || {}), statut: fait ? "à faire" : "fait" } });
+  ctx.dire(fait ? "Rouverte" : "Fait ✓");
+  ctx.faire("afficher", sujet.parent || "moi");
+}),
+V("v_exporter","exporter",["rien"],"Sauvegarder toute la base dans un fichier (sans le coffre).", async function(sujet, c, ctx){
+  const out = await LifeDB.exporter({ fichiers: true });
+  delete out.collections.coffre;
+  const n = Object.keys(out.collections.objets || {}).length;
+  const ok = await ctx.telecharger(`life-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(out));
+  ctx.dire(ok ? `Sauvegarde prête : ${n} objets` : "Sauvegarde annulée");
+}),
+V("v_importer","importer",["rien"],"Restaurer une sauvegarde (remplace la base, garde le coffre).", async function(sujet, c, ctx){
+  const f = await ctx.choisirFichier(".json,application/json");
+  if (!f) return;
+  let obj; try { obj = JSON.parse(await f.text()); } catch (e) { return ctx.dire("Ce fichier n'est pas une sauvegarde Life"); }
+  if (!obj || !obj.collections) return ctx.dire("Ce fichier n'est pas une sauvegarde Life");
+  const n = Object.keys(obj.collections.objets || obj.collections.items || {}).length;
+  if (!(await ctx.confirmer(`Remplacer toute ta base par cette sauvegarde (${n} objets${obj.date ? ", du " + ctx.date(obj.date) : ""}) ? Ton coffre est gardé.`, "Remplacer"))) return;
+  const coffre = (await LifeDB.db.collection("coffre").get()).docs.map(d => [d.id, d.data()]);
+  await LifeDB.importer(obj);
+  for (const [id, v] of coffre) await LifeDB.db.collection("coffre").doc(id).set(v);
+  location.reload();
+}),
+V("v_regler_claude","régler Claude",["rien"],"Modèle, clé API, recherche web.", async function(sujet, c, ctx){
+  const r = LifeClaude.reglages(), garder = localStorage.getItem("life-garder-cle") === "1";
+  const modele = r.modele || "claude-sonnet-5-5";
+  ctx.ecran(`<div class="carte"><h3 class="etage">Modèle</h3><div class="liste">${LifeClaude.MODELES.map(([id, nom]) => `<button class="ligne ${id === modele ? "sel" : ""}" data-act="modele" data-id="${id}"><span class="t">${ctx.esc(nom)}</span></button>`).join("")}</div>
+    <h3 class="etage">Clé API</h3><p class="doux">${LifeClaude.aCle() ? "Une clé est chargée." : "Pas de clé : elle sera demandée."} ${garder ? "Elle est retenue sur cet iPhone." : "Elle est oubliée à la fermeture (le trousseau peut la remplir)."}</p>
+    <div class="rang"><button class="btn" data-act="garder">${garder ? "Ne plus la retenir" : "La retenir sur cet iPhone"}</button>${LifeClaude.aCle() ? `<button class="btn" data-act="oublier">Oublier la clé</button>` : ""}</div>
+    <h3 class="etage">Recherche web</h3><div class="rang"><button class="btn" data-act="web">${r.web === true ? "Désactiver" : "Activer"} la recherche web</button></div></div>`,
+    { titre: "Régler Claude", actions: {
+      modele: el => { LifeClaude.regler({ modele: el.dataset.id }); ctx.faire("régler Claude"); },
+      garder: () => { localStorage.setItem("life-garder-cle", garder ? "0" : "1"); if (garder) { try { localStorage.removeItem("life-cle"); } catch (e) {} } ctx.dire(garder ? "Clé plus retenue" : "Elle sera retenue à la prochaine saisie"); ctx.faire("régler Claude"); },
+      oublier: () => { LifeClaude.oublierCle(); ctx.dire("Clé oubliée"); ctx.faire("régler Claude"); },
+      web: () => { LifeClaude.regler({ web: r.web !== true }); ctx.faire("régler Claude"); } } });
+}),
+V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et en oublier.", async function(sujet, c, ctx){
+  const noms = await ctx.secrets();
+  ctx.ecran(`<p class="doux">Tes secrets restent sur cet iPhone. Claude n'en connaît que le nom. Ils ne sont pas dans les sauvegardes.</p>
+    <div class="liste">${noms.map(n => `<button class="ligne" data-act="oublier" data-nom="${ctx.esc(n)}"><span class="t">🔑 ${ctx.esc(n)}</span><small>Toucher pour l'oublier</small></button>`).join("") || `<p class="doux">Le coffre est vide.</p>`}</div>`,
+    { titre: "Mon coffre", actions: { oublier: async el => { if (await ctx.confirmer(`Oublier le secret « ${el.dataset.nom} » ?`, "Oublier")) { await ctx.oublierSecret(el.dataset.nom); ctx.faire("coffre"); } } } });
+}),
+];
+// Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
+SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
+for (const s of SEMENCES) s.doc.semence = 9;
+})();
+
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
