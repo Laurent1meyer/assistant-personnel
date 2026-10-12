@@ -1,0 +1,32 @@
+{
+  "format": "life_heart",
+  "version": "0.1.0",
+  "branche": "main",
+  "noyau": "Le noyau (code natif, minimal) sait seulement : charger ce fichier, trouver un objet, exécuter un verbe, déclencher les raccourcis. Tout le reste est ici.",
+  "objets": [
+    {"id":"moi","nom":"Moi","type":"personne","parents":[],"definition":"La racine. Tout se relie à moi."},
+
+    {"id":"interface","nom":"Interface","type":"dossier","parents":["moi"],"definition":"Tout ce qui sert à voir et toucher Life."},
+    {"id":"appareils","nom":"Appareils","type":"dossier","parents":["interface"],"definition":"Les supports sur lesquels Life s'affiche."},
+    {"id":"iphone","nom":"iPhone","type":"appareil","parents":["appareils"],"definition":"Mon téléphone, support principal, au pouce.","champs":{"largeur":390,"hauteur":844,"saisie":"tactile"}},
+    {"id":"ecrans","nom":"Écrans","type":"dossier","parents":["interface"],"definition":"Les écrans que Life sait montrer."},
+    {"id":"accueil","nom":"Accueil","type":"ecran","parents":["ecrans"],"definition":"Le premier écran à l'ouverture.","champs":{"titre":"Life","contenu":[]}},
+    {"id":"raccourcis","nom":"Raccourcis","type":"dossier","parents":["interface"],"definition":"Des phrases toutes faites : un verbe, un sujet, des compléments."},
+    {"id":"demarrage","nom":"Au démarrage","type":"raccourci","parents":["raccourcis"],"definition":"Afficher l'accueil sur l'iPhone quand Life s'ouvre.","declencheur":"ouverture","phrase":{"verbe":"afficher","sujet":"accueil","complements":{"sur":"iphone"}}},
+
+    {"id":"verbes","nom":"Verbes","type":"dossier","parents":["moi"],"definition":"Les fonctions de Life. Modifier un verbe change l'app."},
+    {"id":"afficher","nom":"afficher","type":"verbe","parents":["verbes"],"definition":"Montre un écran sur un appareil.","pour":"ecran","complements":{"sur":"appareil"},"code":"(sujet, c, ctx) => { const r = ctx.racine; r.innerHTML = ''; const h = document.createElement('h1'); h.textContent = (sujet.champs && sujet.champs.titre) || sujet.nom; r.appendChild(h); }"},
+
+    {"id":"regles","nom":"Règles","type":"dossier","parents":["moi"],"definition":"Ce que Life et Claude doivent toujours respecter."},
+    {"id":"regle_main","nom":"Rien n'entre dans main sans mon accord","type":"regle","parents":["regles"],"definition":"Claude travaille sur ses branches ; seule ma fusion fait entrer un changement dans la version validée."},
+
+    {"id":"types","nom":"Types","type":"dossier","parents":["moi"],"definition":"Les types sont eux aussi des objets."},
+    {"id":"t_personne","nom":"personne","type":"type","parents":["types"]},
+    {"id":"t_dossier","nom":"dossier","type":"type","parents":["types"]},
+    {"id":"t_appareil","nom":"appareil","type":"type","parents":["types"]},
+    {"id":"t_ecran","nom":"ecran","type":"type","parents":["types"]},
+    {"id":"t_raccourci","nom":"raccourci","type":"type","parents":["types"]},
+    {"id":"t_verbe","nom":"verbe","type":"type","parents":["types"]},
+    {"id":"t_regle","nom":"regle","type":"type","parents":["types"]}
+  ]
+}
