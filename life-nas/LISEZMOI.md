@@ -21,7 +21,7 @@ Il ne suffit pas, pour deux raisons : il ne voit que sa propre base (`data/life.
      sudo /var/packages/Tailscale/target/bin/tailscale serve --bg http://127.0.0.1:8788
      ```
    - La commande affiche l'adresse : `https://<nom-du-nas>.<ton-tailnet>.ts.net/`. Ouvre-la dans Safari sur l'iPhone (Tailscale activé) : tu dois voir la description `Life NAS`.
-6. **Dans Life.** Sur ton objet « NAS Synology », mets le champ `url = https://<nom-du-nas>.<ton-tailnet>.ts.net`. Puis demande à Claude : « Je veux lire une vidéo de mon NAS ». Il lit la description du serveur, te demande le jeton une fois (rangé au coffre) et écrit les verbes.
+6. **Dans Life.** Réglages › « Connecter mon NAS » (ou le bouton « Depuis mon NAS » sur l'accueil vide). Life demande l'adresse `https://<nom-du-nas>.<ton-tailnet>.ts.net` et le jeton (rangé au coffre), teste la connexion et dit précisément ce qui manque si elle échoue. Ensuite « importer depuis le NAS » permet de parcourir les dossiers et de confier à Claude des fichiers (export claude.ai en zip ou JSON, texte).
 
 ## Sécurité
 - Lecture seule ; rien ne peut être modifié ou effacé.
