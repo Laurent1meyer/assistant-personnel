@@ -339,6 +339,19 @@ const chezClaude = id => { let x=id, n=0; while (x && K.O[x] && n++<40) { if (x=
 // Ce que Claude connaît : ce que Laurent a partagé (ou que Claude a créé, qui naît partagé).
 // Décision de Laurent (11/10) : Claude voit TOUTE la base. Seuls les secrets du coffre restent privés.
 const connu = id => id==="moi" || !!K.O[id];
+// Règle 1 de Life : on ne prend pas à autrui, on apprend. Claude n'écrit sur une personne que ce que Laurent lui a dit
+// (champs.source = "laurent") ou ce que la personne a donné (champs.source = "personne"), avec les mots exacts (champs.citation).
+function surAutrui(type, parent, relations){
+  if (type==="personne") return true;
+  for (let x=parent, n=0; x && K.O[x] && n++<40; x=K.O[x].parent) if (K.O[x].type==="personne") return true;
+  return (relations||[]).some(r=>r && K.O[r.vers] && K.O[r.vers].type==="personne");
+}
+function regle1(type, parent, relations, champs){
+  if (!surAutrui(type, parent, relations)) return;
+  const ch = champs || {};
+  if (!["laurent","personne"].includes(ch.source) || String(ch.citation||"").trim().length < 8)
+    throw new Error("Règle 1 : on ne prend pas à autrui, on apprend. Une information sur une personne s'écrit seulement avec champs.source (\"laurent\" : Laurent te l'a dit ; \"personne\" : elle te l'a donnée) et champs.citation (les mots exacts, 8 caractères au moins). Tu ne déduis rien : si une information manque, crée une tâche « Demander à … ».");
+}
 // Ce que Claude voit à cet instant : ce qu'il connaît + ce que Laurent vient de lui montrer.
 const vu = id => connu(id) || K.claude.montre.has(id);
 // Verbes écrits par Claude qui touchent au réseau, aux secrets ou aux données brutes : Laurent valide avant.
@@ -727,6 +740,10 @@ Un service web que tu ne connais pas (par exemple le NAS de Laurent) : lis d'abo
 L'app est une page web servie en HTTPS depuis https://laurent1meyer.github.io, sur l'iPhone de Laurent. Elle ne peut appeler que des adresses HTTPS qui autorisent cette origine (CORS). Pas de serveur à elle.
 La base vit sur l'iPhone (IndexedDB) : pas de gros fichiers dedans.
 
+## Règle 1 de Life : on ne prend pas à autrui, on apprend
+Sur une personne, je n'écris que ce que Laurent m'a dit lui-même, ou ce que la personne a donné. Je ne déduis pas, je ne devine pas, je ne recoupe pas pour deviner. Quand une information me manque, je ne la cherche pas ailleurs : je crée une tâche « Demander à X : … » (parent : la personne, champs.pour : « Laurent »).
+Tout objet qui concerne une personne (type personne, rangé sous une personne, ou relié à une personne) porte champs.source (« laurent » : Laurent me l'a dit ; « personne » : elle me l'a donnée) et champs.citation (les mots exacts). Sans cela, l'app refuse l'écriture.
+
 ## Ton Life
 Tu as ton propre Life dans la même base : la racine « life_claude » et tout ce qui est rangé dessous. C'est ta mémoire : notes, réflexions, ce que tu retiens des conversations, tes essais. Tu y crées ce que tu veux (creer_objet parent life_claude). Tes verbes à toi s'écrivent avec chez:"claude" : ils n'agissent que dans ton Life, et Laurent peut les adopter dans le sien. Laurent possède tout le stockage : il peut tout lire dans ton Life, prendre un objet, effacer. Reste sobre : peu d'objets bien définis.
 Dans le Life de Laurent, n'écris que ce qu'il te demande (ou ce qui découle d'une tâche ou d'une conversation qu'il t'a confiée).
@@ -806,12 +823,13 @@ ${tache ? `\n## Tâche qui t'est confiée\n${tache.titre} [${opt.tache}]${tache.
       execute:({id})=>objetPourClaude(visible(id)) },
     { name:"creer_objet", description:"Crée un objet (ou une tâche, avec phrase {verbe,sujet,complements}). parent : 'moi' (racine du Life de Laurent), 'life_claude' (racine de TON Life), ou un objet que tu connais. Dans le Life de Laurent, l'objet est partagé avec toi.",
       inputSchema:{type:"object",properties:{titre:{type:"string"},type:{type:"string"},parent:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},emoji:{type:"string"},relations:{type:"array",items:{type:"object",properties:{vers:{type:"string"},genre:{type:"string"}}}}},required:["titre","type"]},
-      execute:async o=>{ let p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : (opt.autonome ? "cl_peuplement" : "moi"); if (opt.autonome && !chezClaude(p)) p = K.O.cl_peuplement ? "cl_peuplement" : "life_claude"; const rel=(Array.isArray(o.relations)?o.relations:[]).filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")})); const id=await base.creer({...o, relations:rel, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`, {objet:id}); return {id, parent:p}; } },
+      execute:async o=>{ let p = o.parent && connu(String(o.parent)) && K.O[o.parent] ? String(o.parent) : (opt.autonome ? "cl_peuplement" : "moi"); if (opt.autonome && !chezClaude(p)) p = K.O.cl_peuplement ? "cl_peuplement" : "life_claude"; const rel=(Array.isArray(o.relations)?o.relations:[]).filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")})); regle1(o.type, p, rel, o.champs); const id=await base.creer({...o, relations:rel, parent:p, partage:true, auteur:"Claude"}); trace(`crée « ${o.titre} »`, {objet:id}); return {id, parent:p}; } },
     { name:"modifier_objet", description:"Modifie un objet partagé ou de ton Life : titre, type, desc, champs (fusionnés), phrase, parent ; ajouter_relations : relations à ajouter [{vers, genre}].",
       inputSchema:{type:"object",properties:{id:{type:"string"},titre:{type:"string"},type:{type:"string"},desc:{type:"string"},champs:{type:"object"},phrase:{type:"object"},parent:{type:"string"},ajouter_relations:{type:"array",items:{type:"object",properties:{vers:{type:"string"},genre:{type:"string"}}}}},required:["id"]},
       execute:async o=>{ const id=String(o.id); if (!connu(id)) throw new Error("tu ne peux modifier que les objets partagés avec toi"); const m={};
         for (const k of ["titre","type","desc","phrase"]) if (o[k]!==undefined) m[k]=o[k];
         if (o.champs) m.champs={...(K.O[id].champs||{}), ...o.champs};
+        { const ex=K.O[id]; regle1(m.type!==undefined?m.type:ex.type, m.parent!==undefined?m.parent:ex.parent, [...(ex.relations||[]), ...((Array.isArray(o.ajouter_relations)?o.ajouter_relations:[]).filter(r=>r&&K.O[r.vers]))], m.champs||ex.champs); }
         if (o.parent) { if (!connu(String(o.parent))) throw new Error("parent non partagé"); m.parent=String(o.parent); }
         if (Array.isArray(o.ajouter_relations)) m.relations=[...(K.O[id].relations||[]), ...o.ajouter_relations.filter(r=>r&&K.O[r.vers]&&vu(String(r.vers))).map(r=>({vers:String(r.vers), genre:String(r.genre||"concerne")}))];
         await base.modifier(id, m); trace(`modifie « ${K.O[id].titre} »${o.champs?.statut?" → "+o.champs.statut:""}`, {objet:id}); return {ok:true}; } },
@@ -909,6 +927,7 @@ async function semer(){
   await o("prompt_claude", { titre:"Prompt de Claude", type:"prompt", parent:"reglages", emoji:"✦", desc:PROMPT_DEFAUT });
   await o("t_sauver", { titre:"Sauvegarder ma base", type:"tache", parent:"reglages", emoji:"⬇", phrase:{verbe:"exporter", sujet:null, complements:{}} });
   await o("t_restaurer", { titre:"Restaurer une sauvegarde", type:"tache", parent:"reglages", emoji:"⬆", phrase:{verbe:"importer", sujet:null, complements:{}} });
+  await o("t_nas", { titre:"Connecter mon NAS", type:"tache", parent:"reglages", emoji:"🗄", phrase:{verbe:"connecter NAS", sujet:null, complements:{}} });
   await o("t_regler", { titre:"Régler Claude", type:"tache", parent:"reglages", emoji:"✦", phrase:{verbe:"régler Claude", sujet:null, complements:{}} });
   await o("t_ajouter", { titre:"Ajouter depuis un fichier", type:"tache", parent:"reglages", emoji:"＋", phrase:{verbe:"ajouter depuis un fichier", sujet:null, complements:{}} });
   await o("t_importer_claude", { titre:"Confier des fichiers à Claude", type:"tache", parent:"reglages", emoji:"📥", partage:true, phrase:{verbe:"importer pour Claude", sujet:null, complements:{}} });
@@ -961,7 +980,7 @@ V("v_accueil","accueil",["rien"],"Ta base Life : tout ce qui est rangé sous Moi
   const pourToi = ctx.base.tous().filter(o => o.type === "tache" && o.champs && o.champs.pour === "Laurent" && o.champs.statut !== "fait" && o.parent !== "corbeille");
   let h = "";
   const vide = !ctx.base.tous().some(o => !["moi","life_claude","conversations","reglages","corbeille","prompt_claude"].includes(o.id) && !["reglages"].includes(o.parent) && !String(o.id).startsWith("cl_") && o.parent !== "life_claude");
-  if (vide) h += `<div class="carte centre"><p><b>Ta base est vide.</b></p><p class="doux">Confie à Claude tes fichiers d'export claude.ai (conversations et projets, en zip ou en JSON) : il peuplera son Life, puis tu prendras ce que tu veux.</p><div class="rang"><button class="btn prim" data-faire="importer pour Claude" data-sujet="">Confier des fichiers à Claude</button></div></div>`;
+  if (vide) h += `<div class="carte centre"><p><b>Ta base est vide.</b></p><p class="doux">Confie à Claude tes fichiers d'export claude.ai (conversations et projets, en zip ou en JSON) : il peuplera son Life, puis tu prendras ce que tu veux.</p><div class="rang"><button class="btn prim" data-faire="importer pour Claude" data-sujet="">Confier des fichiers à Claude</button><button class="btn" data-faire="connecter NAS" data-sujet="">Depuis mon NAS</button></div></div>`;
   if (pourToi.length) h += `<h3 class="etage">Pour toi <small>${pourToi.length}</small></h3><div class="liste">${pourToi.map(t => `<button class="ligne" data-objet="${esc(t.id)}"><span class="t">${esc(t.titre)}</span><small>${esc((ctx.base.parent(t.id) || {}).titre || "")}</small></button>`).join("")}</div>`;
   h += ctx.grille(objs).replace(/<\/div>$/, `<button class="ic" data-faire="verbes" data-sujet=""><div class="tuile" style="background:#3B3F4A">ƒ</div><span class="lab">Verbes</span></button></div>`);
   ctx.ecran(h, { sujet: null, titre: "Life", racine: true });
@@ -991,6 +1010,73 @@ V("v_importer","importer pour Claude",["rien","moi"],"Confier à Claude un ou pl
   }
   if (!ids.length) return ctx.dire("Rien d'importé");
   ctx.dire(`${ids.length} fichier${ids.length > 1 ? "s" : ""} confié${ids.length > 1 ? "s" : ""} à Claude`);
+  return ctx.faire("afficher", "cl_imports");
+}),
+V("v_apprendre","apprendre",["personne"],"Règle 1 : on ne prend pas à autrui, on apprend. Noter ce qu'une personne t'a dit, ce que tu sais d'elle, ou lui poser une question.", async function(sujet, c, ctx){
+  const q = await ctx.choisir("Apprendre sur " + sujet.titre, [
+    { valeur:"personne", libelle:"Elle me l'a dit", detail:"Source : " + sujet.titre },
+    { valeur:"laurent", libelle:"Je le sais", detail:"Source : moi" },
+    { valeur:"demande", libelle:"Je dois le lui demander", detail:"Crée une tâche « Demander à… »" }]);
+  if (!q) return;
+  const t = await ctx.demander(q === "demande" ? "Que veux-tu lui demander ?" : "Qu'as-tu appris sur " + sujet.titre + " ? (ses mots, ou les tiens)", "", { multi:true });
+  if (!t || !t.trim()) return;
+  if (q === "demande") { await ctx.base.creer({ titre:"Demander à " + sujet.titre + " : " + t.trim().slice(0, 60), type:"tache", parent:sujet.id, desc:t.trim(), champs:{ pour:"Laurent", statut:"à faire" } }); return ctx.dire("Tâche créée"); }
+  await ctx.base.creer({ titre:t.trim().slice(0, 60), type:"note", parent:sujet.id, desc:t.trim(), champs:{ source:q, citation:t.trim() } });
+  ctx.dire("Noté (source : " + (q === "personne" ? sujet.titre : "toi") + ")");
+}),
+V("v_connecter_nas","connecter NAS",["rien"],"Brancher Life sur ton NAS : adresse HTTPS (MagicDNS) et jeton de Life NAS, rangé dans le coffre. Teste la connexion et dit précisément ce qui manque.", async function(sujet, c, ctx){
+  const dej = ctx.base.tous().find(o => o.type === "nas");
+  let url = await ctx.demander("Adresse HTTPS de ton NAS (nom MagicDNS Tailscale)", (dej && dej.champs && dej.champs.url) || "https://");
+  if (!url) return;
+  url = url.trim().replace(/\/+$/, "");
+  if (!/^https:\/\//i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)([:\/]|$)/i.test(url)) return ctx.dire("Il faut une adresse en https:// : une page HTTPS ne peut pas appeler une adresse en http:// ni une IP seule. Voir life-nas/LISEZMOI.md, étape 5 (Tailscale serve).");
+  let r; try { r = await fetch(url + "/"); } catch (e) { return ctx.dire("Le NAS ne répond pas. Vérifie : Tailscale actif sur l'iPhone, le conteneur Life NAS démarré, et l'origine " + location.origin + " autorisée (variable ORIGINES du serveur)."); }
+  let d; try { d = await r.json(); } catch (e) { d = null; }
+  if (!d || d.nom !== "Life NAS") return ctx.dire("Quelque chose répond (code " + r.status + "), mais pas Life NAS. Vérifie l'adresse.");
+  const jeton = await ctx.secret("nas_jeton", { question:"Jeton de Life NAS (la ligne JETON= de life-nas.env). Il reste dans le coffre de ton iPhone." });
+  if (!jeton) return;
+  let l; try { l = await fetch(url + "/liste?chemin=/", { headers:{ Authorization:"Bearer " + jeton } }); } catch (e) { return ctx.dire("Connexion coupée : " + (e.message || e)); }
+  if (l.status === 401) { await ctx.oublierSecret("nas_jeton"); return ctx.dire("Jeton refusé : redonne-le en relançant « connecter NAS »."); }
+  if (!l.ok) return ctx.dire("Le NAS répond " + l.status + ".");
+  const racine = await l.json();
+  const champs = { ...((dej && dej.champs) || {}), url, connecte:new Date().toISOString() };
+  if (dej) await ctx.base.modifier(dej.id, { champs }); else await ctx.base.creer({ titre:"NAS Synology", type:"nas", parent:"reglages", desc:"Mon NAS, lu par Life NAS (lecture seule).", champs, emoji:"🗄" });
+  ctx.dire("NAS connecté : " + racine.dossiers.length + " dossier" + (racine.dossiers.length > 1 ? "s" : "") + " visibles");
+  return ctx.faire("importer depuis le NAS", null, {});
+}),
+V("v_importer_nas","importer depuis le NAS",["rien","moi"],"Parcourir le NAS et confier à Claude des fichiers (JSON, zip d'export claude.ai, texte) : ils rejoignent les imports de son Life.", async function(sujet, c, ctx){
+  const nas = ctx.base.tous().find(o => o.type === "nas");
+  if (!nas || !(nas.champs || {}).url) return ctx.faire("connecter NAS", null, {});
+  const jeton = await ctx.secret("nas_jeton", { question:"Jeton de Life NAS" }); if (!jeton) return;
+  const url = nas.champs.url, H = { Authorization:"Bearer " + jeton };
+  let ch = "/"; const choisis = [];
+  for (;;) {
+    let r; try { r = await fetch(url + "/liste?chemin=" + encodeURIComponent(ch), { headers:H }); } catch (e) { return ctx.dire("NAS injoignable : " + (e.message || e)); }
+    if (!r.ok) return ctx.dire("Le NAS répond " + r.status);
+    const d = await r.json();
+    const lignes = [];
+    if (d.parent !== null) lignes.push({ valeur:"..", libelle:"↑ Dossier parent" });
+    for (const x of d.dossiers) lignes.push({ valeur:"d:" + x.chemin, libelle:"📁 " + x.nom });
+    for (const x of d.fichiers.filter(f => /\.(json|zip|txt|md|csv)$/i.test(f.nom))) lignes.push({ valeur:"f:" + x.chemin, libelle:"📄 " + x.nom, detail:(x.taille > 1e6 ? (x.taille / 1e6).toFixed(1) + " Mo" : Math.round(x.taille / 1e3) + " ko") + (choisis.includes(x.chemin) ? " · choisi" : "") });
+    lignes.push({ valeur:"ok", libelle:"✔ Terminé (" + choisis.length + " choisi" + (choisis.length > 1 ? "s" : "") + ")" });
+    const v = await ctx.choisir("NAS " + ch, lignes);
+    if (!v || v === "ok") break;
+    if (v === "..") ch = d.parent; else if (v[0] === "d") ch = v.slice(2); else if (!choisis.includes(v.slice(2))) choisis.push(v.slice(2));
+  }
+  if (!choisis.length) return;
+  const ids = [];
+  for (const chemin of choisis) {
+    ctx.dire("Lecture de " + chemin.split("/").pop() + "…");
+    let r; try { r = await fetch(url + "/fichier?chemin=" + encodeURIComponent(chemin), { headers:H }); } catch (e) { ctx.dire("Lecture coupée : " + (e.message || e)); continue; }
+    if (!r.ok) { ctx.dire("Le NAS répond " + r.status + " pour " + chemin); continue; }
+    const blob = await r.blob(), nom = chemin.split("/").pop();
+    if (/\.zip$/i.test(nom)) {
+      let entrees; try { entrees = await ctx.lireZip(new File([blob], nom)); } catch (e) { ctx.dire("Zip illisible : " + e.message); continue; }
+      for (const e of entrees.filter(x => !x.dossier && !/(^|\/)\.|__MACOSX/.test(x.nom))) ids.push(await ctx.nouvelImport(new File([e.blob], e.nom.split("/").pop(), { type:e.nom.endsWith(".json") ? "application/json" : "text/plain" })));
+    } else ids.push(await ctx.nouvelImport(new File([blob], nom, { type:/\.json$/i.test(nom) ? "application/json" : "text/plain" })));
+  }
+  if (!ids.length) return ctx.dire("Rien d'importé");
+  ctx.dire(ids.length + " fichier" + (ids.length > 1 ? "s" : "") + " confié" + (ids.length > 1 ? "s" : "") + " à Claude");
   return ctx.faire("afficher", "cl_imports");
 }),
 V("v_afficher_import","afficher",["import"],"Un fichier confié à Claude : son format, l'avancement du peuplement, et le bouton pour lancer Claude.", async function(sujet, c, ctx){
@@ -1482,7 +1568,7 @@ V("v_coffre","coffre",["rien"],"Voir les noms des secrets rangés au coffre, et 
 ];
 // Le verbe « version » appelle le noyau (le seul pont vers l'éditeur de versions)
 SEMENCES.push({ id:"v_version", doc:{ nom:"version", pour:["rien"], definition:"Ouvrir les versions et le code d'un verbe.", code:"return ctx.__versions(c.id);", version:1, historique:[], cree:"2026-10-11T00:00:00Z", modifie:"2026-10-11T00:00:00Z", auteur:"origine", actif:true, cache:true } });
-for (const s of SEMENCES) s.doc.semence = 13;
+for (const s of SEMENCES) s.doc.semence = 14;
 })();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
